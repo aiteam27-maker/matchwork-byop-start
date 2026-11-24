@@ -151,6 +151,60 @@ details>summary{cursor:pointer;font-weight:600;list-style:none}details>summary::
 .hire3{display:grid;gap:14px;grid-template-columns:1fr;margin-top:14px}@media(min-width:760px){.hire3{grid-template-columns:repeat(3,1fr)}}
 .h3c{background:var(--sf);border:1px solid var(--ln);border-radius:18px;padding:20px;text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:6px;transition:border-color .15s,transform .15s}.h3c:hover{border-color:var(--ac);transform:translateY(-2px)}.h3c .e{font-size:28px}.h3c b{font-size:17px}.h3c .lnk{margin-top:auto;padding-top:6px}
 .tl p{padding:9px 0;border-top:1px solid var(--ln);font-size:14px}.tl p:first-child{border-top:0}.tl small{display:block;color:var(--mut);font-size:12px}
+/* =============== UI polish (v1.1) =============== */
+:root{--sh1:0 1px 2px #15181e0a,0 2px 8px #15181e08;--sh2:0 2px 4px #15181e0a,0 10px 28px #15181e14;--ease:cubic-bezier(.2,.7,.2,1)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--sh1:0 1px 2px #0006,0 2px 8px #0004;--sh2:0 2px 4px #0006,0 12px 32px #0008}}
+:root[data-theme="dark"]{--sh1:0 1px 2px #0006,0 2px 8px #0004;--sh2:0 2px 4px #0006,0 12px 32px #0008}
+body{background:radial-gradient(1200px 500px at 85% -10%,color-mix(in srgb,var(--ac) 9%,transparent),transparent 70%),var(--bg);background-attachment:fixed}
+::selection{background:color-mix(in srgb,var(--ac) 30%,transparent)}
+/* surfaces get gentle depth */
+.card,.jc,.sv,.h3c,.tier,.tile,.mlay{box-shadow:var(--sh1)}
+.card{padding:24px}
+.jc,.sv,.h3c,.choice,.tile,.tier,.opts button,.pills button,.ib,.who,.heart,.xb,.chip{transition:border-color .2s var(--ease),box-shadow .2s var(--ease),transform .2s var(--ease),background-color .2s var(--ease),color .2s var(--ease)}
+.jc:hover,.sv:hover{box-shadow:var(--sh2);transform:translateY(-2px)}
+.h3c:hover,.choice:hover{box-shadow:var(--sh2)}
+.tile:hover,.tier:hover,.opts button:hover{border-color:color-mix(in srgb,var(--ac) 55%,var(--ln))}
+.pills button:not(.on):hover{color:var(--ink);border-color:color-mix(in srgb,var(--ink) 30%,var(--ln))}
+.ib:hover,.who:hover,.xb:hover,.heart:hover{border-color:color-mix(in srgb,var(--ink) 25%,var(--ln));box-shadow:var(--sh1)}
+/* top bar */
+.top{box-shadow:0 1px 0 var(--ln),0 6px 20px -12px #15181e33}
+.logo{letter-spacing:-.01em}
+.dnav a{transition:background-color .15s,color .15s}.dnav a.on{background:var(--acl);color:var(--ac2)}
+/* buttons */
+.btn{box-shadow:0 1px 2px #0000001a,inset 0 1px 0 #ffffff26;transition:background-color .15s,box-shadow .15s,transform .1s}
+.btn:hover{box-shadow:0 4px 14px color-mix(in srgb,var(--ac) 35%,transparent),inset 0 1px 0 #ffffff26}
+.btn:active:not([disabled]){transform:translateY(1px) scale(.99)}
+.btn.gh,.btn.dn{box-shadow:var(--sh1)}.btn.gh:hover,.btn.dn:hover{box-shadow:var(--sh1);border-color:color-mix(in srgb,var(--ink) 25%,var(--ln))}
+/* inputs */
+input:hover:not(:focus),textarea:hover:not(:focus),select:hover:not(:focus){border-color:color-mix(in srgb,var(--ink) 25%,var(--ln))}
+input,textarea,select{transition:border-color .15s,box-shadow .15s}
+/* welcome page */
+.choice{position:relative;overflow:hidden;box-shadow:var(--sh1)}
+.choice:before{content:"";position:absolute;inset:0 0 auto;height:4px;background:linear-gradient(90deg,var(--ac),var(--bl));opacity:0;transition:opacity .2s}
+.choice:hover:before,.choice:focus-visible:before{opacity:1}
+.choice .e{width:64px;height:64px;border-radius:18px;background:var(--sk);display:grid;place-items:center;font-size:34px}
+.trio div{background:var(--sf);border:1px solid var(--ln);border-radius:var(--r);padding:20px;box-shadow:var(--sh1);font-size:22px}
+.trio b{font-size:17px}.trio p{font-size:14px}
+/* hero banner */
+.hero{background:radial-gradient(600px 240px at 100% 0%,color-mix(in srgb,var(--ac) 45%,transparent),transparent 70%),var(--ink);box-shadow:var(--sh2)}
+/* next-step banner gets an accent edge */
+.next{border-left:4px solid var(--ac)}.next.w{border-left-color:var(--wn)}.next.b{border-left-color:var(--bl)}
+/* avatars */
+.av{box-shadow:0 0 0 3px var(--sf)}
+/* chat bubbles */
+.bub{box-shadow:var(--sh1)}
+/* overlays animate in */
+@keyframes gw-up{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+@keyframes gw-fade{from{opacity:0}to{opacity:1}}
+@keyframes gw-toast{from{opacity:0;transform:translate(-50%,10px)}to{opacity:1;transform:translate(-50%,0)}}
+#sheet{backdrop-filter:blur(3px);animation:gw-fade .2s ease}
+#sheet>div{animation:gw-up .28s var(--ease);box-shadow:0 24px 60px #0005}
+.pop{animation:gw-up .2s var(--ease)}
+#toast{animation:gw-toast .25s var(--ease);font-weight:500}
+/* thin scrollbars */
+*{scrollbar-width:thin;scrollbar-color:var(--ln) transparent}
+.pills{scrollbar-width:none}
+@media (prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}.jc:hover,.sv:hover,.choice:hover,.h3c:hover{transform:none}}
 </style>
 </head>
 <body>
