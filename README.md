@@ -23,17 +23,3 @@ Everything runs in a single file, `gigwise.html`. Open it in any browser; no ins
 
 - This is a front-end demo. The other side (clients or freelancers) is simulated and replies within seconds.
 - No real accounts or payments. Data is saved in your browser only. Use **Reset demo data** in the account menu to start over.
-
-## How to run locally
-
-Open `gigwise.html` in a browser. Or serve the folder and open http://localhost:8765/gigwise.html:
-
-```bash
-python3 -m http.server 8765
-```
-
-## Change history
-
-Every change is logged in [CHANGELOG.md](CHANGELOG.md), with who made it, why, and what changed. Each version is a git tag and a [GitHub release](https://github.com/aiteam27-maker/matchwork-byop-start/releases), so any version can be compared or restored.
-
-Before you make a change, read [CLAUDE.md](CLAUDE.md). It has the code map and the rules for documenting, committing, tagging and releasing.
