@@ -174,7 +174,9 @@ def health():
         return {"ok": False, "database": "not configured", "detail": problem}
     try:
         rows(db().table("clients").select("id").limit(1))
-        return {"ok": True, "database": "connected"}
+        import os
+        return {"ok": True, "database": "connected",
+                "demo_reset": os.getenv("DEMO_RESET_ENABLED", "true").lower() != "false"}
     except HTTPException:
         raise
     except Exception as e:  # show the real reason, e.g. tables not created yet
