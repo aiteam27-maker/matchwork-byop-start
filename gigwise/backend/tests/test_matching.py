@@ -38,8 +38,9 @@ class MatchesFrontend(unittest.TestCase):
         self.assertEqual(sorted(h["freelancer_id"] for h in r["hidden"]), [fid(n) for n in [8, 9, 10, 11, 13]])
         self.assertEqual(
             r["ranked"][0]["reason"],
-            "Covers 5 of 6 required skills (Flutter, LLM, Node.js +2). $48/hr fits your ~$50/hr budget, "
-            "6 yrs experience, 4.9★ over 31 jobs. Built “Habit coach app”.",
+            "Covers 5 of your 6 skills: Flutter, LLM, Node.js and 2 more. The only gap is Stripe. "
+            "They charge $48/hr, which fits your budget of roughly $50/hr, and bring 6 years of experience "
+            "and a 4.9★ rating over 31 jobs. Their “Habit coach app” project looks closely related.",
         )
 
     def test_hourly_ranking(self):
@@ -48,14 +49,31 @@ class MatchesFrontend(unittest.TestCase):
         self.assertEqual(got, [(fid(a), b) for a, b in [(3, 96), (7, 49), (8, 47), (1, 46), (14, 44)]])
         self.assertEqual(
             r["ranked"][0]["reason"],
-            "Covers 4 of 4 required skills (Python, LLM, NLP +1). $70/hr is within your $50–$75/hr range, "
-            "5 yrs experience, 4.9★ over 19 jobs. Built “Help-center RAG bot”.",
+            "Has all 4 skills you asked for. They charge $70/hr, within your $50–$75/hr range, and bring "
+            "5 years of experience and a 4.9★ rating over 19 jobs. Their “Help-center RAG bot” project looks closely related.",
         )
 
     def test_reverse_matching(self):
         maya = next(f for f in FL if f["id"] == "f01")
         got = [(m["project_id"], m["total"]) for m in matching.rank_projects(maya, ROWS["projects"])]
         self.assertEqual(got, [("p6", 79), ("p5", 53), ("p1", 46), ("p2", 46), ("p3", 46)])
+
+    def test_reason_wording(self):
+        """Spot-check the plain-English templates: gaps, budget phrasing and new freelancers."""
+        p = PJ["p6"]
+        f = lambda n: next(x for x in FL if x["id"] == n)
+        sofia = matching.public(matching.score(f("f06"), p))["reason"]
+        self.assertIn("The only gap is Stripe.", sofia)
+        self.assertIn("well under your budget", sofia)
+        nadia = matching.public(matching.score(f("f12"), p))["reason"]
+        self.assertIn("though they're new here with no reviews yet", nadia)
+        grace = matching.public(matching.score(f("f14"), PJ["p3"]))["reason"]
+        self.assertIn("above your $75/hr maximum", grace)
+        maya_free = matching.public(matching.score(f("f01"), p), for_freelancer=True)["reason"]
+        self.assertTrue(maya_free.startswith("You match 3 of the 4 skills they need (Flutter, Firebase and UI Design); Stripe would be new for you."))
+        for text in (sofia, nadia, grace, maya_free):
+            self.assertNotIn("  ", text)
+            self.assertNotIn(" ,", text)
 
     def test_no_personal_attributes(self):
         """Changing name or location must not change the score."""

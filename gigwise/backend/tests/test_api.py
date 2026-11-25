@@ -114,7 +114,7 @@ class ApiFlow(unittest.TestCase):
         self.assertEqual(r.json()["project"]["budget"], 55 * 120)
         rev = self.api.get("/freelancers/f01/matches").json()
         self.assertEqual(rev[0]["project_id"], r.json()["project"]["id"])
-        self.assertTrue(rev[0]["reason"].startswith("You have 5 of 6 skills"))
+        self.assertTrue(rev[0]["reason"].startswith("You match 5 of the 6 skills they need"))
 
     def test_skill_catalog_rules(self):
         tax = self.api.get("/taxonomy").json()
