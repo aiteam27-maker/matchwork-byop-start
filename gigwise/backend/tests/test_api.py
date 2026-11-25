@@ -34,7 +34,7 @@ class ApiFlow(unittest.TestCase):
         self.assertEqual(self.api.get("/me").json()["name"], "Pulse Fit")
 
     def test_freelancer_filters_and_badges(self):
-        r = self.api.get("/freelancers", params={"category": "Mobile apps", "available": True}).json()
+        r = self.api.get("/freelancers", params={"category": "Mobile Development", "available": True}).json()
         self.assertIn("f01", [f["id"] for f in r])
         self.assertNotIn("f11", [f["id"] for f in r])  # Lucas is booked
         maya = self.api.get("/freelancers/f01").json()
@@ -115,6 +115,24 @@ class ApiFlow(unittest.TestCase):
         rev = self.api.get("/freelancers/f01/matches").json()
         self.assertEqual(rev[0]["project_id"], r.json()["project"]["id"])
         self.assertTrue(rev[0]["reason"].startswith("You have 5 of 6 skills"))
+
+    def test_skill_catalog_rules(self):
+        tax = self.api.get("/taxonomy").json()
+        self.assertGreaterEqual(len(tax["categories"]), 10)
+        # alternative spellings are converted to the catalog name, duplicates dropped
+        r = self.api.post("/projects", json={**FITNESS, "skills": ["Flutter", "reactjs", "React", "postgres"],
+                                             "category": "Mobile Development"})
+        self.assertEqual(r.status_code, 201, r.text)
+        self.assertEqual(r.json()["project"]["skills"], ["Flutter", "React", "PostgreSQL"])
+        self.assertEqual(r.json()["project"]["category"], "Mobile Development")
+        # unknown skills, too many skills and unknown categories are refused
+        self.assertEqual(self.api.post("/projects", json={**FITNESS, "skills": ["Basket weaving"]}).status_code, 422)
+        many = [s for c in tax["categories"] for sp in c["specialties"] for s in sp["skills"]][:11]
+        self.assertEqual(self.api.post("/projects", json={**FITNESS, "skills": many}).status_code, 422)
+        self.assertEqual(self.api.post("/projects", json={**FITNESS, "category": "Underwater"}).status_code, 422)
+        # with no category, it's worked out from the skills (first skill breaks ties)
+        r = self.api.post("/projects", json=FITNESS).json()["project"]
+        self.assertEqual(r["category"], "Mobile Development")
 
     def test_not_configured_message(self):
         self.patch.stop()

@@ -17,7 +17,7 @@ from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
-from . import matching
+from . import ai, matching
 from .db import NotConfigured, allowed_origins, get_client, settings_problem
 
 app = FastAPI(title="Gigwise API", version="0.1.0",
@@ -150,7 +150,9 @@ def bid_text(bid: float, p: Dict[str, Any]) -> str:
 class ProjectIn(BaseModel):
     title: str = Field(min_length=1, max_length=120)
     description: str = Field(min_length=20, max_length=5000)
-    skills: List[str] = Field(default_factory=list, description="Leave empty to detect from the description")
+    skills: List[str] = Field(default_factory=list, max_length=10,
+                              description="Up to 10 skills from GET /taxonomy. Leave empty to detect from the description")
+    category: Optional[str] = Field(None, description="A category name from GET /taxonomy. Worked out from the skills if empty")
     type: Literal["fixed", "hourly"] = "fixed"
     budget: Optional[float] = Field(None, gt=0, description="Fixed price total")
     rate_min: Optional[float] = Field(None, gt=0, description="Hourly projects")
@@ -209,11 +211,37 @@ def health():
         rows(db().table("clients").select("id").limit(1))
         import os
         return {"ok": True, "database": "connected",
-                "demo_reset": os.getenv("DEMO_RESET_ENABLED", "true").lower() != "false"}
+                "demo_reset": os.getenv("DEMO_RESET_ENABLED", "true").lower() != "false",
+                "ai": ai.enabled()}
     except HTTPException:
         raise
     except Exception as e:  # show the real reason, e.g. tables not created yet
         return {"ok": False, "database": "error", "detail": str(e)[:300]}
+
+
+def catalog_skills(names: List[str], limit: int) -> List[str]:
+    """Map skills to their catalog spelling (accepting known alternative spellings), drop duplicates,
+    and reject anything not in the catalog, so clients and freelancers always use the same names."""
+    out, unknown = [], []
+    for name in names:
+        if not str(name).strip():
+            continue
+        canon = matching.canonical_skill(name)
+        if canon is None:
+            unknown.append(str(name).strip())
+        elif canon not in out:
+            out.append(canon)
+    if unknown:
+        raise HTTPException(422, f"Not in the skill catalog: {', '.join(unknown)}. Pick skills from GET /taxonomy.")
+    if len(out) > limit:
+        raise HTTPException(422, f"Pick at most {limit} skills")
+    return out
+
+
+@app.get("/taxonomy", tags=["system"])
+def taxonomy():
+    """The skill catalog: categories > specialties > skills, plus accepted alternative spellings."""
+    return matching.TAXONOMY
 
 
 @app.get("/me", tags=["system"])
@@ -315,7 +343,9 @@ def create_project(body: ProjectIn):
         if body.rate_max < body.rate_min:
             raise HTTPException(422, "rate_max must be at least rate_min")
         budget = body.rate_max * body.hours
-    skills = [s.strip() for s in body.skills if s.strip()]
+    skills = catalog_skills(body.skills, limit=10)
+    if body.category and body.category not in [c for c, _ in matching.CATEGORIES]:
+        raise HTTPException(422, f"Unknown category: {body.category}. Pick one from GET /taxonomy.")
     auto = not skills
     if auto:
         skills = matching.detect_skills(f"{body.title} {body.description}", freelancers)
@@ -329,7 +359,7 @@ def create_project(body: ProjectIn):
         "hours": body.hours, "level": body.level, "duration": body.duration,
         "deadline": body.deadline.isoformat() if body.deadline else None,
         "questions": [q.strip() for q in body.questions if q.strip()][:3],
-        "category": matching.category_of(skills),
+        "category": body.category if body.category else matching.category_of(skills),
     }
     p = rows(db().table("projects").insert(row))[0]
     return {"project": p, "matches": matching.rank_freelancers(p, freelancers)}
@@ -949,7 +979,7 @@ class PortfolioItem(BaseModel):
 class FreelancerIn(BaseModel):
     name: str = Field(min_length=1, max_length=80)
     title: str = Field(min_length=1, max_length=120)
-    skills: List[str] = Field(min_length=1, max_length=20)
+    skills: List[str] = Field(min_length=1, max_length=15, description="1 to 15 skills from GET /taxonomy")
     rate: float = Field(gt=0, le=1000)
     years: int = Field(0, ge=0, le=60)
     hours_per_week: int = Field(30, ge=0, le=80)
@@ -965,7 +995,7 @@ class FreelancerIn(BaseModel):
 
 def _profile_row(body: FreelancerIn) -> Dict[str, Any]:
     row = body.model_dump()
-    row["skills"] = [s.strip() for s in row["skills"] if s.strip()]
+    row["skills"] = catalog_skills(row["skills"], limit=15)
     row["bio"] = row["bio"].strip() or row["title"]
     return row
 
@@ -1045,3 +1075,44 @@ if _FRONTEND.is_dir():
     @app.get("/", include_in_schema=False)
     def _root():
         return RedirectResponse("/app/")
+
+
+
+# ================================================================ Claude-written text
+# Optional: needs ANTHROPIC_API_KEY. Without it (or if Claude fails) the responses say so and the
+# app keeps its template text, so nothing depends on these endpoints.
+
+class ExplainIn(BaseModel):
+    project_id: str
+    freelancer_ids: List[str] = Field(min_length=1, max_length=8)
+
+
+class DraftIn(BaseModel):
+    project_id: str
+    freelancer_id: str
+    bid: Optional[float] = Field(None, gt=0)
+    days: Optional[int] = Field(None, gt=0)
+
+
+@app.post("/ai/explain", tags=["ai"])
+def ai_explain(body: ExplainIn):
+    """Claude-written match reasons for up to 8 freelancers on one project, grounded only in the facts
+    behind the score. Freelancers missing from the result should keep their template reason."""
+    if not ai.enabled():
+        return {"enabled": False, "explanations": {}}
+    p, fl = parallel(lambda: one("projects", body.project_id, "Project"),
+                     lambda: rows(db().table("freelancers").select("*").in_("id", body.freelancer_ids)))
+    order = {fid: i for i, fid in enumerate(body.freelancer_ids)}
+    fl.sort(key=lambda f: order.get(f["id"], 99))
+    return {"enabled": True, "explanations": ai.explain(p, fl)}
+
+
+@app.post("/ai/draft-proposal", tags=["ai"])
+def ai_draft_proposal(body: DraftIn):
+    """A Claude-written cover letter in the freelancer's voice, grounded only in their profile.
+    cover_letter is null when AI is off or fails; the app then uses its template draft."""
+    if not ai.enabled():
+        return {"enabled": False, "cover_letter": None}
+    p, f = parallel(lambda: one("projects", body.project_id, "Project"),
+                    lambda: one("freelancers", body.freelancer_id, "Freelancer"))
+    return {"enabled": True, "cover_letter": ai.draft_proposal(p, f, body.bid, body.days)}

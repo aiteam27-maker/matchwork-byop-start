@@ -69,7 +69,7 @@ Full details and a "Try it out" button for each one: http://localhost:8000/docs
 
 | Area | Endpoints |
 |---|---|
-| System | `GET /health`, `GET /me` (the demo client you act as) |
+| System | `GET /health` (also says whether AI is on), `GET /me` (the demo client you act as), `GET /taxonomy` (the skill catalog) |
 | Freelancers | `GET /freelancers` (filters: q, category, max_rate, min_rating, available), `GET /freelancers/{id}`, `POST /freelancers` (create profile), `PUT /freelancers/{id}` (edit profile) |
 | Projects | `GET /projects` (filters), `GET /projects/{id}`, `POST /projects` (fixed or hourly; detects skills if blank; returns matches) |
 | Matching | `GET /projects/{id}/matches`, `GET /freelancers/{id}/matches` (reverse matching) |
@@ -81,8 +81,22 @@ Full details and a "Try it out" button for each one: http://localhost:8000/docs
 | Saved | `GET/PUT/DELETE /freelancers/{id}/saved-jobs/{project_id}`, `GET /saved-freelancers`, `PUT/DELETE /saved-freelancers/{id}` |
 | Chat | `GET /threads`, `GET /threads/{id}/messages`, `POST /threads/{id}/messages`, `POST /threads/{id}/read` |
 | Notifications | `GET /notifications`, `POST /notifications/read` |
+| AI (optional) | `POST /ai/explain` (Claude-written match reasons for up to 8 freelancers), `POST /ai/draft-proposal` (cover letter draft) |
 
-**Coming next:** connecting the frontend; Claude-written explanations; real login (Supabase Auth); live chat (Supabase Realtime).
+**Coming next:** real login (Supabase Auth); live chat (Supabase Realtime).
+
+## Skill catalog
+
+Skills come from one catalog, `gigwise/frontend/taxonomy.js`: 12 categories, 35 specialties and about 240 skills, plus accepted alternative spellings ("ReactJS" is saved as "React"). The frontend and backend both read that file. The API only accepts catalog skills (up to 10 per project, 15 per profile), so clients and freelancers always use the same names, which keeps skill matching accurate. To add a skill, edit that file and deploy.
+
+## Claude-written explanations (optional)
+
+With `ANTHROPIC_API_KEY` set (in `.env` locally, and in Render's Environment for the live site), the app asks Claude (`claude-opus-5-5`) to write the match reasons and proposal drafts:
+
+- Claude only sees the facts behind the score: skills matched and missing, rate vs budget, experience, rating, Job Success, portfolio and bio. **Never names or locations.** It is told to cite only those facts and to be honest about gaps.
+- Without a key, or if a call fails or is declined, the app keeps its template text. Nothing depends on AI.
+- Results are cached, and calls are capped at 30 a minute per server (`AI_MAX_CALLS_PER_MINUTE`), because without login anyone with the link can trigger them.
+- If Claude declines a request, a server-side fallback model is used automatically.
 
 ## Notes
 
