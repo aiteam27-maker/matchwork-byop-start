@@ -1,4 +1,4 @@
-# MatchWork backend
+# Gigwise backend
 
 Not built yet. The frontend (`../frontend/index.html`) currently runs entirely in the browser, with demo data saved in localStorage.
 
