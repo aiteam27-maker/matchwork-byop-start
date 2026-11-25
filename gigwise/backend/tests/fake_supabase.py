@@ -20,9 +20,15 @@ DEFAULTS = {
     "proposals": {"status": "submitted", "answers": [], "links": [], "connects_spent": 0, "edited_at": None},
     "threads": {"invited": False, "client_read_at": None, "freelancer_read_at": None},
     "notifications": {"read": False, "link": ""},
-    "freelancers": {"connects": 40, "jss": None, "rating": None, "jobs": 0},
-    "clients": {"is_demo_user": False},
+    "freelancers": {"connects": 40, "jss": None, "rating": None, "jobs": 0, "available": True, "hours_per_week": 30,
+                    "portfolio": [], "employment": [], "education": [], "certifications": [], "languages": []},
+    "clients": {"is_demo_user": False, "rating": None, "hires": 0},
+    "offers": {"status": "pending", "milestones": [], "rate": None, "weekly_limit": None, "message": None, "proposal_id": None},
+    "contracts": {"status": "active", "ended_at": None, "rate": None, "weekly_limit": None, "offer_id": None},
+    "milestones": {"status": "pending", "note": None, "link": None, "changes_requested": None},
 }
+# Columns whose database default is now()
+NOW_DEFAULTS = {"contracts": "started_at"}
 
 
 class Result:
@@ -101,6 +107,8 @@ class Query:
                     row["id"] = next(self.db.counter) if self.table_name in NUMERIC_ID else \
                         f"{PREFIX.get(self.table_name, 'x')}_{uuid.uuid4().hex[:12]}"
                 row.setdefault("created_at", self.db.now())
+                if self.table_name in NOW_DEFAULTS:
+                    row.setdefault(NOW_DEFAULTS[self.table_name], row["created_at"])
                 rows.append(row)
                 created.append(copy.deepcopy(row))
             return Result(created)
@@ -126,13 +134,13 @@ class FakeSupabase:
         self.tables: Dict[str, List[Dict[str, Any]]] = {n: [] for n in names}
         self.counter = itertools.count(1)
         self._tick = itertools.count()
+        self._base = datetime.now(timezone.utc).replace(microsecond=0)  # start at real time, then only move forward
         for table, rows in seed.items():
             Query(self, table).insert(rows).execute()
 
     def now(self) -> str:
         # strictly increasing timestamps so ordering in tests is deterministic
-        base = datetime(2026, 1, 1, tzinfo=timezone.utc)  # fixed, so tests never depend on the real clock
-        return f"{base.isoformat()[:-6]}.{next(self._tick):06d}+00:00"
+        return f"{self._base.isoformat()[:-6]}.{next(self._tick):06d}+00:00"
 
     def table(self, name: str) -> Query:
         return Query(self, name)

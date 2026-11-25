@@ -56,20 +56,26 @@ Then open http://localhost:8000/docs to see and try every endpoint in the browse
 .venv/bin/python -m unittest discover tests
 ```
 
-## Endpoints (so far)
+## Endpoints
+
+Full details and a "Try it out" button for each one: http://localhost:8000/docs
 
 | Area | Endpoints |
 |---|---|
 | System | `GET /health`, `GET /me` (the demo client you act as) |
-| Freelancers | `GET /freelancers` (filters: q, category, max_rate, min_rating, available), `GET /freelancers/{id}` |
-| Projects | `GET /projects` (filters), `GET /projects/{id}`, `POST /projects` (detects skills if blank, returns matches) |
+| Freelancers | `GET /freelancers` (filters: q, category, max_rate, min_rating, available), `GET /freelancers/{id}`, `POST /freelancers` (create profile), `PUT /freelancers/{id}` (edit profile) |
+| Projects | `GET /projects` (filters), `GET /projects/{id}`, `POST /projects` (fixed or hourly; detects skills if blank; returns matches) |
 | Matching | `GET /projects/{id}/matches`, `GET /freelancers/{id}/matches` (reverse matching) |
 | Invites | `POST /projects/{id}/invites` |
 | Proposals | `GET /projects/{id}/proposals`, `POST /projects/{id}/proposals` (Connects, screening answers), `PATCH /proposals/{id}`, `POST /proposals/{id}/shortlist`, `/decline`, `/withdraw` |
+| Offers | `POST /proposals/{id}/offers` (milestones or hourly terms), `GET /offers`, `GET /offers/{id}`, `POST /offers/{id}/accept`, `/decline`, `/withdraw` |
+| Contracts | `GET /contracts`, `GET /contracts/{id}`, `POST /contracts/{id}/milestones/{n}/submit`, `/approve`, `/request-changes`, `POST /contracts/{id}/end` |
+| Reviews | `POST /contracts/{id}/reviews` (both directions, after the contract ends; updates rating and Job Success) |
+| Saved | `GET/PUT/DELETE /freelancers/{id}/saved-jobs/{project_id}`, `GET /saved-freelancers`, `PUT/DELETE /saved-freelancers/{id}` |
 | Chat | `GET /threads`, `GET /threads/{id}/messages`, `POST /threads/{id}/messages`, `POST /threads/{id}/read` |
 | Notifications | `GET /notifications`, `POST /notifications/read` |
 
-**Coming next:** offers, contracts, milestones and reviews endpoints; connecting the frontend; Claude-written explanations; real login (Supabase Auth); live chat (Supabase Realtime).
+**Coming next:** connecting the frontend; Claude-written explanations; real login (Supabase Auth); live chat (Supabase Realtime).
 
 ## Notes
 
