@@ -1,0 +1,1232 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MatchWork</title>
+<style>
+:root{--bg:#f6f7f5;--card:#fff;--ink:#16211c;--mute:#5f6b66;--line:#e2e7e3;--soft:#f0f3f1;--brand:#0e7c66;--brand-d:#0a5e4e;--brand-l:#e2f3ee;--blue:#2f6fd1;--blue-l:#e6efff;--amber:#a86512;--amber-l:#fdf1dc;--red:#b42318;--red-l:#fde8e6;--gray:#8a918d;--r:14px;--sh:0 1px 2px rgba(16,24,20,.05),0 6px 20px rgba(16,24,20,.06)}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;color:var(--ink);background:var(--bg);-webkit-font-smoothing:antialiased}
+a{color:var(--brand);text-decoration:none}
+h1,h2,h3{line-height:1.2;margin:0 0 .4em;letter-spacing:-.01em}
+h1{font-size:30px}h2{font-size:21px}h3{font-size:16px}
+p{margin:0 0 .8em}
+.wrap{max-width:1160px;margin:0 auto;padding:0 20px}
+.narrow{max-width:760px}
+.mute{color:var(--mute)}.sm{font-size:13px}.xs{font-size:12px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.end{justify-content:flex-end}.between{justify-content:space-between}
+.grow{flex:1}
+.btn{appearance:none;border:1px solid var(--brand);background:var(--brand);color:#fff;font:inherit;font-weight:600;padding:9px 16px;border-radius:999px;cursor:pointer;white-space:nowrap;transition:background .15s,transform .05s}
+.btn:hover{background:var(--brand-d)}.btn:active{transform:translateY(1px)}
+.btn.ghost{background:#fff;color:var(--brand)}.btn.ghost:hover{background:var(--brand-l)}
+.btn.plain{background:transparent;border-color:var(--line);color:var(--ink)}.btn.plain:hover{background:var(--soft)}
+.btn.sm{padding:6px 12px;font-size:13px}
+.btn.danger{background:#fff;border-color:#f0c4bf;color:var(--red)}.btn.danger:hover{background:var(--red-l)}
+.btn[disabled]{opacity:.55;cursor:default}
+.link{background:none;border:0;padding:0;font:inherit;color:var(--brand);cursor:pointer;font-weight:600}
+.link:hover{text-decoration:underline}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh);padding:20px}
+.chip{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:999px;background:var(--soft);font-size:12.5px;color:#33403a;white-space:nowrap}
+.chip.ok{background:var(--brand-l);color:var(--brand-d)}
+.chip.miss{background:#fff;border:1px dashed #d7b4b0;color:var(--red)}
+.chip.tag{background:var(--blue-l);color:var(--blue)}
+.chip.warn{background:var(--amber-l);color:var(--amber)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:12px;font-weight:600}
+.st-submitted{background:var(--soft);color:#3c4843}.st-shortlisted{background:var(--blue-l);color:var(--blue)}.st-accepted{background:var(--brand-l);color:var(--brand-d)}.st-declined{background:var(--red-l);color:var(--red)}
+.t1{--c:#0e7c66}.t2{--c:#2f6fd1}.t3{--c:#b7791f}.t4{--c:#8a918d}
+.tierlbl{font-size:12px;font-weight:700;color:var(--c)}
+.ring{--s:56px;width:var(--s);height:var(--s);border-radius:50%;background:conic-gradient(var(--c) calc(var(--v)*1%),#e6ebe8 0);display:grid;place-items:center;flex:none;position:relative}
+.ring::before{content:"";position:absolute;inset:5px;border-radius:50%;background:#fff}
+.ring span{position:relative;font-weight:800;font-size:17px;color:var(--ink)}
+.ring.sm{--s:42px}.ring.sm span{font-size:14px}.ring.sm::before{inset:4px}
+.spill{white-space:nowrap;display:inline-flex;align-items:center;gap:5px;padding:2px 9px 2px 3px;border-radius:999px;background:#fff;border:1px solid var(--line);font-weight:700;font-size:13px}
+.spill i{width:22px;height:22px;border-radius:50%;background:var(--c);color:#fff;font-style:normal;font-size:11px;display:grid;place-items:center}
+.av{border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:700;flex:none}
+input,textarea,select{font:inherit;color:inherit;border:1px solid #cfd7d2;border-radius:10px;padding:9px 12px;background:#fff;width:100%}
+input:focus,textarea:focus,select:focus{outline:2px solid #9ad3c4;border-color:var(--brand)}
+textarea{resize:vertical}
+label{display:block;font-weight:600;font-size:14px;margin-bottom:14px}
+label input,label textarea,label select{margin-top:6px;font-weight:400}
+.lbl{font-weight:600;font-size:14px;margin-bottom:6px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+.hint{font-size:13px;color:var(--mute);background:var(--soft);border-radius:10px;padding:9px 12px;margin-bottom:14px}
+.hint b{color:var(--ink)}
+/* header */
+#hdr{position:sticky;top:0;z-index:20;background:rgba(255,255,255,.94);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.hdr-in{display:flex;align-items:center;gap:18px;height:62px}
+.logo{display:flex;align-items:center;gap:8px;font-weight:800;font-size:19px;color:var(--ink);letter-spacing:-.02em}
+.nav{display:flex;gap:4px;flex:1;overflow-x:auto;scrollbar-width:none}
+.nav::-webkit-scrollbar{display:none}
+.nav a,.nav button{padding:7px 12px;border-radius:8px;color:#34413b;font-weight:500;white-space:nowrap;background:none;border:0;font:inherit;cursor:pointer}
+.nav a:hover,.nav button:hover{background:var(--soft)}
+.nav a.on{color:var(--brand-d);background:var(--brand-l);font-weight:600}
+.hdr-r{display:flex;align-items:center;gap:10px}
+.icon-btn{position:relative;width:38px;height:38px;border-radius:50%;display:grid;place-items:center;color:var(--ink);border:1px solid var(--line);background:#fff}
+.icon-btn:hover{background:var(--soft)}
+.badge{position:absolute;top:-4px;right:-4px;background:#e0412f;color:#fff;font-size:11px;min-width:18px;height:18px;border-radius:9px;display:grid;place-items:center;padding:0 4px}
+.seg{display:inline-flex;background:var(--soft);border-radius:999px;padding:3px;border:1px solid var(--line)}
+.seg button{border:0;background:none;font:inherit;font-weight:600;padding:6px 16px;border-radius:999px;cursor:pointer;color:var(--mute)}
+.seg button.on{background:#fff;color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.seg.sm button{padding:4px 11px;font-size:13px}
+.who{display:flex;align-items:center;gap:7px;border:1px solid var(--line);background:#fff;border-radius:999px;padding:3px 10px 3px 3px;font:inherit;font-size:13px;font-weight:600;cursor:pointer}
+main{min-height:calc(100vh - 140px);padding-bottom:40px}
+.page{padding-top:28px}
+.ph{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:18px}
+.ph p{margin:0}
+/* landing */
+.hero{padding:44px 0 36px}
+.hero-in{display:grid;grid-template-columns:1.1fr .9fr;gap:40px;align-items:center}
+.hero h1{font-size:44px;letter-spacing:-.03em;margin:18px 0 14px}
+.lead{font-size:18px;color:#3e4b45;max-width:540px}
+.hero-q{display:flex;gap:8px;background:#fff;border:1px solid var(--line);border-radius:999px;padding:6px;box-shadow:var(--sh);max-width:560px;margin-top:22px}
+.hero-q input{border:0;border-radius:999px}
+.hero-q input:focus{outline:none}
+.try{margin-top:12px;font-size:13px;color:var(--mute)}
+.try .link{font-weight:500}
+.sample{position:relative}
+.sample .card{padding:18px}
+.sample .back{position:absolute;inset:18px -10px -14px 18px;background:var(--brand-l);border-radius:var(--r);z-index:-1}
+.strip{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin:10px 0 50px}
+.strip div{background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:16px}
+.strip b{display:block;font-size:24px;letter-spacing:-.02em}
+.sec{margin:56px 0}
+.sec-h{text-align:center;max-width:640px;margin:0 auto 26px}
+.sec-h p{color:var(--mute);font-size:16px}
+.how{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.steps{counter-reset:s;list-style:none;padding:0;margin:12px 0 0}
+.steps li{counter-increment:s;display:flex;gap:12px;padding:10px 0;border-top:1px solid var(--line)}
+.steps li:first-child{border-top:0}
+.steps li::before{content:counter(s);width:26px;height:26px;border-radius:50%;background:var(--brand-l);color:var(--brand-d);font-weight:700;display:grid;place-items:center;flex:none;font-size:13px}
+.weights{display:grid;grid-template-columns:1.2fr 1fr;gap:20px}
+.w-row{display:grid;grid-template-columns:170px 1fr 44px;gap:12px;align-items:center;padding:9px 0;border-top:1px solid var(--line)}
+.w-row:first-child{border-top:0}
+.w-bar{height:10px;background:var(--soft);border-radius:6px;overflow:hidden}
+.w-bar i{display:block;height:100%;background:var(--brand);border-radius:6px}
+.guard li{margin-bottom:8px}
+.cats{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.cat{background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;cursor:pointer;text-align:left;font:inherit;transition:border-color .15s,box-shadow .15s}
+.cat:hover{border-color:var(--brand);box-shadow:var(--sh)}
+.cat b{display:block;font-size:16px}
+.cta{background:var(--ink);color:#fff;border-radius:20px;padding:36px;display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap}
+.cta h2{color:#fff;font-size:26px}
+.cta p{color:#c4cec9;margin:0}
+/* cards */
+.fgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+.fcard{display:flex;flex-direction:column;gap:10px}
+.fcard .top{display:flex;gap:12px;align-items:center}
+.fcard .bio{font-size:13.5px;color:#3e4b45;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;margin:0}
+.meta{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:13px;color:var(--mute)}
+.meta b{color:var(--ink)}
+.star{color:#d08a00}
+.avail{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--brand-d);font-weight:600}
+.avail::before{content:"";width:7px;height:7px;border-radius:50%;background:#1aa37f}
+.avail.no{color:var(--gray)}.avail.no::before{background:#c2c8c4}
+/* matches */
+.mlayout{display:grid;grid-template-columns:1fr 310px;gap:22px;align-items:start}
+.mlist{display:flex;flex-direction:column;gap:14px}
+.mcard{display:grid;grid-template-columns:auto 1fr auto;gap:14px 16px;align-items:start;position:relative}
+.mcard .rank{position:absolute;top:-9px;left:16px;background:var(--ink);color:#fff;font-size:11px;font-weight:700;border-radius:999px;padding:1px 8px}
+.mcard.top1{border-color:#9fd3c3;box-shadow:0 0 0 3px var(--brand-l),var(--sh)}
+.mhead{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px}
+.mhead h3{margin:0}
+.reason{margin:8px 0 10px;font-size:14.5px;color:#26332d}
+.mscore{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:84px}
+.mact{grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap;align-items:center;border-top:1px solid var(--line);padding-top:12px}
+.bd{grid-column:1/-1;background:var(--soft);border-radius:12px;padding:12px 14px}
+.bd-row{display:grid;grid-template-columns:1fr 160px 70px;gap:12px;align-items:center;padding:7px 0;border-top:1px solid #e3e8e5}
+.bd-row:first-child{border-top:0}
+.bar{height:8px;background:#dfe5e1;border-radius:5px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--brand);border-radius:5px}
+.bd-pts{text-align:right;font-weight:700;font-variant-numeric:tabular-nums}
+.bd-tot{text-align:right;padding-top:8px;border-top:1px solid #d5ddd8;margin-top:4px}
+.side{position:sticky;top:80px;display:flex;flex-direction:column;gap:14px}
+.banner{display:flex;gap:12px;align-items:center;background:var(--brand-l);border:1px solid #bfe3d8;color:#0c4f42;border-radius:12px;padding:11px 14px;margin-bottom:16px;flex-wrap:wrap}
+.banner.amber{background:var(--amber-l);border-color:#f1d6a6;color:#6b4208}
+.banner.blue{background:var(--blue-l);border-color:#c9dafb;color:#1d4a91}
+.psum{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:16px}
+/* jobs */
+.jcard{display:flex;flex-direction:column;gap:8px;cursor:pointer;transition:border-color .15s}
+.jcard:hover{border-color:#a9cfc4}
+.jcard .desc{font-size:14px;color:#3e4b45;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin:0}
+.jlist{display:flex;flex-direction:column;gap:12px}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;align-items:center}
+.toolbar input{max-width:340px}
+.toolbar select{width:auto}
+/* table */
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:#fff;box-shadow:var(--sh)}
+table{border-collapse:collapse;width:100%;min-width:860px}
+th,td{padding:12px 14px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top;font-size:14px}
+th{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--mute);background:#fafbfa;font-weight:600}
+tr:last-child td{border-bottom:0}
+td.best{background:#f1faf6}
+.best-tag{display:block;font-size:11px;font-weight:700;color:var(--brand)}
+tr.declined td{opacity:.55}
+.cover{font-size:13px;color:#3e4b45;width:260px;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
+.cmp td:first-child{min-width:190px}.cmp td{white-space:normal}.cmp .nw{white-space:nowrap}
+/* chat */
+.chat{display:grid;grid-template-columns:300px 1fr;height:calc(100vh - 160px);min-height:460px;background:#fff;border:1px solid var(--line);border-radius:var(--r);overflow:hidden;box-shadow:var(--sh)}
+.tlist{border-right:1px solid var(--line);overflow-y:auto}
+.titem{display:flex;gap:10px;padding:12px 14px;border-bottom:1px solid var(--line);cursor:pointer;color:inherit}
+.titem:hover{background:var(--soft)}.titem.on{background:var(--brand-l)}
+.titem .tx{min-width:0;flex:1}
+.titem .last{font-size:13px;color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dot{width:9px;height:9px;border-radius:50%;background:#e0412f;flex:none;margin-top:6px}
+.conv{display:flex;flex-direction:column;min-width:0}
+.conv-h{padding:12px 16px;border-bottom:1px solid var(--line);display:flex;gap:10px;align-items:center}
+.msgs{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:8px;background:#fafbfa}
+.msg{max-width:72%;padding:9px 13px;border-radius:16px;background:#fff;border:1px solid var(--line);font-size:14.5px;white-space:pre-wrap}
+.msg.me{align-self:flex-end;background:var(--brand);color:#fff;border-color:var(--brand);border-bottom-right-radius:5px}
+.msg.them{align-self:flex-start;border-bottom-left-radius:5px}
+.msg time{display:block;font-size:11px;opacity:.65;margin-top:2px}
+.msg.sys{align-self:center;background:none;border:0;color:var(--mute);font-size:12.5px;text-align:center;max-width:90%}
+.typing{align-self:flex-start;color:var(--mute);font-size:13px;font-style:italic}
+.chat-back{display:none;font-size:20px}
+.composer{display:flex;gap:8px;padding:12px;border-top:1px solid var(--line)}
+.composer textarea{min-height:42px;max-height:120px}
+.empty{text-align:center;padding:40px 20px;color:var(--mute)}
+.empty h3{color:var(--ink)}
+/* profile */
+.prof{display:grid;grid-template-columns:1fr 320px;gap:22px;align-items:start}
+.port{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
+.port div{border:1px solid var(--line);border-radius:12px;padding:12px;background:#fafbfa}
+.rev{border-top:1px solid var(--line);padding:12px 0}
+.rev:first-child{border-top:0}
+.skillbox{display:flex;flex-wrap:wrap;gap:6px;align-items:center;border:1px solid #cfd7d2;border-radius:10px;padding:6px 8px;background:#fff;cursor:text;margin-bottom:8px}
+.skillbox input{border:0;padding:4px;flex:1;min-width:160px;width:auto}
+.skillbox input:focus{outline:none}
+.skillbox .chip button{border:0;background:none;padding:0 0 0 2px;cursor:pointer;color:inherit;font-size:14px;line-height:1}
+.detected{font-size:13px;margin-bottom:14px;min-height:4px}
+.dash{display:grid;grid-template-columns:1fr 300px;gap:22px;align-items:start}
+.dash>*,.prof>*,.mlayout>*{min-width:0}
+.secttl{display:flex;justify-content:space-between;align-items:center;margin:26px 0 12px}
+.secttl:first-child{margin-top:0}
+.secttl h2{margin:0}
+/* sheet */
+.sheet{position:fixed;inset:0;background:rgba(14,22,18,.45);display:none;align-items:center;justify-content:center;z-index:50;padding:16px}
+.sheet.open{display:flex}
+.sheet-body{background:#fff;border-radius:18px;max-width:560px;width:100%;max-height:calc(100vh - 32px);overflow-y:auto;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+.sheet-h{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:12px}
+.x{border:0;background:var(--soft);width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:18px;flex:none}
+.rolecards{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.rolecard{border:1px solid var(--line);border-radius:14px;padding:18px;cursor:pointer;background:#fff;text-align:left;font:inherit}
+.rolecard:hover{border-color:var(--brand);background:#fbfefd}
+.rolecard b{display:block;font-size:16px;margin:8px 0 4px}
+.plist{display:flex;flex-direction:column;gap:6px}
+.pitem{display:flex;gap:10px;align-items:center;border:1px solid var(--line);border-radius:12px;padding:9px 12px;cursor:pointer;background:#fff;font:inherit;text-align:left;width:100%}
+.pitem:hover{border-color:var(--brand)}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:11px 18px;border-radius:12px;font-size:14px;opacity:0;pointer-events:none;transition:.25s;z-index:60;max-width:calc(100vw - 32px)}
+#toast.show{opacity:1;transform:translateX(-50%)}
+.heart{border:1px solid var(--line);background:#fff;width:34px;height:34px;border-radius:50%;cursor:pointer;font-size:17px;line-height:1;color:#9aa39e;display:grid;place-items:center;flex:none}
+.heart:hover{border-color:#f3c3bc}.heart.on{color:#e0412f;border-color:#f3c3bc;background:#fff5f3}
+.badges{display:inline-flex;gap:5px;flex-wrap:wrap;vertical-align:middle}
+.bdg{font-size:11.5px;font-weight:700;padding:2px 8px;border-radius:999px;background:#f1eaff;color:#6b3fc4;white-space:nowrap}
+.bdg.jss{background:var(--soft);color:#33403a}.bdg.rise{background:#e5f4ff;color:#1569a8}
+.filters{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;align-items:center}
+.filters select{width:auto;padding:7px 10px;font-size:13.5px;border-radius:999px;background:#fff}
+.filters select.set{border-color:var(--brand);background:var(--brand-l);color:var(--brand-d);font-weight:600}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:14px;overflow-x:auto}
+.tabs button{border:0;background:none;font:inherit;font-weight:600;color:var(--mute);padding:9px 14px;border-bottom:2px solid transparent;cursor:pointer;margin-bottom:-1px;white-space:nowrap}
+.tabs button.on{color:var(--ink);border-bottom-color:var(--brand)}
+.bellwrap{position:relative}
+.npanel{position:absolute;right:-60px;top:46px;width:340px;max-width:calc(100vw - 24px);background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,.16);z-index:30;max-height:440px;overflow-y:auto}
+.npanel h3{padding:12px 14px 8px;margin:0;border-bottom:1px solid var(--line)}
+.nitem{display:block;width:100%;text-align:left;border:0;border-bottom:1px solid var(--line);background:none;font:inherit;padding:11px 14px;cursor:pointer;font-size:13.5px;color:var(--ink)}
+.nitem:hover{background:var(--soft)}.nitem.new{background:#f2fbf8}.nitem.new::before{content:"● ";color:var(--brand)}
+.ms{display:grid;grid-template-columns:30px 1fr auto;gap:12px;padding:14px 0;border-top:1px solid var(--line);align-items:start}
+.ms:first-child{border-top:0}
+.ms-n{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:13px;background:var(--soft);color:var(--mute)}
+.ms.approved .ms-n{background:var(--brand);color:#fff}.ms.submitted .ms-n{background:var(--blue);color:#fff}.ms.active .ms-n{background:var(--brand-l);color:var(--brand-d);box-shadow:0 0 0 2px var(--brand)}
+.starpick{display:flex;gap:2px}
+.starpick button{border:0;background:none;cursor:pointer;color:#d6dbd8;padding:0 2px;font-size:30px;line-height:1}
+.starpick button.on{color:#d08a00}
+.mrow{display:grid;grid-template-columns:1fr 110px 150px 34px;gap:8px;margin-bottom:8px;align-items:center}
+.lrow{display:grid;gap:8px;margin-bottom:8px;align-items:center}
+.st-withdrawn{background:#eef0ef;color:#6b736f}.st-pending{background:var(--amber-l);color:var(--amber)}.st-active{background:var(--brand-l);color:var(--brand-d)}.st-ended{background:#eef0ef;color:#46514c}.st-approved{background:var(--brand-l);color:var(--brand-d)}.st-offer{background:#f1eaff;color:#6b3fc4}
+.qa{background:var(--soft);border-radius:10px;padding:10px 12px;margin-bottom:8px;font-size:14px}
+.qa b{display:block;font-size:13px;color:var(--mute);font-weight:600;margin-bottom:2px}
+.kv{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-top:1px solid var(--line);font-size:14px}
+.kv:first-child{border-top:0}
+.dl{padding:8px 0;border-top:1px solid var(--line);font-size:14px}.dl:first-of-type{border-top:0}
+.offerbox{border:1px solid #d9c9fb;background:#faf7ff}
+footer{border-top:1px solid var(--line);padding:22px 0;color:var(--mute);font-size:13px;background:#fff}
+@media (max-width:1060px){.nav a,.nav button{padding:7px 8px;font-size:14px}.hdr-in{gap:12px}.who span{display:none}}
+@media (max-width:900px){
+ .hero-in,.how,.weights,.mlayout,.prof,.dash{grid-template-columns:1fr}
+ .side{position:static}
+ .strip{grid-template-columns:1fr 1fr}
+ .cats{grid-template-columns:1fr 1fr}
+ .hero h1{font-size:34px}
+}
+@media (max-width:640px){
+ .wrap{padding:0 16px}
+ .hdr-in{flex-wrap:wrap;height:auto;padding-top:10px;padding-bottom:6px;gap:8px 12px}
+ .nav{order:3;flex-basis:100%;margin:0 -6px}
+ .hdr-r .who span{display:none}
+ .grid2,.grid3,.rolecards,.cats{grid-template-columns:1fr}
+ .mrow{grid-template-columns:1fr 1fr}.mrow>:first-child{grid-column:1/-1}
+ .lrow{grid-template-columns:1fr!important}
+ .npanel{right:-110px}
+ .hero h1{font-size:30px}
+ .hero-q{flex-direction:column;border-radius:16px}
+ .mcard{grid-template-columns:auto 1fr}
+ .mscore{grid-column:1/-1;flex-direction:row;justify-content:flex-start;order:-1}
+ .bd-row{grid-template-columns:1fr 70px}.bd-row .bar{grid-column:1/-1;order:3}
+ .w-row{grid-template-columns:1fr 44px}.w-row .w-bar{grid-column:1/-1}
+ .chat{grid-template-columns:1fr;height:calc(100vh - 190px)}
+ .chat.has .chat-back{display:inline}
+ .chat.has .tlist{display:none}.chat:not(.has) .conv{display:none}
+ .msg{max-width:88%}
+ .cta{padding:24px}
+}
+</style>
+</head>
+<body>
+<header id="hdr"></header>
+<main id="app"></main>
+<footer id="ftr"></footer>
+<div id="sheet" class="sheet" onclick="if(event.target===this)closeSheet()" role="dialog" aria-modal="true"><div class="sheet-body" id="sheetBody"></div></div>
+<div id="toast" role="status" aria-live="polite"></div>
+<script>
+/* ============ helpers ============ */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const money=n=>'$'+Math.round(n).toLocaleString('en-US');
+const NOW=()=>Date.now(),MIN=6e4,HR=36e5,DAY=864e5;
+function ago(ts){const d=NOW()-ts;if(d<MIN)return'just now';if(d<HR)return Math.floor(d/MIN)+'m ago';if(d<DAY)return Math.floor(d/HR)+'h ago';const n=Math.floor(d/DAY);return n===1?'yesterday':n+' days ago'}
+const hhmm=ts=>new Date(ts).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});
+const fdate=s=>s?new Date(s+'T12:00').toLocaleDateString('en-US',{month:'short',day:'numeric'}):'—';
+const isoIn=d=>new Date(NOW()+d*DAY).toISOString().slice(0,10);
+const LOGO=`<svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true"><rect width="28" height="28" rx="8" fill="#0e7c66"/><path d="M7 19V9l7 6 7-6v10" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+const ICHAT=`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg>`;
+const AVC=['#0e7c66','#2f6fd1','#8a4fd6','#c2410c','#0f766e','#b4235a','#4d7c0f','#1e40af','#a16207','#475569'];
+const av=(f,s=44)=>`<span class="av" style="width:${s}px;height:${s}px;font-size:${Math.round(s*.38)}px;background:${AVC[f.id%AVC.length]}">${esc(f.name.split(' ').map(w=>w[0]).join('').slice(0,2))}</span>`;
+const stars=f=>f.rating?`<span class="star">★</span> <b>${f.rating.toFixed(1)}</b> <span>(${f.jobs} jobs)</span>`:`<span class="chip tag">New talent</span>`;
+
+/* ============ seed data ============ */
+const F0=[
+{id:1,name:'Maya R.',title:'Mobile + AI engineer',skills:['Flutter','Dart','LLM','Firebase','Node.js','UI Design'],rate:48,years:6,rating:4.9,jobs:31,available:true,hpw:30,loc:'Lisbon, Portugal',bio:'Mobile engineer building Flutter apps with AI features: chat coaches, personalised plans and progress tracking. Shipped several health and fitness apps with Firebase backends and push reminders.',port:[{t:'Habit coach app',d:'Flutter app with an LLM chat coach, streaks and push reminders.'},{t:'Run tracker',d:'GPS workout tracking with weekly progress charts and Firebase sync.'}]},
+{id:2,name:'Daniel K.',title:'Full-stack web developer',skills:['React','Node.js','PostgreSQL','TypeScript','REST API','Firebase'],rate:55,years:8,rating:4.8,jobs:52,available:true,hpw:35,loc:'Toronto, Canada',bio:'Full-stack developer building SaaS dashboards, booking systems and APIs with React and Node. Clean code, clear updates, on-time delivery.',port:[{t:'Clinic booking platform',d:'React + Node booking system with payments and admin dashboard.'},{t:'Analytics dashboard',d:'Realtime metrics dashboard on PostgreSQL.'}]},
+{id:3,name:'Aisha B.',title:'AI / LLM engineer',skills:['Python','LLM','NLP','LangChain','Prompt Engineering'],rate:70,years:5,rating:4.9,jobs:19,available:true,hpw:25,loc:'Nairobi, Kenya',bio:'Builds AI assistants, RAG search and chatbots with large language models. Focus on accurate, grounded answers and evaluation.',port:[{t:'Help-center RAG bot',d:'Chatbot answering support questions from 2,000 help articles.'},{t:'Contract Q&A assistant',d:'LLM assistant for legal document search.'}]},
+{id:4,name:'Tomás G.',title:'Product designer (UI/UX)',skills:['UI Design','Figma','UX Research','Prototyping','Branding'],rate:40,years:7,rating:4.8,jobs:64,available:true,hpw:30,loc:'Buenos Aires, Argentina',bio:'Designs clean, motivating app interfaces from research to high-fidelity Figma prototypes. Mobile apps, onboarding flows and design systems.',port:[{t:'Meditation app redesign',d:'Onboarding and habit screens, +18% day-7 retention.'},{t:'Fintech design system',d:'Component library in Figma.'}]},
+{id:5,name:'Wei L.',title:'React Native developer',skills:['React Native','TypeScript','Firebase','Node.js','UI Design'],rate:38,years:4,rating:4.7,jobs:22,available:true,hpw:40,loc:'Singapore',bio:'Cross-platform mobile apps with React Native and Firebase: auth, chat, notifications and in-app subscriptions.',port:[{t:'Meal planner app',d:'React Native app with recipes, shopping lists and reminders.'}]},
+{id:6,name:'Sofia M.',title:'Flutter developer',skills:['Flutter','Dart','Firebase','UI Design'],rate:32,years:3,rating:4.6,jobs:11,available:true,hpw:30,loc:'Kraków, Poland',bio:'Flutter developer focused on smooth, pixel-perfect mobile apps with Firebase auth and Firestore.',port:[{t:'Yoga class app',d:'Class schedule, bookings and reminders in Flutter.'}]},
+{id:7,name:'Kwame A.',title:'Backend & cloud engineer',skills:['Node.js','Python','PostgreSQL','AWS','Docker','REST API'],rate:60,years:9,rating:4.9,jobs:47,available:true,hpw:30,loc:'Accra, Ghana',bio:'Designs scalable backends and APIs on AWS. User accounts, payments, background jobs and monitoring.',port:[{t:'Subscription billing API',d:'Node.js service handling 40k subscribers.'}]},
+{id:8,name:'Elena P.',title:'Data scientist',skills:['Python','Machine Learning','SQL','Data Analysis','TensorFlow'],rate:65,years:6,rating:4.8,jobs:28,available:true,hpw:20,loc:'Athens, Greece',bio:'Machine learning for recommendations and prediction. Turns messy data into models and clear dashboards.',port:[{t:'Workout recommender',d:'ML model recommending workouts from user history.'}]},
+{id:9,name:'Ravi S.',title:'Shopify & e-commerce developer',skills:['Shopify','Liquid','JavaScript','SEO'],rate:30,years:5,rating:4.7,jobs:80,available:true,hpw:40,loc:'Pune, India',bio:'Shopify stores that convert: custom themes, product pages, payment setup and on-page SEO.',port:[{t:'Organic skincare store',d:'Custom Shopify theme, +32% conversion.'}]},
+{id:10,name:'Hannah W.',title:'Content writer & SEO',skills:['Copywriting','SEO','Content Strategy','Blogging'],rate:45,years:6,rating:4.9,jobs:58,available:true,hpw:25,loc:'Dublin, Ireland',bio:'Writes SEO blog posts and website copy for health, fitness and food brands. Keyword plans included.',port:[{t:'Fitness blog program',d:'40 SEO articles, 3x organic traffic in 6 months.'}]},
+{id:11,name:'Lucas F.',title:'Senior iOS engineer',skills:['Swift','iOS','HealthKit','Firebase','UI Design'],rate:75,years:10,rating:5.0,jobs:40,available:false,hpw:0,loc:'Berlin, Germany',bio:'Native iOS apps with HealthKit, Apple Watch and subscriptions. Currently booked.',port:[{t:'Strength training app',d:'Native iOS app with HealthKit and Watch support.'}]},
+{id:12,name:'Nadia H.',title:'Junior Flutter developer',skills:['Flutter','Dart','Firebase'],rate:22,years:1,rating:null,jobs:0,available:true,hpw:40,loc:'Casablanca, Morocco',bio:'Recent graduate building Flutter apps. Eager to take on first client projects with fast turnaround.',port:[{t:'Student budget app',d:'Flutter app with Firebase sync.'}]},
+{id:13,name:'Omar Z.',title:'Brand & logo designer',skills:['Branding','Logo Design','Illustration','Figma'],rate:35,years:4,rating:4.8,jobs:33,available:true,hpw:30,loc:'Amman, Jordan',bio:'Brand identities for small businesses: logo, colours, type and social templates.',port:[{t:'Bakery brand kit',d:'Logo, menu and Instagram templates.'}]},
+{id:14,name:'Grace O.',title:'Full-stack AI developer',skills:['Next.js','React','LLM','Node.js','Stripe','PostgreSQL'],rate:85,years:7,rating:4.9,jobs:26,available:true,hpw:30,loc:'Lagos, Nigeria',bio:'Ships AI-powered web products end to end: Next.js front ends, LLM features and Stripe subscriptions.',port:[{t:'AI writing SaaS',d:'Next.js app with LLM drafts and Stripe billing.'}]}
+];
+const EX={
+'AI fitness coaching app':{title:'AI fitness coaching app',desc:'We\'re building an AI fitness coaching app for iOS and Android. Users chat with an AI coach that builds personalised workout and nutrition plans, tracks progress and sends reminders. We need a clean, motivating UI and a simple backend with user accounts and subscriptions.',budget:6000,hours:120,days:45},
+'Shopify store for a tea brand':{title:'Shopify store for our organic tea brand',desc:'Looking for someone to build a Shopify store for our organic tea brand, with product pages, a payment checkout and basic SEO so customers can find us.',budget:2500,hours:60,days:30},
+'RAG chatbot for our help center':{title:'RAG chatbot for our help center',desc:'We want an AI chatbot that answers customer questions using our help center articles, embedded on our website. Python preferred.',budget:4000,hours:70,days:35}
+};
+const YEAR=new Date().getFullYear();
+const PD={
+1:{emp:[['Senior mobile engineer','FitLab health app studio','2022','Present'],['Mobile developer','Freelance','2020','2022']],edu:[['University of Lisbon','BSc Computer Science','2019']],cert:[['Associate Android Developer','Google','2021']],lang:[['English','Fluent'],['Portuguese','Native']]},
+2:{emp:[['Full-stack developer','Freelance','2018','Present'],['Software engineer','Shopwise','2016','2018']],edu:[['University of Waterloo','BMath Computer Science','2016']],cert:[['AWS Certified Developer','Amazon Web Services','2022']],lang:[['English','Native'],['French','Conversational']]},
+3:{emp:[['ML engineer','Freelance','2021','Present'],['Data scientist','Telecom analytics team','2019','2021']],edu:[['University of Nairobi','MSc Artificial Intelligence','2019']],cert:[['Generative AI with LLMs','DeepLearning.AI','2023']],lang:[['English','Fluent'],['Swahili','Native']]},
+4:{emp:[['Product designer','Freelance','2019','Present'],['UI designer','Fintech startup','2017','2019']],edu:[['Universidad de Buenos Aires','BA Graphic Design','2017']],cert:[['Google UX Design Certificate','Google','2020']],lang:[['English','Fluent'],['Spanish','Native']]},
+10:{emp:[['Content writer & SEO','Freelance','2020','Present'],['Editor','Health magazine','2018','2020']],edu:[['Trinity College Dublin','BA English','2018']],cert:[['HubSpot Content Marketing','HubSpot','2022']],lang:[['English','Native'],['Irish','Conversational']]},
+14:{emp:[['Full-stack AI developer','Freelance','2021','Present'],['Software engineer','Payments startup','2018','2021']],edu:[['University of Lagos','BSc Computer Engineering','2018']],cert:[],lang:[['English','Native'],['Yoruba','Native']]}};
+const JSS={1:98,2:95,3:100,4:97,5:93,6:91,7:99,8:96,9:89,10:98,11:100,12:null,13:94,14:97};
+function enrich(f){
+ const d=PD[f.id]||{},row=(a,k)=>a.map(x=>Object.fromEntries(k.map((kk,i)=>[kk,x[i]])));
+ f.jss=JSS[f.id]??null;f.connects=40;
+ f.emp=row(d.emp||[[f.title,'Freelance',String(YEAR-f.years),'Present']],['role','co','from','to']);
+ f.edu=row(d.edu||[],['school','deg','yr']);f.cert=row(d.cert||[],['name','by','yr']);f.lang=row(d.lang||[['English','Fluent']],['l','lv']);
+ return f;
+}
+function seed(){
+ const t=NOW();
+ const P=[
+  {id:'p0',title:'Logo refresh for Pulse Fit',desc:'Refresh our logo and colours ahead of the app launch.',skills:['Branding','Logo Design','Figma'],type:'fixed',budget:800,hours:20,level:'Intermediate',duration:'Less than 1 month',deadline:isoIn(-20),owner:'me',client:'Pulse Fit (you)',status:'ended',hired:13,ts:t-60*DAY,questions:[]},
+  {id:'p8',title:'Workout guide content for our app',desc:'Eight beginner workout guides written for our app and blog. SEO-friendly, with a keyword plan.',skills:['Copywriting','Content Strategy','SEO'],type:'fixed',budget:1500,hours:40,level:'Intermediate',duration:'Less than 1 month',deadline:isoIn(14),owner:'me',client:'Pulse Fit (you)',status:'hired',hired:10,ts:t-12*DAY,questions:[]},
+  {id:'p1',title:'Marketing site for our coaching startup',desc:'We need a fast marketing website with a landing page, pricing page and blog. Modern design and good SEO copy.',skills:['React','UI Design','SEO','Copywriting'],type:'fixed',budget:3000,hours:60,level:'Intermediate',duration:'1 to 3 months',deadline:isoIn(30),owner:'me',client:'Pulse Fit (you)',status:'open',ts:t-3*DAY,questions:['Share a link to a marketing site you have built.']},
+  {id:'p2',title:'Shopify store for organic tea brand',desc:'Build a Shopify store with custom product pages, checkout and on-page SEO.',skills:['Shopify','SEO','UI Design'],type:'fixed',budget:2500,hours:60,level:'Intermediate',duration:'Less than 1 month',deadline:isoIn(28),owner:'x',client:'Leaf & Co.',cr:4.8,cn:12,status:'open',ts:t-2*DAY,extra:6,questions:['Share a Shopify store you have built.']},
+  {id:'p3',title:'RAG chatbot for help center',desc:'AI chatbot that answers customer questions from our help articles. Python and an LLM, with a small evaluation set.',skills:['Python','LLM','NLP','LangChain'],type:'hourly',rateMin:50,rateMax:75,hours:70,level:'Expert',duration:'1 to 3 months',deadline:isoIn(35),owner:'x',client:'HelpHub',cr:4.9,cn:5,status:'open',ts:t-5*HR,extra:3,questions:['Describe an AI or RAG project you have shipped.','How would you measure answer quality?']},
+  {id:'p4',title:'Brand kit for a neighbourhood bakery',desc:'New logo and brand kit, plus menu and Instagram templates.',skills:['Branding','Logo Design','Figma'],type:'fixed',budget:1200,hours:30,level:'Entry',duration:'Less than 1 month',deadline:isoIn(21),owner:'x',client:'Crumb Bakery',cr:5.0,cn:2,status:'open',ts:t-1*DAY,extra:9,questions:[]},
+  {id:'p5',title:'Workout analytics dashboard',desc:'Web dashboard showing member workout stats for gym owners. React front end, Node API and PostgreSQL.',skills:['React','Node.js','PostgreSQL'],type:'hourly',rateMin:35,rateMax:50,hours:80,level:'Intermediate',duration:'1 to 3 months',deadline:isoIn(40),owner:'x',client:'FitMetrics',cr:4.7,cn:8,status:'open',ts:t-9*HR,extra:4,questions:[]},
+  {id:'p6',title:'Flutter app for yoga studio bookings',desc:'Mobile app where members book classes, pay for passes and get reminders. Clean, calm UI.',skills:['Flutter','Firebase','UI Design','Stripe'],type:'fixed',budget:5000,hours:110,level:'Intermediate',duration:'1 to 3 months',deadline:isoIn(50),owner:'x',client:'Lotus Yoga',cr:4.9,cn:3,status:'open',ts:t-2*HR,extra:2,questions:['Which apps have you published to the App Store or Play Store?']},
+  {id:'p7',title:'SEO blog posts for meal-prep startup',desc:'8 blog posts a month on healthy cooking, written for SEO, plus a keyword plan.',skills:['Copywriting','SEO','Blogging'],type:'hourly',rateMin:25,rateMax:40,hours:30,level:'Entry',duration:'3 to 6 months',deadline:isoIn(30),owner:'x',client:'PrepBox',cr:4.6,cn:20,status:'open',ts:t-4*DAY,extra:12,questions:[]}
+ ];
+ P.forEach(p=>{if(p.type==='hourly')p.budget=p.rateMax*p.hours;p.cat=catOf(p.skills)});
+ D={v:2,seq:100,fl:JSON.parse(JSON.stringify(F0)).map(enrich),pr:P,
+  props:[
+  {id:'q0',pid:'p0',fid:13,cover:'Happy to refresh your logo. I will send three concepts in week one.',bid:800,days:14,status:'accepted',ts:t-58*DAY,answers:[],links:[]},
+  {id:'q3',pid:'p8',fid:10,cover:'I write workout and nutrition content for fitness brands. I can deliver all eight guides with a keyword plan.',bid:1500,days:18,status:'accepted',ts:t-11*DAY,answers:[],links:['hannahwrites.example.com/fitness']},
+  {id:'q1',pid:'p1',fid:2,cover:'Hi! I build fast React marketing sites. I can deliver the landing, pricing and blog pages with a CMS so your team can post easily.',bid:3200,days:21,status:'submitted',ts:t-2*DAY,answers:['danielk.example.com/clinic is a React marketing site with a blog and online booking.'],links:['danielk.example.com']},
+  {id:'q2',pid:'p1',fid:10,cover:'Hello! I write SEO copy for fitness brands and can pair with your developer on landing and blog content.',bid:1800,days:14,status:'shortlisted',ts:t-1*DAY,answers:['I focus on copy rather than code. My fitness blog program tripled organic traffic in six months.'],links:[]}
+  ],
+  offers:[],
+  contracts:[
+  {id:'c0',pid:'p0',fid:13,type:'fixed',ms:[{t:'Logo concepts',amt:300,due:isoIn(-40),st:'approved'},{t:'Final logo and colour palette',amt:500,due:isoIn(-25),st:'approved'}],status:'ended',ts:t-55*DAY,endTs:t-24*DAY},
+  {id:'c1',pid:'p8',fid:10,type:'fixed',ms:[{t:'Outline and keyword plan',amt:300,due:isoIn(-5),st:'approved'},{t:'First 4 workout guides',amt:600,due:isoIn(3),st:'submitted',note:'All four guides are in the shared doc and ready for your review.',link:'docs.example.com/workout-guides-1'},{t:'Final 4 guides and edits',amt:600,due:isoIn(14),st:'pending'}],status:'active',ts:t-10*DAY}
+  ],
+  reviews:[
+  {cid:'c0',pid:'p0',fid:13,dir:'c2f',r:5,t:'Omar turned a vague brief into a logo our whole team loves. Fast and easy to work with.',ts:t-24*DAY},
+  {cid:'c0',pid:'p0',fid:13,dir:'f2c',r:5,t:'Clear brief, quick feedback and a pleasure to work with.',ts:t-24*DAY}
+  ],
+  notes:[{id:'n1',to:'c',t:'Hannah W. submitted “First 4 workout guides” for your review',link:'#/contract/c1',ts:t-3*HR,read:false}],
+  saved:{talent:[],jobs:{}},th:{},log:[],ui:{role:null,fid:null}};
+ sysMsg('p0',13,'Contract ended. Both sides left feedback.',t-24*DAY);
+ sysMsg('p8',10,'Pulse Fit hired Hannah W. Contract started.',t-10*DAY);
+ ensureThread('p8',10).msgs.push({f:'c',t:'Welcome aboard, Hannah! Looking forward to the outline.',ts:t-10*DAY+HR},{f:'f',t:'Thanks! Outline and keyword plan coming this week.',ts:t-10*DAY+2*HR});
+ sysMsg('p8',10,'Hannah W. submitted “First 4 workout guides” for review',t-3*HR);
+ sysMsg('p1',2,'Daniel K. submitted a proposal: $3,200 · 21 days',t-2*DAY);
+ sysMsg('p1',10,'Hannah W. submitted a proposal: $1,800 · 14 days',t-1*DAY);
+ Object.values(D.th).forEach(th=>{th.read.c=t;th.read.f=t});
+}
+const KEY='matchwork-demo-v2';let D;
+function load(){try{const s=localStorage.getItem(KEY);if(s){D=JSON.parse(s);if(D&&D.v===2)return}}catch(e){}seed();save()}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(D))}catch(e){}}
+function resetDemo(ok){if(!ok){openSheet(sheetH('Reset demo data?','Projects, proposals, profiles and messages you created will be removed.')+`<div class="row end"><button class="btn plain" onclick="closeSheet()">Cancel</button><button class="btn danger" onclick="closeSheet();resetDemo(true)">Reset</button></div>`);return}seed();save();S.open={};location.hash='#/';render();toast('Demo data reset')}
+
+/* ============ accessors ============ */
+const fl=id=>D.fl.find(f=>f.id===+id);
+const pj=id=>D.pr.find(p=>p.id===id);
+const propsOf=pid=>D.props.filter(q=>q.pid===pid);
+const propOf=(pid,fid)=>D.props.find(q=>q.pid===pid&&q.fid===+fid);
+const tkey=(pid,fid)=>pid+'~'+fid;
+const myProjects=()=>D.pr.filter(p=>p.owner==='me').sort((a,b)=>b.ts-a.ts);
+const invited=(pid,fid)=>!!D.th[tkey(pid,fid)]?.invited;
+function ensureThread(pid,fid){const k=tkey(pid,fid);if(!D.th[k])D.th[k]={pid,fid:+fid,msgs:[],read:{c:0,f:0},auto:{c:false,f:false},invited:false};return D.th[k]}
+function sysMsg(pid,fid,text,ts){ensureThread(pid,fid).msgs.push({f:'s',t:text,ts:ts||NOW()})}
+const side=()=>D.ui.role==='client'?'c':'f';
+const lastTs=t=>t.msgs.length?t.msgs[t.msgs.length-1].ts:0;
+function myThreads(){const r=D.ui.role;return Object.values(D.th).filter(t=>r==='client'?pj(t.pid)?.owner==='me':(r==='freelancer'&&t.fid===D.ui.fid)).sort((a,b)=>lastTs(b)-lastTs(a))}
+function unread(t){const s=side();return t.msgs.filter(m=>m.f!==s&&m.f!=='s'&&m.ts>(t.read[s]||0)).length}
+const logEv=(ev,pid,fid)=>{const p=pj(pid),f=fl(fid);D.log.push({ev,pid,fid,score:p&&f?score(f,p).total:null,ts:NOW()})};
+
+/* ============ matching engine (PRD 6.2 + 7) ============ */
+const W={skills:.45,text:.20,budget:.20,exp:.08,rating:.07};
+const WL={skills:'Skill coverage',text:'Profile similarity',budget:'Budget fit',exp:'Experience',rating:'Ratings'};
+const ALIAS={node:'node.js',nodejs:'node.js','react.js':'react',reactjs:'react',ui:'ui design','ui/ux':'ui design',ux:'ux research',ml:'machine learning',js:'javascript',ts:'typescript',postgres:'postgresql',gpt:'llm','next':'next.js'};
+const nk=s=>{s=String(s).toLowerCase().trim();return ALIAS[s]||s};
+const STOP=new Set('the a an and or to of for in on with is are we i our us you your need needs want wants build building builds looking app apps that this it as be by from will can who which into plus also simple clean new one using use like get some more all any has have their them they its per via'.split(' '));
+const tok=s=>(String(s).toLowerCase().match(/[a-z0-9+#.]{3,}/g)||[]).map(w=>w.replace(/\.+$/,'')).map(w=>w.length>4&&/[^s]s$/.test(w)?w.slice(0,-1):w).filter(w=>w.length>=3&&!STOP.has(w));
+// Scoring uses only profile facts: skills, profile/portfolio text, rate, years, rating.
+// Name, location, photo and other personal attributes are never read here (PRD 7.5).
+function score(f,p){
+ const fs=new Set(f.skills.map(nk));
+ const matched=p.skills.filter(s=>fs.has(nk(s))),missing=p.skills.filter(s=>!fs.has(nk(s)));
+ const cov=p.skills.length?matched.length/p.skills.length:0;
+ const A=new Set(tok(p.title+' '+p.desc+' '+p.skills.join(' ')));
+ const B=new Set(tok(f.title+' '+f.bio+' '+f.skills.join(' ')+' '+f.port.map(x=>x.t+' '+x.d).join(' ')));
+ const shared=[...A].filter(w=>B.has(w));
+ const cos=A.size&&B.size?shared.length/Math.sqrt(A.size*B.size):0;
+ const text=Math.min(1,cos/0.3);
+ const target=p.type==='hourly'?p.rateMax:p.budget/p.hours,over=(f.rate-target)/target;
+ const budget=over<=0?1:Math.max(0,1-over*1.25);
+ const exp=Math.min(f.years,10)/10;
+ const rating=f.rating?f.rating/5:0.7;
+ const parts={skills:cov,text,budget,exp,rating};
+ const total=Math.round(100*Object.keys(W).reduce((a,k)=>a+W[k]*parts[k],0));
+ const why=!f.available?'Not available for new work':!matched.length?'No required skills':'';
+ // best-matching portfolio item (grounded in profile)
+ let port=null,pb=1;f.port.forEach(x=>{const n=tok(x.t+' '+x.d).filter(w=>A.has(w)).length;if(n>pb){pb=n;port=x}});
+ return {f,p,total,parts,matched,missing,target,shared,port,eligible:!why,why};
+}
+function rankFor(p){const all=D.fl.map(f=>score(f,p));return{list:all.filter(m=>m.eligible).sort((a,b)=>b.total-a.total||(b.f.rating||0)-(a.f.rating||0)),hidden:all.filter(m=>!m.eligible)}}
+function rankProjectsFor(f){return D.pr.filter(p=>p.status==='open').map(p=>score(f,p)).filter(m=>m.matched.length).sort((a,b)=>b.total-a.total)}
+const tier=s=>s>=80?['Top match','t1']:s>=65?['Strong match','t2']:s>=50?['Good match','t3']:['Partial match','t4'];
+const ring=(s,cls='')=>`<div class="ring ${cls} ${tier(s)[1]}" style="--v:${s}" aria-label="Match score ${s} out of 100"><span>${s}</span></div>`;
+const spill=s=>`<span class="spill ${tier(s)[1]}" title="${tier(s)[0]}"><i>${s}</i>${tier(s)[0]}</span>`;
+const andList=a=>a.length<2?a.join(''):a.slice(0,-1).join(', ')+' and '+a[a.length-1];
+const list3=a=>a.length<=3?a.join(', '):a.slice(0,3).join(', ')+' +'+(a.length-3);
+// "Explanation" layer: grounded template text built only from score parts and profile facts.
+function reasonClient(m){
+ const {f,p,matched}=m;
+ let s=`Covers ${matched.length} of ${p.skills.length} required skills${matched.length?' ('+list3(matched)+')':''}. `;
+ s+=budPhrase(m,false);
+ s+=`, ${f.years} yr${f.years===1?'':'s'} experience`+(f.rating?`, ${f.rating.toFixed(1)}★ over ${f.jobs} jobs.`:', no ratings yet.');
+ if(m.port)s+=` Built “${m.port.t}”.`;
+ return s;
+}
+function reasonFree(m){
+ const {p,matched,missing}=m;
+ let s=`You have ${matched.length} of ${p.skills.length} skills they need`+(missing.length?` (missing ${list3(missing)})`:'')+'. ';
+ s+=budPhrase(m,true)+'.';
+ if(m.port)s+=` Mention your “${m.port.t}” project.`;
+ return s;
+}
+function breakdown(m){
+ const d={skills:`${m.matched.length} of ${m.p.skills.length} required skills`,text:m.shared.length?`Shared terms: ${m.shared.slice(0,6).join(', ')}`:'Little overlap with profile text',budget:m.p.type==='hourly'?`$${m.f.rate}/hr vs their $${m.p.rateMin}–$${m.p.rateMax}/hr range`:`$${m.f.rate}/hr vs ~$${Math.round(m.target)}/hr (budget ÷ hours)`,exp:`${m.f.years} yrs (capped at 10)`,rating:m.f.rating?`${m.f.rating.toFixed(1)}★ average`:'No ratings yet, scored neutral'};
+ return `<div class="bd">${Object.keys(W).map(k=>`<div class="bd-row"><div><b>${WL[k]}</b> <span class="mute xs">weight ${Math.round(W[k]*100)}%</span><div class="mute xs">${esc(d[k])}</div></div><div class="bar"><i style="width:${Math.round(m.parts[k]*100)}%"></i></div><div class="bd-pts">${(m.parts[k]*Math.round(W[k]*100)).toFixed(1)}<span class="mute xs"> / ${Math.round(W[k]*100)}</span></div></div>`).join('')}<div class="bd-tot">Match score <b>${m.total}</b> / 100</div></div>`;
+}
+function budPhrase(m,you){
+ const f=m.f,p=m.p,yr=you?'their':'your',Y=you?'Your ':'';
+ if(p.type==='hourly'){if(f.rate>p.rateMax)return `${Y}$${f.rate}/hr is ${Math.round((f.rate/p.rateMax-1)*100)}% above ${yr} $${p.rateMax}/hr max`;return `${Y}$${f.rate}/hr is ${f.rate<p.rateMin?'below':'within'} ${yr} $${p.rateMin}–$${p.rateMax}/hr range`}
+ const t=Math.round(m.target);return f.rate<=m.target?`${Y}$${f.rate}/hr fits ${yr} ~$${t}/hr budget`:`${Y}$${f.rate}/hr is ${Math.round((f.rate/m.target-1)*100)}% above ${yr} ~$${t}/hr budget`;
+}
+/* categories, levels, badges, Connects */
+const CATS=[['Mobile apps',['Flutter','React Native','Swift','iOS','Dart']],['Web development',['React','Next.js','Node.js','TypeScript','PostgreSQL','REST API','JavaScript']],['AI & data',['LLM','Python','Machine Learning','NLP','LangChain','Data Analysis','SQL']],['Design',['UI Design','Figma','Branding','Logo Design','UX Research','Illustration']],['Writing & SEO',['Copywriting','SEO','Blogging','Content Strategy']],['E-commerce',['Shopify','Liquid','Stripe']]];
+function catOf(skills){let best='Other',bn=0;CATS.forEach(([c,sk])=>{const n=skills.filter(s=>sk.some(x=>nk(x)===nk(s))).length;if(n>bn){bn=n;best=c}});return best}
+const fcats=f=>CATS.filter(([c,sk])=>f.skills.some(s=>sk.some(x=>nk(x)===nk(s)))).map(c=>c[0]);
+const LEVELS=['Entry','Intermediate','Expert'],LENS=['Less than 1 month','1 to 3 months','3 to 6 months','More than 6 months'];
+const btxt=p=>p.type==='hourly'?`Hourly <b>$${p.rateMin}–$${p.rateMax}</b>/hr`:`Fixed price <b>${money(p.budget)}</b>`;
+const connCost=p=>p.budget<1000?2:p.budget<5000?4:6;
+// Badges are shown to help clients compare, but are NOT part of the match score.
+function badges(f){const b=[];if(f.jss)b.push(['jss',f.jss+'% Job Success']);if(f.jss>=90&&f.jobs>=40&&f.rating>=4.8)b.push(['','Top Rated Plus']);else if(f.jss>=90&&f.jobs>=15&&f.rating>=4.7)b.push(['','Top Rated']);else if(f.jobs<10&&(!f.rating||f.rating>=4.5))b.push(['rise','Rising Talent']);return b}
+const bdgs=(f,noJss)=>{const b=badges(f).filter(x=>!noJss||x[0]!=='jss');return b.length?`<span class="badges">${b.map(([c,t])=>`<span class="bdg ${c}">${t}</span>`).join('')}</span>`:''};
+function clientStats(p){if(p.owner!=='me')return{r:p.cr||null,n:p.cn||0};const rs=D.reviews.filter(x=>x.dir==='f2c').map(x=>x.r),all=[4.8,5,4.9,5].concat(rs);return{r:Math.round(all.reduce((a,b)=>a+b,0)/all.length*10)/10,n:3+D.contracts.length}}
+const cname=p=>p.client.replace(' (you)','');
+const pmeta=(p,n)=>`<span>${btxt(p)}</span><span><b>${p.hours}</b> hrs est.${p.type==='fixed'?` (≈$${Math.round(p.budget/p.hours)}/hr)`:''}</span>${p.level?`<span>${esc(p.level)}</span>`:''}${p.duration?`<span>${esc(p.duration)}</span>`:''}<span>Deadline <b>${fdate(p.deadline)}</b></span>${n!=null?`<span>Proposals <b>${n}</b></span>`:''}`;
+const skillChips=m=>m.matched.map(s=>`<span class="chip ok">✓ ${esc(s)}</span>`).join('')+m.missing.map(s=>`<span class="chip miss" title="Missing skill">✕ ${esc(s)}</span>`).join('');
+
+/* skill detection (PRD 6.1) */
+const KW=[[/\bmobile|\bios\b|\bandroid|\biphone/,['Flutter']],[/chat ?bot|\bai\b|\bgpt|\bllm|language model|\bassistant/,['LLM']],[/\bwebsite|\bweb ?app|\blanding page/,['React']],[/\bstore\b|\bshopify|e-?commerce/,['Shopify']],[/\bpayment|\bcheckout|\bsubscription/,['Stripe']],[/\bbackend|\bapi\b|\baccounts?\b|\blogin/,['Node.js','Firebase']],[/\blogo|\bbrand(ing| kit)/,['Branding']],[/\bdesign|\bui\b|\bux\b|\binterface/,['UI Design']],[/\bblog|\bseo\b|\bcopy\b/,['SEO','Copywriting']],[/\bdatabase|\bsql\b/,['PostgreSQL']],[/\brecommend|\bpredict|machine learning|\bml\b/,['Machine Learning']],[/\bdashboard|\banalytics/,['React','Data Analysis']],[/\bpython\b/,['Python']],[/\brag\b|help (center|articles)|knowledge base/,['NLP']]];
+const allSkills=()=>[...new Set(D.fl.flatMap(f=>f.skills))].sort();
+function detect(text){
+ const t=String(text).toLowerCase(),out=[];
+ KW.forEach(([re,sk])=>{if(re.test(t))out.push(...sk)});
+ allSkills().forEach(s=>{const re=new RegExp('(^|[^a-z0-9])'+s.toLowerCase().replace(/[.+#*?()[\]\\/]/g,'\\$&')+'($|[^a-z0-9])');if(re.test(t))out.push(s)});
+ const seen=new Set(),res=[];out.forEach(s=>{const k=nk(s);if(!seen.has(k)){seen.add(k);res.push(s)}});return res.slice(0,6);
+}
+
+/* ============ UI state + router ============ */
+let S={notesOpen:false,ct:'active',bf:{tab:'all',cat:'',type:'',level:'',len:'',minb:'',minScore:''},tf:{tab:'all',cat:'',maxRate:'',minRating:'',avail:'',badge:''},hero:'hire',open:{},postSkills:[],draft:null,postStart:0,tq:'',tp:'',bq:'',bsort:'match',msort:'match',psort:'score',showHidden:false,me:null,lastRoute:null,typing:{}};
+function route(){const p=(location.hash.slice(1)||'/').split('/');return{r:p[1]||'',id:p[2]?decodeURIComponent(p[2]):''}}
+const go=h=>{if(location.hash===h)render();else location.hash=h};
+function render(){
+ const {r,id}=route(),rk=r+'/'+id;
+ if(['post','client','matches','proposals'].includes(r)&&D.ui.role!=='client'){D.ui.role='client';save()}
+ if(['dashboard','me'].includes(r)){
+  if(!(r==='me'&&S.me&&S.me.isNew)){
+   if(D.ui.role!=='freelancer'||!fl(D.ui.fid)){if(fl(D.ui.fid)){D.ui.role='freelancer';save()}else{location.hash='#/';pickFreelancer('#/'+r);return}}
+  }
+ }
+ if(['chat','contracts','contract','offer'].includes(r)&&(!D.ui.role||(D.ui.role==='freelancer'&&!fl(D.ui.fid)))){D.ui.role='client';save()}
+ if(S.notesOpen&&S.lastRoute!==rk)S.notesOpen=false;
+ const changed=S.lastRoute!==rk;
+ if(changed&&r==='post'){S.postStart=NOW();if(!S.draft)S.draft={};}
+ if(changed&&r==='me'&&!(S.me&&S.me.isNew&&S.me.keep)){S.me=null}
+ if(S.me)S.me.keep=false;
+ let h;
+ try{h=({'':vLanding,contracts:vContracts,contract:vContract,offer:vOffer,post:vPost,matches:vMatches,proposals:vProposals,client:vClient,talent:vTalent,profile:vProfile,projects:vBoard,project:vProject,dashboard:vDash,me:vMe,chat:vChat}[r]||vLanding)(id)}catch(e){console.error(e);h=`<div class="wrap page"><div class="card empty"><h3>Something went wrong</h3><p>${esc(e.message)}</p><button class="btn" onclick="go('#/')">Go home</button></div></div>`}
+ $('#app').innerHTML=h;hdr();ftr();
+ if(changed)window.scrollTo({top:0,behavior:'instant'});
+ S.lastRoute=rk;
+ if(r==='post'){paintSkills();rateHint()}
+ if(r==='chat'){const m=$('.msgs');if(m)m.scrollTop=m.scrollHeight}
+}
+function soft(){
+ const a=document.activeElement;
+ if($('#sheet').classList.contains('open')){hdr();return}
+ if(a&&a.id==='cmp'){const v=a.value;render();const c=$('#cmp');if(c){c.value=v;c.focus()}return}
+ if(a&&['INPUT','TEXTAREA','SELECT'].includes(a.tagName)){hdr();return}
+ const y=window.scrollY;render();window.scrollTo(0,y);
+}
+function setRole(r,dest){D.ui.role=r;save();if(r==='freelancer'&&!fl(D.ui.fid)){pickFreelancer(dest);return}closeSheet();go(dest)}
+
+function hdr(){
+ const r=D.ui.role,me=fl(D.ui.fid),cur=route().r;
+ const links=r==='client'?[['post','Post a project'],['client','My projects'],['contracts','Contracts'],['talent','Find talent'],['projects','Project board']]:r==='freelancer'?[['dashboard','Best matches'],['projects','Find work'],['contracts','Contracts'],['talent','Freelancers'],['me','My profile']]:null;
+ const nn=r?myNotes().filter(x=>!x.read).length:0;
+ const n=r?myThreads().reduce((a,t)=>a+unread(t),0):0;
+ $('#hdr').innerHTML=`<div class="wrap hdr-in"><a class="logo" href="#/">${LOGO}<span>MatchWork</span></a>
+ <nav class="nav" aria-label="Main">${links?links.map(([k,l])=>`<a href="#/${k}" class="${cur===k?'on':''}">${l}</a>`).join(''):`<button onclick="setRole('client','#/talent')">Find talent</button><button onclick="setRole('freelancer','#/projects')">Find work</button><button onclick="howScroll()">How matching works</button>`}</nav>
+ <div class="hdr-r">${r?`<div class="bellwrap"><button class="icon-btn" onclick="toggleNotes(event)" aria-label="Notifications${nn?', '+nn+' new':''}" aria-expanded="${S.notesOpen}">${IBELL}${nn?`<b class="badge">${nn}</b>`:''}</button>${S.notesOpen?notesPanel():''}</div><a class="icon-btn" href="#/chat" title="Messages" aria-label="Messages${n?', '+n+' unread':''}">${ICHAT}${n?`<b class="badge">${n}</b>`:''}</a>
+ <div class="seg sm" role="group" aria-label="View as"><button class="${r==='client'?'on':''}" onclick="setRole('client','#/client')">Client</button><button class="${r==='freelancer'?'on':''}" onclick="setRole('freelancer','#/dashboard')">Freelancer</button></div>
+ ${r==='freelancer'&&me?`<button class="who" onclick="pickFreelancer()" title="Switch freelancer">${av(me,26)}<span>${esc(me.name)}</span></button>`:''}`
+ :`<button class="btn plain sm" onclick="roleSheet()">Log in</button><button class="btn sm" onclick="roleSheet()">Sign up</button>`}</div></div>`;
+}
+function ftr(){$('#ftr').innerHTML=`<div class="wrap row between"><span>MatchWork · hackathon demo · data is saved in this browser only</span><span class="row"><button class="link" onclick="howScroll()">How scoring works</button><button class="link" onclick="resetDemo()">Reset demo data</button></span></div>`}
+function howScroll(){if(route().r!==''){go('#/');setTimeout(()=>$('#how')?.scrollIntoView(),60)}else $('#how')?.scrollIntoView()}
+
+/* ============ notifications, saved items, filters ============ */
+const IBELL=`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>`;
+function myNotes(){const r=D.ui.role;return D.notes.filter(n=>r==='client'?n.to==='c':(r==='freelancer'&&n.to===D.ui.fid)).sort((a,b)=>b.ts-a.ts)}
+function notify(to,t,link){D.notes.push({id:'n'+(++D.seq),to,t,link,ts:NOW(),read:false})}
+function notesPanel(){const ns=myNotes().slice(0,20);return `<div class="npanel" role="dialog" aria-label="Notifications"><h3>Notifications</h3>${ns.length?ns.map(n=>`<button class="nitem ${n.read?'':'new'}" onclick="openNote('${n.id}')">${esc(n.t)}<div class="xs mute">${ago(n.ts)}</div></button>`).join(''):'<p class="mute sm" style="padding:14px;margin:0">No notifications yet.</p>'}</div>`}
+function toggleNotes(e){e.stopPropagation();if(S.notesOpen)closeNotes();else{S.notesOpen=true;hdr()}}
+function closeNotes(){if(!S.notesOpen)return;S.notesOpen=false;myNotes().forEach(n=>n.read=true);save();hdr()}
+function openNote(id){const n=D.notes.find(x=>x.id===id);closeNotes();if(n&&n.link)go(n.link)}
+document.addEventListener('click',e=>{if(S.notesOpen&&!e.target.closest('.bellwrap'))closeNotes()});
+const savedJobs=()=>D.saved.jobs[D.ui.fid]||(D.saved.jobs[D.ui.fid]=[]);
+function heart(kind,id){const on=kind==='job'?savedJobs().includes(id):D.saved.talent.includes(+id);return `<button class="heart ${on?'on':''}" onclick="event.stopPropagation();toggleSave('${kind}','${id}')" aria-pressed="${on}" aria-label="${on?'Remove from saved':'Save for later'}" title="${on?'Saved':'Save for later'}">${on?'♥':'♡'}</button>`}
+function toggleSave(kind,id){const a=kind==='job'?savedJobs():D.saved.talent,v=kind==='job'?id:+id,i=a.indexOf(v);if(i>=0)a.splice(i,1);else a.push(v);save();toast(i>=0?'Removed from saved':'Saved for later');soft()}
+function fsel(obj,key,label,opts){const v=S[obj][key];return `<select class="${v?'set':''}" aria-label="${label}" onchange="S.${obj}.${key}=this.value;render()"><option value="">${label}</option>${opts.map(o=>{const [val,l]=Array.isArray(o)?o:[o,o];return `<option value="${esc(val)}" ${String(v)===String(val)?'selected':''}>${esc(l)}</option>`}).join('')}</select>`}
+const clearBtn=(obj,keep)=>Object.entries(S[obj]).some(([k,v])=>k!=='tab'&&v)?`<button class="link sm" onclick="${Object.keys(S[obj]).filter(k=>k!=='tab').map(k=>`S.${obj}.${k}=''`).join(';')};render()">Clear filters</button>`:'';
+
+/* ============ sheets + toast ============ */
+function openSheet(h){$('#sheetBody').innerHTML=h;$('#sheet').classList.add('open');setTimeout(()=>$('#sheetBody [autofocus]')?.focus(),30)}
+function closeSheet(){$('#sheet').classList.remove('open')}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeSheet()});
+let tt;function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('show'),2800)}
+const sheetH=(t,sub)=>`<div class="sheet-h"><div><h2>${t}</h2>${sub?`<p class="mute" style="margin:0">${sub}</p>`:''}</div><button class="x" onclick="closeSheet()" aria-label="Close">×</button></div>`;
+function roleSheet(){openSheet(sheetH('Join MatchWork','How do you want to use it?')+`<div class="rolecards">
+ <button class="rolecard" onclick="setRole('client','#/post')"><span style="font-size:26px">🧭</span><b>I'm hiring</b><span class="mute sm">Post a project and get a ranked, explained shortlist.</span></button>
+ <button class="rolecard" onclick="closeSheet();pickFreelancer('#/dashboard')"><span style="font-size:26px">🛠️</span><b>I'm a freelancer</b><span class="mute sm">See projects ranked by fit and send proposals.</span></button></div>
+ <p class="mute xs" style="margin:14px 0 0">Demo: no password needed. Clients sign in as “Pulse Fit”; freelancers pick a demo profile or create one.</p>`)}
+function pickFreelancer(dest){
+ dest=dest||'#/dashboard';
+ const inv=f=>Object.values(D.th).filter(t=>t.fid===f.id&&t.invited).length;
+ const list=[...D.fl].sort((a,b)=>inv(b)-inv(a)||a.id-b.id);
+ openSheet(sheetH('Continue as a freelancer','Pick a demo profile, or create your own.')+`<div class="plist">${list.map(f=>`<button class="pitem" onclick="useFreelancer(${f.id},'${dest}')">${av(f,36)}<span class="grow"><b>${esc(f.name)}</b> <span class="mute sm">· ${esc(f.title)}</span><br><span class="mute xs">$${f.rate}/hr · ${f.skills.slice(0,3).map(esc).join(', ')}</span></span>${inv(f)?`<span class="chip tag">Invited · ${inv(f)}</span>`:''}${f.id===D.ui.fid?'<span class="chip ok">Current</span>':''}</button>`).join('')}
+ <button class="pitem" onclick="newProfile()"><span class="av" style="width:36px;height:36px;background:#cfd7d2;color:#16211c">+</span><b>Create a new freelancer profile</b></button></div>`);
+}
+function useFreelancer(id,dest){D.ui.fid=id;D.ui.role='freelancer';save();closeSheet();toast('Signed in as '+fl(id).name);go(dest||'#/dashboard')}
+function newProfile(){closeSheet();D.ui.role='freelancer';save();S.me={isNew:true,keep:true,name:'',title:'',skills:[],rate:40,years:2,hpw:30,loc:'',bio:'',available:true,port:[],emp:[],edu:[],cert:[],lang:[{l:'English',lv:'Fluent'}]};go('#/me')}
+
+/* ============ LANDING ============ */
+function sampleCard(){
+ const e=EX['AI fitness coaching app'],p={...e,skills:detect(e.title+' '+e.desc)};
+ const {list}=rankFor(p),m=list[0];if(!m)return'';
+ return `<div class="sample"><div class="back"></div><div class="card">
+ <div class="row between" style="margin-bottom:10px"><span class="mute sm">Project · <b style="color:var(--ink)">${esc(e.title)}</b></span><span class="chip tag">#1 of ${list.length}</span></div>
+ <div class="row" style="align-items:flex-start;gap:14px">${av(m.f,48)}<div class="grow"><b>${esc(m.f.name)}</b> <span class="mute sm">· ${esc(m.f.title)}</span><div class="meta"><span><b>$${m.f.rate}</b>/hr</span><span>${stars(m.f)}</span></div></div><div class="mscore">${ring(m.total)}<span class="tierlbl ${tier(m.total)[1]}">${tier(m.total)[0]}</span></div></div>
+ <p class="reason" style="font-size:14px">${esc(reasonClient(m))}</p><div class="chips">${skillChips(m)}</div>
+ <div style="margin-top:14px">${Object.keys(W).map(k=>`<div class="row" style="gap:10px;margin:5px 0"><span class="sm" style="width:128px">${WL[k]}</span><div class="bar grow"><i style="width:${Math.round(m.parts[k]*100)}%"></i></div><span class="xs mute" style="width:40px;text-align:right">${(m.parts[k]*Math.round(W[k]*100)).toFixed(0)}/${Math.round(W[k]*100)}</span></div>`).join('')}</div>
+ </div></div>`;
+}
+function vLanding(){
+ const hire=S.hero==='hire';
+ const cats=[['Mobile apps',['Flutter','React Native','Swift','iOS'],'📱'],['Web development',['React','Next.js','Node.js'],'🌐'],['AI & data',['LLM','Python','Machine Learning'],'🤖'],['Design',['UI Design','Figma','Branding'],'🎨'],['Writing & SEO',['Copywriting','SEO'],'✍️'],['E-commerce',['Shopify'],'🛒']];
+ const feat=[...D.fl].filter(f=>f.rating).sort((a,b)=>b.rating-a.rating||b.jobs-a.jobs).slice(0,4);
+ return `<section class="hero"><div class="wrap hero-in"><div>
+ <div class="seg" role="tablist"><button class="${hire?'on':''}" onclick="S.hero='hire';render()">Hire</button><button class="${!hire?'on':''}" onclick="S.hero='work';render()">Work</button></div>
+ ${hire?`<h1>Post a project.<br>Get a ranked shortlist in under 60 seconds.</h1>
+ <p class="lead">MatchWork scores every freelancer on skills, experience and budget fit, and tells you exactly why each person was suggested.</p>
+ <form class="hero-q" onsubmit="event.preventDefault();startPost(this.q.value)"><input name="q" aria-label="Describe your project" placeholder="What do you need built? e.g. an AI fitness coaching app"><button class="btn">Find my matches</button></form>
+ <div class="try">Try: ${Object.keys(EX).map(x=>`<button class="link" onclick="startPost('${x}')">${x}</button>`).join(' · ')}</div>`
+ :`<h1>Find projects<br>you're likely to win.</h1>
+ <p class="lead">Open projects are ranked by how well they fit your skills, rate and experience, with a short note on why you fit. Spend proposals where they count.</p>
+ <div class="row" style="margin-top:22px"><button class="btn" onclick="setRole('freelancer','#/dashboard')">See projects that fit me</button><button class="btn ghost" onclick="newProfile()">Create a profile</button></div>`}
+ </div>${sampleCard()}</div></section>
+ <div class="wrap">
+ <div class="strip"><div><b>&lt; 60 sec</b><span class="mute sm">from posting to a shortlist</span></div><div><b>5 signals</b><span class="mute sm">skills, text, budget, experience, ratings</span></div><div><b>Every match</b><span class="mute sm">comes with a plain-English reason</span></div><div><b>${D.fl.filter(f=>f.available).length} freelancers</b><span class="mute sm">available now in this demo</span></div></div>
+ <section class="sec" id="how"><div class="sec-h"><h2>How MatchWork works</h2><p>One place for posting, matching, proposals and chat, on both sides of the job.</p></div>
+ <div class="how"><div class="card"><h3>🧭 For clients</h3><ol class="steps"><li><div><b>Post a project</b><br><span class="mute sm">Title, description, budget and hours. Skip skills and we'll detect them.</span></div></li><li><div><b>See ranked matches</b><br><span class="mute sm">Each freelancer gets a 0–100 score with matched and missing skills.</span></div></li><li><div><b>Invite and chat</b><br><span class="mute sm">Invite your top picks; a thread opens for each one.</span></div></li><li><div><b>Compare proposals and hire</b><br><span class="mute sm">Bids, delivery times and match scores side by side.</span></div></li></ol></div>
+ <div class="card"><h3>🛠️ For freelancers</h3><ol class="steps"><li><div><b>Build your profile</b><br><span class="mute sm">Skills, rate, experience and portfolio.</span></div></li><li><div><b>See projects that fit you</b><br><span class="mute sm">Ranked by the same score clients see, with a “why you fit” note.</span></div></li><li><div><b>Send one strong proposal</b><br><span class="mute sm">Cover letter drafted from your profile, bid and timeline.</span></div></li><li><div><b>Chat and deliver</b><br><span class="mute sm">Talk with the client in one thread per project.</span></div></li></ol></div></div></section>
+ <section class="sec"><div class="sec-h"><h2>How the match score works</h2><p>The same transparent formula ranks freelancers for clients and projects for freelancers.</p></div>
+ <div class="weights"><div class="card">${Object.keys(W).map(k=>`<div class="w-row"><div><b>${WL[k]}</b><div class="mute xs">${{skills:'Share of required skills the freelancer has',text:'Overlap between project text and profile + portfolio',budget:'Hourly rate vs budget ÷ estimated hours',exp:'Years of experience, capped at 10',rating:'Average client rating'}[k]}</div></div><div class="w-bar"><i style="width:${Math.round(W[k]*100)/0.45}%"></i></div><b style="text-align:right">${Math.round(W[k]*100)}%</b></div>`).join('')}</div>
+ <div class="card"><h3>Fair by design</h3><ul class="guard mute sm" style="padding-left:18px;margin:8px 0 0"><li><b style="color:var(--ink)">Never scored:</b> name, gender, location, photo or any other personal attribute.</li><li><b style="color:var(--ink)">Grounded reasons:</b> explanations cite only facts from the freelancer's profile.</li><li><b style="color:var(--ink)">Hard filters first:</b> only available freelancers with at least one required skill are ranked.</li><li><b style="color:var(--ink)">Learns from outcomes:</b> invites, shortlists, hires and declines are logged to tune the weights.</li></ul></div></div></section>
+ <section class="sec"><div class="sec-h"><h2>Find freelancers for every kind of work</h2></div><div class="cats">${cats.map(([n,sk,ic])=>{const c=D.fl.filter(f=>f.available&&f.skills.some(s=>sk.includes(s))).length;return`<button class="cat" onclick="S.tq='${sk[0]}';setRole('client','#/talent')"><span style="font-size:22px">${ic}</span><b>${n}</b><span class="mute sm">${c} available · ${sk.slice(0,3).join(', ')}</span></button>`}).join('')}</div></section>
+ <section class="sec"><div class="sec-h"><h2>Top-rated freelancers</h2></div><div class="fgrid">${feat.map(f=>fCard(f)).join('')}</div></section>
+ <section class="sec"><div class="cta"><div><h2>Ready to see who fits?</h2><p>Post a project and get your ranked shortlist in under a minute.</p></div><div class="row"><button class="btn" onclick="startPost('')">Post a project</button><button class="btn ghost" onclick="setRole('freelancer','#/dashboard')">I'm a freelancer</button></div></div></section>
+ </div>`;
+}
+function startPost(q){q=(q||'').trim();S.postSkills=[];if(EX[q]){const e=EX[q];S.draft={type:'fixed',title:e.title,desc:e.desc,budget:e.budget,hours:e.hours,deadline:isoIn(e.days),level:'Intermediate',duration:'1 to 3 months',questions:[QSUG[catOf(detect(e.title+' '+e.desc))]]}}else S.draft=q?{title:q.length<70?q.charAt(0).toUpperCase()+q.slice(1):'',desc:q.length>=70?q:''}:{};D.ui.role='client';save();closeSheet();S.lastRoute=null;go('#/post')}
+function fCard(f,m){
+ return `<div class="card fcard"><div class="top">${av(f)}<div class="grow" style="min-width:0"><b>${esc(f.name)}</b><div class="mute sm">${esc(f.title)}</div></div>${m?`<div class="mscore">${ring(m.total,'sm')}</div>`:''}${D.ui.role==='client'?heart('talent',f.id):''}</div>
+ <div class="meta"><span><b>$${f.rate}</b>/hr</span><span>${stars(f)}</span><span>${f.years} yrs</span><span class="avail ${f.available?'':'no'}">${f.available?'Available':'Booked'}</span></div>
+ ${bdgs(f)}
+ ${m?`<p class="sm" style="margin:0"><span class="tierlbl ${tier(m.total)[1]}">${tier(m.total)[0]}.</span> ${esc(reasonClient(m))}</p><div class="chips">${skillChips(m)}</div>`:`<p class="bio">${esc(f.bio)}</p><div class="chips">${f.skills.slice(0,5).map(s=>`<span class="chip">${esc(s)}</span>`).join('')}</div>`}
+ <div class="row" style="margin-top:auto"><span class="mute xs grow">${esc(f.loc)}</span><button class="btn ghost sm" onclick="go('#/profile/${f.id}')">See profile</button></div></div>`;
+}
+
+/* ============ POST A PROJECT ============ */
+function vPost(){
+ const d=S.draft||{},ty=d.type||'fixed';
+ return `<div class="wrap narrow page"><div class="ph"><div><h1>Post a project</h1><p class="mute">Takes about a minute. Your ranked shortlist appears as soon as you post.</p></div><button class="btn plain sm" onclick="fillExample()">Fill demo example</button></div>
+ <div class="card">
+ <label>Project title<input id="f_title" value="${esc(d.title||'')}" placeholder="e.g. AI fitness coaching app" oninput="S.draft.title=this.value"></label>
+ <label>Description<textarea id="f_desc" rows="6" placeholder="What are you building, what should it do, and what do you need help with?" oninput="S.draft.desc=this.value;paintSkills()">${esc(d.desc||'')}</textarea></label>
+ <div class="lbl">Required skills <span class="mute sm" style="font-weight:400">optional. Leave blank and we'll detect them from your description</span></div>
+ <div class="skillbox" onclick="$('#f_skill').focus()"><span id="skchips" class="chips"></span><input id="f_skill" list="allsk" placeholder="Type a skill, press Enter" onkeydown="skKey(event)" aria-label="Add skill"></div>
+ <datalist id="allsk">${allSkills().map(s=>`<option value="${esc(s)}">`).join('')}</datalist>
+ <div id="detected" class="detected"></div>
+ <div class="lbl">How do you want to pay?</div>
+ <div class="seg" role="group" aria-label="Payment type" style="margin-bottom:14px"><button type="button" class="${ty==='fixed'?'on':''}" onclick="S.draft.type='fixed';render()">Fixed price</button><button type="button" class="${ty==='hourly'?'on':''}" onclick="S.draft.type='hourly';render()">Hourly</button></div>
+ ${ty==='fixed'?`<div class="grid3"><label>Budget (USD)<input id="f_budget" type="number" min="50" step="50" value="${esc(d.budget||'')}" placeholder="6000" oninput="S.draft.budget=this.value;rateHint()"></label><label>Estimated hours<input id="f_hours" type="number" min="1" value="${esc(d.hours||'')}" placeholder="120" oninput="S.draft.hours=this.value;rateHint()"></label><label>Deadline<input id="f_deadline" type="date" min="${isoIn(1)}" value="${esc(d.deadline||'')}" oninput="S.draft.deadline=this.value"></label></div>`
+ :`<div class="grid2"><label>Min hourly rate (USD)<input id="f_rmin" type="number" min="5" value="${esc(d.rateMin||'')}" placeholder="35" oninput="S.draft.rateMin=this.value;rateHint()"></label><label>Max hourly rate (USD)<input id="f_rmax" type="number" min="5" value="${esc(d.rateMax||'')}" placeholder="55" oninput="S.draft.rateMax=this.value;rateHint()"></label></div>
+ <div class="grid2"><label>Estimated total hours<input id="f_hours" type="number" min="1" value="${esc(d.hours||'')}" placeholder="120" oninput="S.draft.hours=this.value;rateHint()"></label><label>Deadline<input id="f_deadline" type="date" min="${isoIn(1)}" value="${esc(d.deadline||'')}" oninput="S.draft.deadline=this.value"></label></div>`}
+ <div id="ratehint"></div>
+ <div class="grid2"><label>Experience level<select id="f_level" onchange="S.draft.level=this.value">${LEVELS.map(l=>`<option ${(d.level||'Intermediate')===l?'selected':''}>${l}</option>`).join('')}</select></label><label>Project length<select id="f_len" onchange="S.draft.duration=this.value">${LENS.map(l=>`<option ${(d.duration||'1 to 3 months')===l?'selected':''}>${l}</option>`).join('')}</select></label></div>
+ <div class="lbl">Screening questions <span class="mute sm" style="font-weight:400">optional, up to 3. Freelancers answer them in their proposal</span></div>
+ <div style="margin-bottom:16px">${(d.questions||[]).map((q,i)=>`<div class="row" style="flex-wrap:nowrap;margin-bottom:8px"><input value="${esc(q)}" aria-label="Question ${i+1}" oninput="S.draft.questions[${i}]=this.value"><button type="button" class="btn danger sm" onclick="S.draft.questions.splice(${i},1);render()">Remove</button></div>`).join('')}
+ ${(d.questions||[]).length<3?`<div class="row"><button type="button" class="btn plain sm" onclick="(S.draft.questions=S.draft.questions||[]).push('');render()">+ Add question</button><button type="button" class="link sm" onclick="suggestQ()">✨ Suggest one for this project</button></div>`:''}</div>
+ <div class="row end"><button class="btn plain" onclick="go('#/client')">Cancel</button><button class="btn" onclick="postProject()">Post &amp; see matches</button></div>
+ </div></div>`;
+}
+function paintSkills(){
+ const el=$('#skchips');if(!el)return;
+ el.innerHTML=S.postSkills.map((s,i)=>`<span class="chip ok">${esc(s)}<button onclick="event.stopPropagation();S.postSkills.splice(${i},1);paintSkills()" aria-label="Remove ${esc(s)}">×</button></span>`).join('');
+ const det=detect(($('#f_title')?.value||'')+' '+($('#f_desc')?.value||''));
+ $('#detected').innerHTML=!S.postSkills.length&&det.length?`<span class="mute">✨ Detected from your description:</span> ${det.map(s=>`<span class="chip tag">${esc(s)}</span>`).join(' ')} <button class="link sm" onclick="S.postSkills=detect(($('#f_title').value)+' '+$('#f_desc').value);paintSkills()">Edit these</button>`:'';
+}
+function skKey(e){if(e.key==='Enter'||e.key===','){e.preventDefault();addSkill(e.target.value)}else if(e.key==='Backspace'&&!e.target.value&&S.postSkills.length){S.postSkills.pop();paintSkills()}}
+function addSkill(v){v=v.trim().replace(/,$/,'');if(!v)return;const known=allSkills().find(s=>nk(s)===nk(v));v=known||v;if(!S.postSkills.some(s=>nk(s)===nk(v)))S.postSkills.push(v);$('#f_skill').value='';paintSkills()}
+function rateHint(){
+ const el=$('#ratehint');if(!el)return;const h=+$('#f_hours')?.value,av=D.fl.filter(f=>f.available);
+ let r=0,txt='';
+ if($('#f_rmax')){const lo=+$('#f_rmin').value,hi=+$('#f_rmax').value;if(hi>0){r=hi;txt=`You'll pay <b>$${lo||'?'}–$${hi}/hr</b>${h>0?`, about <b>${money(hi*h)}</b> at most for ${h} hours`:''}.`}}
+ else{const b=+$('#f_budget').value;if(b>0&&h>0){r=b/h;txt=`Your budget works out to about <b>$${Math.round(r)}/hr</b>.`}}
+ el.innerHTML=r?`<div class="hint">${txt} ${av.filter(f=>f.rate<=r).length} of ${av.length} available freelancers charge that or less. Budget fit is 20% of each match score.</div>`:'';
+}
+const QSUG={'Mobile apps':'Which apps have you published to the App Store or Play Store?','Web development':'Share a link to a similar site or app you have built.','AI & data':'Describe an AI or data project you have shipped.','Design':'Share 2–3 portfolio pieces closest to this brief.','Writing & SEO':'Share a writing sample in a similar niche.','E-commerce':'Share an online store you have built.','Other':'What similar work have you done?'};
+function suggestQ(){const sk=S.postSkills.length?S.postSkills:detect(($('#f_title').value||'')+' '+($('#f_desc').value||''));const q=QSUG[catOf(sk)];S.draft.questions=S.draft.questions||[];if(S.draft.questions.includes(q))return toast('Already added');S.draft.questions.push(q);render()}
+function fillExample(){const e=EX['AI fitness coaching app'];S.postSkills=[];S.draft={type:'fixed',title:e.title,desc:e.desc,budget:e.budget,hours:e.hours,deadline:isoIn(e.days),level:'Intermediate',duration:'1 to 3 months',questions:[QSUG[catOf(detect(e.title+' '+e.desc))]]};S.lastRoute=null;render();S.lastRoute='post/';toast('Example filled. Skills left blank so they get detected.')}
+function postProject(){
+ const g=id=>$('#'+id),type=S.draft.type||'fixed',title=g('f_title').value.trim(),desc=g('f_desc').value.trim(),hours=+g('f_hours').value,deadline=g('f_deadline').value;
+ if(g('f_skill').value.trim())addSkill(g('f_skill').value);
+ if(!title)return toast('Add a project title'),g('f_title').focus();
+ if(desc.length<20)return toast('Describe the project in a sentence or two'),g('f_desc').focus();
+ let budget,rateMin,rateMax;
+ if(type==='fixed'){budget=+g('f_budget').value;if(!(budget>0))return toast('Add a budget'),g('f_budget').focus()}
+ else{rateMin=+g('f_rmin').value;rateMax=+g('f_rmax').value;if(!(rateMin>0))return toast('Add a minimum hourly rate'),g('f_rmin').focus();if(!(rateMax>=rateMin))return toast('Max rate must be at least the min rate'),g('f_rmax').focus()}
+ if(!(hours>0))return toast('Add estimated hours'),g('f_hours').focus();
+ let skills=S.postSkills.slice(),auto=false;
+ if(!skills.length){skills=detect(title+' '+desc);auto=true}
+ if(!skills.length)return toast('We couldn\'t detect skills. Add at least one.'),g('f_skill').focus();
+ const questions=(S.draft.questions||[]).map(q=>q.trim()).filter(Boolean).slice(0,3);
+ const p={id:'p'+(++D.seq),title,desc,skills,auto,type,budget:type==='hourly'?rateMax*hours:budget,rateMin,rateMax,hours,deadline,level:g('f_level').value,duration:g('f_len').value,questions,cat:catOf(skills),owner:'me',client:'Pulse Fit (you)',status:'open',ts:NOW(),took:Math.max(1,Math.round((NOW()-S.postStart)/1000))};
+ D.pr.push(p);save();S.draft=null;S.postSkills=[];
+ go('#/matches/'+p.id);simulateProposals(p.id);
+}
+// Demo-only: a couple of other matched freelancers send proposals shortly after posting
+function simulateProposals(pid){
+ const p=pj(pid);const {list}=rankFor(p);const picks=[list[1],list[3]].filter(Boolean);
+ picks.forEach((m,i)=>setTimeout(()=>{
+  const p2=pj(pid);if(!p2||p2.status!=='open'||propOf(pid,m.f.id))return;
+  const f=m.f,bid=p.type==='hourly'?Math.min(f.rate,p.rateMax):Math.round(Math.min(p.budget*1.1,f.rate*p.hours)/50)*50,days=Math.max(5,Math.ceil(p.hours/Math.max(10,f.hpw)*7));
+  const ans=(p.questions||[]).map(()=>m.port?`My “${m.port.t}” project is the closest example: ${m.port.d}`:`I've done similar work with ${andList(m.matched)}.`);
+  const q={id:'q'+(++D.seq),pid,fid:f.id,cover:`Hi! I'm a ${f.title} with ${f.years} years of experience. I've worked with ${andList(m.matched)}${m.port?`, most recently on “${m.port.t}”`:''}. I can start this week and share progress every few days.`,bid,days,status:'submitted',ts:NOW(),answers:ans,links:[]};
+  D.props.push(q);
+  sysMsg(pid,f.id,`${f.name} submitted a proposal: ${bidTxt(q,p)} · ${days} days`);
+  notify('c',`New proposal from ${f.name} on “${p.title}”`,'#/proposals/'+pid);
+  save();toast(`New proposal from ${f.name} on “${p.title}”`);soft();
+ },6000+i*7000));
+}
+
+/* ============ MATCH RESULTS ============ */
+function projectSummary(p,extra){
+ const n=propsOf(p.id).length;
+ return `<div class="card psum"><div class="grow" style="min-width:260px"><div class="mute xs">${p.owner==='me'?'Your project':'Project'} · posted ${ago(p.ts)}${p.status==='hired'?' · <b style="color:var(--brand)">Hired</b>':''}</div><h2 style="margin:2px 0 6px">${esc(p.title)}</h2>
+ <div class="meta" style="margin-bottom:8px">${pmeta(p)}</div>
+ <div class="chips">${p.skills.map(s=>`<span class="chip">${esc(s)}</span>`).join('')}${p.auto?'<span class="chip tag">✨ skills auto-detected</span>':''}</div></div>
+ <div class="row" style="align-items:flex-start">${extra||''}${p.owner==='me'?`<button class="btn ${n?'':'ghost'}" onclick="go('#/proposals/${p.id}')">Compare proposals (${n})</button>`:''}</div></div>`;
+}
+function vMatches(pid){
+ const p=pj(pid);if(!p||p.owner!=='me')return notFound('Project not found');
+ const {list,hidden}=rankFor(p);
+ const sorted=[...list].sort(S.msort==='rate'?(a,b)=>a.f.rate-b.f.rate:S.msort==='rating'?(a,b)=>(b.f.rating||0)-(a.f.rating||0):()=>0);
+ const hired=p.hired?fl(p.hired):null;
+ return `<div class="wrap page">
+ ${projectSummary(p,`<button class="btn plain" onclick="go('#/client')">All projects</button>`)}
+ ${hired?`<div class="banner">✅ <span>You hired <b>${esc(hired.name)}</b> for this project. <button class="link" onclick="go('#/chat/${tkey(p.id,hired.id)}')">Open chat</button></span></div>`:`<div class="banner">⚡ <span><b>Shortlist ready${p.took?` ${p.took}s after you started posting`:''}.</b> ${list.length} freelancers ranked${hidden.length?`, ${hidden.length} filtered out`:''}.</span></div>`}
+ <div class="mlayout"><div>
+ <div class="toolbar"><h2 style="margin:0" class="grow">Recommended freelancers</h2><label style="margin:0" class="row sm"><span class="mute">Sort</span><select onchange="S.msort=this.value;render()"><option value="match">Best match</option><option value="rate" ${S.msort==='rate'?'selected':''}>Lowest rate</option><option value="rating" ${S.msort==='rating'?'selected':''}>Highest rated</option></select></label></div>
+ <div class="mlist">${sorted.map(m=>matchCard(m,list.indexOf(m))).join('')||'<div class="card empty"><h3>No matches yet</h3><p>No available freelancer has any of these skills. Try broader skills.</p></div>'}</div>
+ ${hidden.length?`<div style="margin-top:16px"><button class="link sm" onclick="S.showHidden=!S.showHidden;soft()">${S.showHidden?'Hide':'Show'} ${hidden.length} filtered-out freelancer${hidden.length>1?'s':''}</button>${S.showHidden?`<div class="card" style="margin-top:10px;padding:12px 16px">${hidden.map(m=>`<div class="row" style="padding:6px 0">${av(m.f,30)}<span class="grow"><b>${esc(m.f.name)}</b> <span class="mute sm">· ${esc(m.f.title)}</span></span><span class="chip warn">${m.why}</span></div>`).join('')}</div>`:''}</div>`:''}
+ </div>
+ <aside class="side"><div class="card"><h3>Why this order?</h3><p class="mute sm">Each score is a weighted blend of five signals. Open “Why this score” on any card to see the parts.</p>${Object.keys(W).map(k=>`<div class="row between sm" style="padding:4px 0;border-top:1px solid var(--line)"><span>${WL[k]}</span><b>${Math.round(W[k]*100)}%</b></div>`).join('')}</div>
+ <div class="card"><h3>Fairness</h3><p class="mute sm" style="margin:0">Scores never use name, gender, location or photo. Reasons cite only profile facts. Only available freelancers with at least one required skill are ranked.</p></div></aside></div></div>`;
+}
+function matchCard(m,i){
+ const f=m.f,p=m.p,k=p.id+':'+f.id,th=D.th[tkey(p.id,f.id)],pr=propOf(p.id,f.id),[tl,tc]=tier(m.total);
+ return `<div class="card mcard ${i===0?'top1':''}"><span class="rank">#${i+1}</span>
+ ${av(f,50)}
+ <div><div class="mhead"><h3><a href="#/profile/${f.id}" style="color:inherit">${esc(f.name)}</a></h3><span class="mute sm">${esc(f.title)}</span></div>
+ <div class="meta"><span><b>$${f.rate}</b>/hr</span><span>${stars(f)}</span><span>${f.years} yrs exp</span><span>${esc(f.loc)}</span></div><div style="margin-top:6px">${bdgs(f)}</div>
+ <p class="reason">${esc(reasonClient(m))}</p><div class="chips">${skillChips(m)}</div></div>
+ <div class="mscore">${ring(m.total)}<span class="tierlbl ${tc}">${tl}</span></div>
+ <div class="mact">${th?.invited?'<span class="chip ok">✓ Invited</span>':`<button class="btn sm" onclick="openInvite('${p.id}',${f.id})" ${p.status!=='open'?'disabled':''}>Invite to project</button>`}
+ ${pr?`<span class="pill st-${pr.status}">Proposal ${pr.status}</span>`:''}
+ ${th?`<button class="btn ghost sm" onclick="go('#/chat/${tkey(p.id,f.id)}')">Message</button>`:''}
+ <button class="btn plain sm" onclick="go('#/profile/${f.id}')">Profile</button>${heart('talent',f.id)}
+ <span class="grow"></span><button class="link sm" onclick="S.open['${k}']=!S.open['${k}'];soft()" aria-expanded="${!!S.open[k]}">${S.open[k]?'Hide':'Why this score'} ▾</button></div>
+ ${S.open[k]?breakdown(m):''}</div>`;
+}
+function openInvite(pid,fid){
+ const p=pj(pid),f=fl(fid),m=score(f,p);
+ openSheet(sheetH(`Invite ${esc(f.name)}`,`to “${esc(p.title)}” · match score ${m.total}`)+`
+ <div class="hint">${esc(reasonClient(m))}</div>
+ <label>Message<textarea id="inv_msg" rows="5" autofocus>Hi ${esc(f.name.split(' ')[0])}, I think you'd be a great fit for our project “${esc(p.title)}”. You cover ${esc(andList(m.matched))}${m.port?` and your “${esc(m.port.t)}” work is very relevant`:''}. Would you be open to sending a proposal?</textarea></label>
+ <div class="row end"><button class="btn plain" onclick="closeSheet()">Cancel</button><button class="btn" onclick="sendInvite('${pid}',${fid})">Send invite</button></div>`);
+}
+function sendInvite(pid,fid){
+ const t=$('#inv_msg').value.trim();if(!t)return toast('Write a short message');
+ const th=ensureThread(pid,fid),f=fl(fid);th.invited=true;
+ th.msgs.push({f:'s',t:`Pulse Fit invited ${f.name} to this project`,ts:NOW()});
+ th.msgs.push({f:'c',t,ts:NOW()+1});th.read.c=NOW()+1;logEv('invite',pid,fid);notify(+fid,`Pulse Fit invited you to “${pj(pid).title}”`,'#/project/'+pid);save();closeSheet();toast('Invite sent to '+f.name);
+ autoReply(tkey(pid,fid),'c');go('#/chat/'+tkey(pid,fid));
+}
+
+/* ============ CLIENT HOME ============ */
+function vClient(){
+ const ps=myProjects();
+ return `<div class="wrap page"><div class="ph"><div><h1>My projects</h1><p class="mute">Signed in as Pulse Fit · client</p></div><button class="btn" onclick="startPost('')">+ Post a project</button></div>
+ ${ps.length?`<div class="jlist">${ps.map(p=>{const {list}=rankFor(p),n=propsOf(p.id).length,inv=Object.values(D.th).filter(t=>t.pid===p.id&&t.invited).length,top=list[0];return `<div class="card"><div class="row between" style="align-items:flex-start"><div class="grow" style="min-width:240px"><div class="mute xs">Posted ${ago(p.ts)} · ${pstat(p)}</div><h3 style="font-size:18px;margin:2px 0 6px"><a href="#/matches/${p.id}" style="color:inherit">${esc(p.title)}</a></h3><div class="meta">${pmeta(p)}</div></div>
+ ${top?`<div class="row sm" style="gap:8px"><span class="mute">Top match</span>${av(top.f,28)}<b>${esc(top.f.name)}</b>${spill(top.total)}</div>`:''}</div>
+ <div class="chips" style="margin:10px 0">${p.skills.map(s=>`<span class="chip">${esc(s)}</span>`).join('')}</div>
+ <div class="row"><span class="mute sm grow">${list.length} ranked matches · ${inv} invited · ${n} proposal${n===1?'':'s'}</span>${contractOf(p.id)?`<button class="btn sm" onclick="go('#/contract/${contractOf(p.id).id}')">View contract</button>`:''}<button class="btn ghost sm" onclick="go('#/matches/${p.id}')">See matches</button><button class="btn ${contractOf(p.id)?'ghost':''} sm" onclick="go('#/proposals/${p.id}')">Compare proposals (${n})</button></div></div>`}).join('')}</div>`
+ :`<div class="card empty"><h3>No projects yet</h3><p>Post your first project to get a ranked shortlist.</p><button class="btn" onclick="startPost('')">Post a project</button></div>`}</div>`;
+}
+
+/* ============ PROPOSAL COMPARISON ============ */
+function vProposals(pid){
+ const p=pj(pid);if(!p||p.owner!=='me')return notFound('Project not found');
+ const dead=q=>['declined','withdrawn'].includes(q.status),ref=bidRef(p),unit=p.type==='hourly'?'max rate':'budget';
+ let rows=propsOf(pid).map(q=>({q,f:fl(q.fid),m:score(fl(q.fid),p)}));
+ const so={score:(a,b)=>b.m.total-a.m.total,bid:(a,b)=>a.q.bid-b.q.bid,days:(a,b)=>a.q.days-b.q.days,rating:(a,b)=>(b.f.rating||0)-(a.f.rating||0)};
+ rows.sort((a,b)=>dead(a.q)-dead(b.q)||so[S.psort](a,b));
+ const live=rows.filter(r=>!dead(r.q)),po=pendingOffer(pid),c=contractOf(pid),many=live.length>1;
+ const best={score:Math.max(...live.map(r=>r.m.total)),bid:Math.min(...live.map(r=>r.q.bid)),days:Math.min(...live.map(r=>r.q.days))};
+ const top=rankFor(p).list.filter(m=>!propOf(pid,m.f.id)).slice(0,3);
+ return `<div class="wrap page">${projectSummary(p,`<button class="btn plain" onclick="go('#/matches/${p.id}')">← Matches</button>`)}
+ ${po?`<div class="banner" style="background:#f6f1ff;border-color:#d9c9fb;color:#4b2a91">⏳ <span>Offer sent to <b>${esc(fl(po.fid).name)}</b>, waiting for a reply. <button class="link" onclick="go('#/offer/${po.id}')">View offer</button></span></div>`:''}
+ ${c?`<div class="banner">✅ <span>You hired <b>${esc(fl(c.fid).name)}</b>. <button class="link" onclick="go('#/contract/${c.id}')">Open contract</button></span></div>`:''}
+ <div class="toolbar"><h2 style="margin:0" class="grow">Compare proposals <span class="mute" style="font-weight:400">(${rows.length})</span></h2>${rows.length>1?`<label style="margin:0" class="row sm"><span class="mute">Sort</span><select onchange="S.psort=this.value;render()">${[['score','Match score'],['bid','Lowest bid'],['days','Fastest delivery'],['rating','Highest rated']].map(([v,l])=>`<option value="${v}" ${S.psort===v?'selected':''}>${l}</option>`).join('')}</select></label>`:''}</div>
+ ${rows.length?`<div class="tw"><table class="cmp" style="min-width:1140px"><thead><tr><th>Freelancer</th><th>Match</th><th>${p.type==='hourly'?'Rate':'Bid'}</th><th>Delivery</th><th>Skills</th><th>Proposal</th><th>Status</th><th></th></tr></thead><tbody>
+ ${rows.map(({q,f,m})=>{const d=dead(q),diff=Math.round((q.bid/ref-1)*100),o=offerFor(q.id);return `<tr class="${d?'declined':''}">
+ <td><div class="row" style="gap:8px;flex-wrap:nowrap;align-items:flex-start">${av(f,34)}<div><a href="#/profile/${f.id}"><b>${esc(f.name)}</b></a><div class="mute xs">$${f.rate}/hr · ${f.rating?'★ '+f.rating.toFixed(1):'New'} · ${f.years} yrs</div><div style="margin-top:4px">${bdgs(f,true)}</div></div></div></td>
+ <td class="${!d&&m.total===best.score&&many?'best':''}">${spill(m.total)}${!d&&m.total===best.score&&many?'<span class="best-tag">Best match</span>':''}</td>
+ <td class="${!d&&q.bid===best.bid&&many?'best':''}"><b>${bidTxt(q,p)}</b><div class="xs ${diff>0?'':'mute'}" style="${diff>0?'color:var(--amber)':''}">${diff===0?'= '+unit:diff>0?diff+'% over '+unit:Math.abs(diff)+'% under '+unit}</div>${!d&&q.bid===best.bid&&many?'<span class="best-tag">Lowest</span>':''}</td>
+ <td class="${!d&&q.days===best.days&&many?'best':''}"><b>${q.days}</b> days<div class="xs mute">${p.deadline?(NOW()+q.days*DAY<=new Date(p.deadline+'T23:59').getTime()?'before deadline':'after deadline'):''}</div>${!d&&q.days===best.days&&many?'<span class="best-tag">Fastest</span>':''}</td>
+ <td><b>${m.matched.length}/${p.skills.length}</b>${m.missing.length?`<div class="xs" style="color:var(--red)">Missing ${esc(list3(m.missing))}</div>`:'<div class="xs mute">All covered</div>'}</td>
+ <td><div class="cover">${esc(q.cover)}</div><button class="link xs" onclick="viewProposal('${q.id}')">View full proposal${(p.questions||[]).length?' + answers':''}${(q.links||[]).length?' + links':''}</button><div class="xs mute">${ago(q.ts)}${q.edited?' · edited':''}</div></td>
+ <td><span class="pill st-${o?'offer':q.status}">${o?'offer sent':q.status}</span></td>
+ <td><div class="row" style="gap:6px;flex-wrap:nowrap">${!d&&p.status==='open'?`${q.status==='submitted'?`<button class="btn ghost sm" onclick="setStatus('${q.id}','shortlisted')">Shortlist</button>`:''}${o?`<button class="btn danger sm" onclick="withdrawOffer('${o.id}')">Withdraw offer</button>`:!po?`<button class="btn sm" onclick="openOffer('${q.id}')">Send offer</button><button class="btn danger sm" onclick="setStatus('${q.id}','declined')">Decline</button>`:''}`:''}<button class="btn plain sm" onclick="go('#/chat/${tkey(p.id,f.id)}')">Message</button></div></td></tr>`}).join('')}</tbody></table></div>`
+ :`<div class="card empty"><h3>No proposals yet</h3><p>Invite your top matches to get proposals faster.</p>${top.length?`<div class="plist" style="max-width:520px;margin:12px auto 0">${top.map(m=>`<div class="pitem">${av(m.f,34)}<span class="grow"><b>${esc(m.f.name)}</b> <span class="mute sm">· ${esc(m.f.title)}</span></span>${spill(m.total)}${invited(pid,m.f.id)?'<span class="chip ok">Invited</span>':`<button class="btn sm" onclick="openInvite('${pid}',${m.f.id})">Invite</button>`}</div>`).join('')}</div>`:''}</div>`}
+ </div>`;
+}
+function viewProposal(qid){
+ const q=D.props.find(x=>x.id===qid),p=pj(q.pid),f=fl(q.fid),m=score(f,p),o=offerFor(qid),open=!['declined','withdrawn'].includes(q.status)&&p.status==='open';
+ openSheet(sheetH(`${esc(f.name)}'s proposal`,`${esc(p.title)} · ${ago(q.ts)}${q.edited?' · edited':''}`)+`
+ <div class="row" style="gap:10px;margin-bottom:12px;flex-wrap:nowrap">${av(f,40)}<div class="grow"><b>${esc(f.name)}</b> <span class="mute sm">${esc(f.title)}</span><div>${bdgs(f)}</div></div>${spill(m.total)}</div>
+ <div class="grid2" style="margin-bottom:0"><div class="qa"><b>${p.type==='hourly'?'Hourly rate':'Bid'}</b>${bidTxt(q,p)}</div><div class="qa"><b>Delivery</b>${q.days} days</div></div>
+ <div class="qa"><b>Cover letter</b><span style="white-space:pre-wrap">${esc(q.cover)}</span></div>
+ ${(p.questions||[]).map((qq,i)=>`<div class="qa"><b>${esc(qq)}</b>${esc(q.answers?.[i]||'No answer')}</div>`).join('')}
+ ${(q.links||[]).length?`<div class="qa"><b>Links</b>${q.links.map(l=>`<div><a href="${safeUrl(l)}" target="_blank" rel="noopener noreferrer">${esc(l)}</a></div>`).join('')}</div>`:''}
+ <div class="row end" style="margin-top:8px"><button class="btn plain" onclick="closeSheet();go('#/chat/${tkey(p.id,f.id)}')">Message</button>${open&&!o&&!pendingOffer(p.id)?`<button class="btn" onclick="closeSheet();openOffer('${q.id}')">Send offer</button>`:''}</div>`);
+}
+function setStatus(qid,st){
+ const q=D.props.find(x=>x.id===qid),p=pj(q.pid),f=fl(q.fid);
+ q.status=st;logEv(st==='shortlisted'?'shortlist':'decline',q.pid,q.fid);
+ sysMsg(q.pid,q.fid,st==='shortlisted'?`Pulse Fit shortlisted ${f.name}'s proposal`:`Pulse Fit declined ${f.name}'s proposal`);
+ notify(f.id,st==='shortlisted'?`Your proposal for “${p.title}” was shortlisted`:`Your proposal for “${p.title}” was declined`,'#/project/'+p.id);
+ save();toast(st==='shortlisted'?`${f.name} shortlisted`:'Proposal declined');soft();
+}
+
+/* ============ TALENT DIRECTORY + PROFILE ============ */
+function vTalent(){
+ const mine=myProjects().filter(p=>p.status==='open'),isC=D.ui.role==='client',F=S.tf;
+ if(S.tp&&!pj(S.tp))S.tp='';
+ if(!isC)F.tab='all';
+ const q=S.tq.toLowerCase().trim();
+ let fs=D.fl.filter(f=>(!q||(f.name+' '+f.title+' '+f.skills.join(' ')+' '+f.bio).toLowerCase().includes(q))
+  &&(!F.cat||fcats(f).includes(F.cat))&&(!F.maxRate||f.rate<=+F.maxRate)&&(!F.minRating||(f.rating||0)>=+F.minRating)
+  &&(!F.avail||f.available)&&(!F.badge||badges(f).some(b=>b[1].startsWith(F.badge)))&&(F.tab!=='saved'||D.saved.talent.includes(f.id)));
+ let ms=null;
+ if(isC&&S.tp){const p=pj(S.tp);ms=new Map(fs.map(f=>[f.id,score(f,p)]));fs.sort((a,b)=>ms.get(b.id).total-ms.get(a.id).total)}else fs.sort((a,b)=>(b.available-a.available)||(b.rating||0)-(a.rating||0));
+ return `<div class="wrap page"><div class="ph"><div><h1>Freelancers</h1><p class="mute">${D.fl.length} profiles · ${D.fl.filter(f=>f.available).length} available now</p></div></div>
+ ${isC?`<div class="tabs" role="tablist"><button class="${F.tab!=='saved'?'on':''}" onclick="S.tf.tab='all';render()">All freelancers</button><button class="${F.tab==='saved'?'on':''}" onclick="S.tf.tab='saved';render()">♥ Saved (${D.saved.talent.length})</button></div>`:''}
+ <div class="toolbar"><input type="search" placeholder="Search skills, titles or names" value="${esc(S.tq)}" oninput="S.tq=this.value;clearTimeout(window._tq);window._tq=setTimeout(()=>{render();const i=$('.toolbar input');i.focus();i.setSelectionRange(i.value.length,i.value.length)},250)" aria-label="Search freelancers">
+ ${isC&&mine.length?`<label style="margin:0" class="row sm"><span class="mute">Rank for</span><select onchange="S.tp=this.value;render()"><option value="">No project (by rating)</option>${mine.map(p=>`<option value="${p.id}" ${S.tp===p.id?'selected':''}>${esc(p.title)}</option>`).join('')}</select></label>`:''}</div>
+ <div class="filters">${fsel('tf','cat','Category',CATS.map(c=>c[0]))}${fsel('tf','maxRate','Hourly rate',[[30,'Up to $30/hr'],[50,'Up to $50/hr'],[75,'Up to $75/hr']])}${fsel('tf','minRating','Rating',[[4.5,'4.5★ & up'],[4.8,'4.8★ & up']])}${fsel('tf','avail','Availability',[['1','Available now']])}${fsel('tf','badge','Badge',[['Top Rated','Top Rated'],['Rising Talent','Rising Talent']])}${clearBtn('tf')}<span class="mute sm">${fs.length} result${fs.length===1?'':'s'}</span></div>
+ ${isC&&S.tp?`<div class="banner blue">Ranked by match score for “${esc(pj(S.tp).title)}”. Unavailable freelancers are still shown here but won't appear in your shortlist.</div>`:''}
+ <div class="fgrid">${fs.map(f=>fCard(f,ms&&ms.get(f.id))).join('')||`<div class="card empty">${F.tab==='saved'?'No saved freelancers yet. Tap ♡ on a profile to save it.':'No freelancers match these filters.'}</div>`}</div></div>`;
+}
+const REV=['Delivered exactly what we needed, ahead of schedule. Great communication throughout.','Very strong skills and clear updates. Would hire again.','Took our rough idea and turned it into something polished. Highly recommended.'];
+function vProfile(id){
+ const f=fl(id);if(!f)return notFound('Freelancer not found');
+ const isC=D.ui.role==='client',mine=myProjects().filter(p=>p.status==='open'),own=D.ui.role==='freelancer'&&D.ui.fid===f.id;
+ const real=D.reviews.filter(r=>r.fid===f.id&&r.dir==='c2f').sort((a,b)=>b.ts-a.ts).map(r=>({t:r.t,r:r.r,by:`${cname(pj(r.pid))} · ${pj(r.pid).title}`}));
+ const revs=real.concat(f.rating?REV.slice(0,Math.min(3,1+f.id%3)).map((t,i)=>({t,r:i===2&&f.rating<4.9?4:5,by:['Startup founder','Small business owner','Product lead'][i]})):[]);
+ return `<div class="wrap page"><button class="link sm" onclick="history.back()">← Back</button>
+ <div class="prof" style="margin-top:12px"><div>
+ <div class="card"><div class="row" style="align-items:flex-start;gap:16px">${av(f,72)}<div class="grow"><h1 style="margin:0">${esc(f.name)}</h1><div style="font-size:17px">${esc(f.title)}</div><div style="margin-top:6px">${bdgs(f)}</div><div class="meta" style="margin-top:6px"><span>${esc(f.loc)}</span><span class="avail ${f.available?'':'no'}">${f.available?`Available · ${f.hpw} hrs/week`:'Booked, not taking new work'}</span></div></div>${own?`<button class="btn ghost sm" onclick="go('#/me')">Edit profile</button>`:D.ui.role==='client'?heart('talent',f.id):''}</div>
+ <p style="margin:16px 0 12px">${esc(f.bio)}</p><div class="chips">${f.skills.map(s=>`<span class="chip">${esc(s)}</span>`).join('')}</div></div>
+ <h2 style="margin:24px 0 12px">Portfolio</h2>${f.port.length?`<div class="port">${f.port.map(x=>`<div><b>${esc(x.t)}</b><p class="mute sm" style="margin:4px 0 0">${esc(x.d)}</p></div>`).join('')}</div>`:'<p class="mute">No portfolio items yet.</p>'}
+ <h2 style="margin:24px 0 12px">Work history</h2><div class="card">${(f.emp||[]).map(x=>`<div class="dl"><b>${esc(x.role)}</b><div class="mute sm">${esc(x.co)} · ${esc(x.from)}–${esc(x.to)}</div></div>`).join('')||'<p class="mute" style="margin:0">No employment history added.</p>'}</div>
+ <h2 style="margin:24px 0 12px">Reviews</h2><div class="card">${revs.length?revs.map(r=>`<div class="rev"><div class="row between"><b>${r.by}</b><span class="star">${'★'.repeat(r.r)}<span style="color:#d6dbd8">${'★'.repeat(5-r.r)}</span></span></div><p class="mute sm" style="margin:4px 0 0">${r.t}</p></div>`).join(''):'<p class="mute" style="margin:0">No reviews yet. Reviews appear after completed projects.</p>'}</div>
+ </div><aside class="side"><div class="card"><div class="row between"><span class="mute">Hourly rate</span><b style="font-size:22px">$${f.rate}</b></div><div class="row between" style="margin-top:8px"><span class="mute">Rating</span><span>${stars(f)}</span></div><div class="row between" style="margin-top:8px"><span class="mute">Experience</span><b>${f.years} years</b></div>${f.jss?`<div class="row between" style="margin-top:8px"><span class="mute">Job Success</span><b>${f.jss}%</b></div>`:''}<p class="mute xs" style="margin:10px 0 0">Badges and Job Success help you compare. They are not part of the match score.</p></div>
+ <div class="card"><h3>Languages</h3>${(f.lang||[]).map(x=>`<div class="kv"><span>${esc(x.l)}</span><span class="mute">${esc(x.lv)}</span></div>`).join('')||'<p class="mute sm" style="margin:0">None added.</p>'}</div>
+ <div class="card"><h3>Education</h3>${(f.edu||[]).map(x=>`<div class="dl"><b>${esc(x.school)}</b><div class="mute sm">${esc(x.deg)}${x.yr?' · '+esc(x.yr):''}</div></div>`).join('')||'<p class="mute sm" style="margin:0">None added.</p>'}</div>
+ ${(f.cert||[]).length?`<div class="card"><h3>Certifications</h3>${f.cert.map(x=>`<div class="dl"><b>${esc(x.name)}</b><div class="mute sm">${esc(x.by)}${x.yr?' · '+esc(x.yr):''}</div></div>`).join('')}</div>`:''}
+ ${isC?`<div class="card"><h3>Fit with your projects</h3>${mine.length?mine.map(p=>{const m=score(f,p);return `<div style="padding:10px 0;border-top:1px solid var(--line)"><div class="row between"><b class="sm">${esc(p.title)}</b>${spill(m.total)}</div><p class="xs mute" style="margin:4px 0 8px">${m.eligible?esc(reasonClient(m)):m.why}</p>${m.eligible?(invited(p.id,f.id)?'<span class="chip ok">✓ Invited</span>':`<button class="btn sm" onclick="openInvite('${p.id}',${f.id})">Invite</button>`):''}</div>`}).join(''):`<p class="mute sm">Post a project to see how ${esc(f.name.split(' ')[0])} fits.</p><button class="btn sm" onclick="startPost('')">Post a project</button>`}</div>`:''}</aside></div></div>`;
+}
+
+/* ============ PROJECT BOARD + DETAIL ============ */
+function vBoard(){
+ const me=D.ui.role==='freelancer'?fl(D.ui.fid):null,q=S.bq.toLowerCase().trim(),F=S.bf;
+ if(!me)F.tab='all';
+ const sv=me?savedJobs():[];
+ const ms=me?new Map(D.pr.map(p=>[p.id,score(me,p)])):null;
+ let ps=D.pr.filter(p=>(F.tab==='saved'?sv.includes(p.id):p.status==='open')
+  &&(!q||(p.title+' '+p.desc+' '+p.skills.join(' ')).toLowerCase().includes(q))
+  &&(!F.cat||p.cat===F.cat)&&(!F.type||p.type===F.type)&&(!F.level||p.level===F.level)&&(!F.len||p.duration===F.len)
+  &&(!F.minb||p.budget>=+F.minb)&&(!F.minScore||!me||ms.get(p.id).total>=+F.minScore));
+ if(me&&S.bsort==='match')ps.sort((a,b)=>ms.get(b.id).total-ms.get(a.id).total);else ps.sort((a,b)=>b.ts-a.ts);
+ return `<div class="wrap page"><div class="ph"><div><h1>${me?'Find work':'Project board'}</h1><p class="mute">${D.pr.filter(p=>p.status==='open').length} open projects${me?` · ranked by your match score · <b style="color:var(--ink)">${me.connects}</b> Connects left`:''}</p></div></div>
+ ${me?`<div class="tabs" role="tablist"><button class="${F.tab!=='saved'?'on':''}" onclick="S.bf.tab='all';render()">Best matches</button><button class="${F.tab==='saved'?'on':''}" onclick="S.bf.tab='saved';render()">♥ Saved jobs (${sv.length})</button></div>`:''}
+ <div class="toolbar"><input type="search" placeholder="Search projects" value="${esc(S.bq)}" oninput="S.bq=this.value;clearTimeout(window._bq);window._bq=setTimeout(()=>{render();const i=$('.toolbar input');i.focus();i.setSelectionRange(i.value.length,i.value.length)},250)" aria-label="Search projects">${me?`<label style="margin:0" class="row sm"><span class="mute">Sort</span><select onchange="S.bsort=this.value;render()"><option value="match">Best match for me</option><option value="new" ${S.bsort==='new'?'selected':''}>Newest</option></select></label>`:''}</div>
+ <div class="filters">${fsel('bf','cat','Category',CATS.map(c=>c[0]))}${fsel('bf','type','Payment type',[['fixed','Fixed price'],['hourly','Hourly']])}${fsel('bf','level','Experience level',LEVELS)}${fsel('bf','len','Project length',LENS)}${fsel('bf','minb','Budget',[[1000,'$1,000+'],[3000,'$3,000+'],[5000,'$5,000+']])}${me?fsel('bf','minScore','Match score',[[50,'50+ (good)'],[65,'65+ (strong)'],[80,'80+ (top)']]):''}${clearBtn('bf')}<span class="mute sm">${ps.length} result${ps.length===1?'':'s'}</span></div>
+ <div class="jlist">${ps.map(p=>jobCard(p,ms&&ms.get(p.id))).join('')||`<div class="card empty">${F.tab==='saved'?'No saved jobs yet. Tap ♡ on a project to save it for later.':'No open projects match these filters.'}</div>`}</div></div>`;
+}
+function jobCard(p,m){
+ const me=D.ui.role==='freelancer'?fl(D.ui.fid):null,n=propsOf(p.id).length+(p.extra||0),mine=p.owner==='me'&&D.ui.role==='client',cs=clientStats(p),pr=me&&propOf(p.id,me.id);
+ return `<div class="card jcard" onclick="go('#/project/${p.id}')" role="link" tabindex="0" onkeydown="if(event.key==='Enter')go('#/project/${p.id}')">
+ <div class="row between" style="align-items:flex-start;flex-wrap:nowrap"><div class="grow" style="min-width:0"><div class="mute xs">Posted ${ago(p.ts)} · ${esc(cname(p))}${cs.r?` <span class="star">★</span> ${cs.r.toFixed(1)} (${cs.n} hires)`:''}${mine?' · <span class="chip tag">Yours</span>':''}${p.status!=='open'?` · <span class="pill st-ended">${p.status==='hired'?'Filled':'Closed'}</span>`:''}</div><h3 style="font-size:17px;margin:2px 0 0">${esc(p.title)}</h3></div><div class="row" style="flex-wrap:nowrap;gap:8px">${m?spill(m.total):''}${me?heart('job',p.id):''}</div></div>
+ <div class="meta">${pmeta(p,n)}</div>
+ <p class="desc">${esc(p.desc)}</p>
+ ${m?`<p class="sm" style="margin:0"><b>Why you fit:</b> ${esc(reasonFree(m))}</p><div class="chips">${skillChips(m)}</div>`:`<div class="chips">${p.skills.map(s=>`<span class="chip">${esc(s)}</span>`).join('')}</div>`}
+ ${me?`<div class="row xs mute">${pr?`<span class="pill st-${pr.status}">Applied · ${pr.status}</span>`:invited(p.id,me.id)?'<span class="chip tag">Invited: free to apply</span>':`<span>Costs <b style="color:var(--ink)">${connCost(p)} Connects</b> to apply</span>`}</div>`:''}</div>`;
+}
+function vProject(pid){
+ const p=pj(pid);if(!p)return notFound('Project not found');
+ const me=D.ui.role==='freelancer'?fl(D.ui.fid):null,m=me?score(me,p):null,pr=me?propOf(pid,me.id):null,th=me?D.th[tkey(pid,me.id)]:null;
+ const own=p.owner==='me'&&D.ui.role==='client';
+ return `<div class="wrap page"><button class="link sm" onclick="history.back()">← Back</button>
+ <div class="prof" style="margin-top:12px"><div>
+ ${th?.invited&&!pr?`<div class="banner blue">✉️ <span><b>${esc(p.client.replace(' (you)',''))} invited you</b> to this project. <button class="link" onclick="go('#/chat/${tkey(pid,me.id)}')">Read message</button></span></div>`:''}
+ <div class="card"><div class="mute xs">Posted ${ago(p.ts)} · ${esc(p.client)}</div><div class="row between" style="flex-wrap:nowrap;align-items:flex-start"><h1 style="margin:4px 0 10px">${esc(p.title)}</h1>${me?heart('job',p.id):''}</div>
+ <div class="meta" style="margin-bottom:14px">${pmeta(p)}<span>Proposals <b>${propsOf(p.id).length+(p.extra||0)}</b></span></div>
+ <p style="white-space:pre-wrap">${esc(p.desc)}</p><div class="lbl" style="margin-top:14px">Skills required</div><div class="chips">${p.skills.map(s=>`<span class="chip">${esc(s)}</span>`).join('')}</div>${(p.questions||[]).length?`<div class="lbl" style="margin-top:16px">Screening questions</div><ol class="sm mute" style="margin:0;padding-left:20px">${p.questions.map(q=>`<li>${esc(q)}</li>`).join('')}</ol>`:''}</div>
+ <div class="card" style="margin-top:16px"><h3>About the client</h3><div class="meta"><span><b>${esc(cname(p))}</b></span>${clientStats(p).r?`<span><span class="star">★</span> <b>${clientStats(p).r.toFixed(1)}</b></span>`:''}<span>${clientStats(p).n} hires</span><span>${D.pr.filter(x=>x.client===p.client).length} projects posted</span></div></div></div>
+ <aside class="side">
+ ${me?`<div class="card"><div class="row" style="gap:12px">${ring(m.total)}<div><div class="tierlbl ${tier(m.total)[1]}">${tier(m.total)[0]}</div><b>Your match score</b></div></div>
+ <p class="sm" style="margin:12px 0 10px"><b>Why you fit:</b> ${esc(reasonFree(m))}</p><div class="chips" style="margin-bottom:12px">${skillChips(m)}</div>
+ ${pr?propBox(pr,p):p.status==='open'?`<button class="btn" style="width:100%" onclick="openPropose('${pid}')">Submit a proposal</button><p class="xs mute" style="margin:6px 0 0;text-align:center">${invited(pid,me.id)?'Free: you were invited':`Costs ${connCost(p)} Connects · you have ${me.connects}`}</p>`:'<div class="hint" style="margin:0">This project is no longer open.</div>'}
+ ${th?`<button class="btn ghost" style="width:100%;margin-top:8px" onclick="go('#/chat/${tkey(pid,me.id)}')">Open chat</button>`:''}
+ <button class="link sm" style="margin-top:12px" onclick="S.open['pd']=!S.open['pd'];soft()">${S.open.pd?'Hide':'Show'} score breakdown ▾</button>${S.open.pd?`<div style="margin-top:8px">${breakdown(m)}</div>`:''}</div>`
+ :own?`<div class="card"><h3>Your project</h3><div class="plist"><button class="btn" onclick="go('#/matches/${pid}')">See ranked matches</button><button class="btn ghost" onclick="go('#/proposals/${pid}')">Compare proposals (${propsOf(pid).length})</button></div></div>`
+ :`<div class="card"><h3>Is this a fit for you?</h3><p class="mute sm">Switch to the freelancer view to see your match score and apply.</p><button class="btn" onclick="setRole('freelancer','#/project/${pid}')">View as freelancer</button></div>`}
+ </aside></div></div>`;
+}
+function openPropose(pid){
+ const p=pj(pid),f=fl(D.ui.fid),m=score(f,p),ex=propOf(pid,f.id),edit=!!ex&&['submitted','shortlisted'].includes(ex.status);
+ if(ex&&!edit)return toast('You already applied to this project');
+ if(edit&&offerFor(ex.id))return toast('You have an offer on this proposal. Reply to it instead.');
+ const hourly=p.type==='hourly',free=invited(pid,f.id),cost=free?0:connCost(p),short=!edit&&f.connects<cost;
+ const bid=edit?ex.bid:hourly?Math.min(f.rate,p.rateMax):(Math.round(Math.min(p.budget,f.rate*p.hours)/50)*50||p.budget);
+ const days=edit?ex.days:Math.max(5,Math.ceil(p.hours/Math.max(10,f.hpw||30)*7));
+ openSheet(sheetH(edit?'Edit your proposal':'Submit a proposal',`${esc(p.title)} · ${esc(cname(p))} · ${hourly?`$${p.rateMin}–$${p.rateMax}/hr`:'budget '+money(p.budget)}`)+`
+ <div class="hint row" style="gap:10px;flex-wrap:nowrap">${spill(m.total)}<span>${esc(reasonFree(m))}</span></div>
+ <label><span class="row between">Cover letter <button class="link sm" type="button" onclick="draftCover('${pid}')">✨ Draft from my profile</button></span><textarea id="pp_cover" rows="7" autofocus placeholder="Why are you a good fit? Mention relevant work.">${edit?esc(ex.cover):''}</textarea></label>
+ ${(p.questions||[]).length?`<div class="lbl">The client's questions</div>${p.questions.map((q,i)=>`<label style="font-weight:500">${esc(q)}<textarea id="pp_a${i}" rows="2">${edit?esc(ex.answers?.[i]||''):''}</textarea></label>`).join('')}`:''}
+ <div class="grid2"><label>${hourly?'Your hourly rate (USD)':'Bid (USD)'}<input id="pp_bid" type="number" min="1" value="${bid}" oninput="bidHint('${pid}')"></label><label>Delivery time (days)<input id="pp_days" type="number" min="1" value="${days}"></label></div>
+ <div id="pp_hint"></div>
+ <label>Links <span class="mute sm" style="font-weight:400">(optional) portfolio, GitHub or shared files, one per line</span><textarea id="pp_links" rows="2" placeholder="e.g. github.com/yourname/project">${edit?esc((ex.links||[]).join('\n')):''}</textarea></label>
+ ${edit?'':`<div class="hint">${free?'✉️ You were invited, so this proposal is <b>free</b>.':`This proposal costs <b>${cost} Connects</b>. You have <b>${f.connects}</b>.`}${short?' <b style="color:var(--red)">Not enough Connects to apply.</b>':''} Connects limit how many proposals you send, which keeps them focused.</div>`}
+ <div class="row end"><button class="btn plain" onclick="closeSheet()">Cancel</button><button class="btn" onclick="submitProposal('${pid}')" ${short?'disabled':''}>${edit?'Save changes':'Submit proposal'}</button></div>`);
+ bidHint(pid);
+}
+function bidHint(pid){const p=pj(pid),b=+$('#pp_bid')?.value,el=$('#pp_hint');if(!el)return;if(!(b>0)){el.innerHTML='';return}const ref=bidRef(p),d=Math.round((b/ref-1)*100),what=p.type==='hourly'?`max rate of $${ref}/hr`:`${money(ref)} budget`;el.innerHTML=`<div class="hint">Your ${p.type==='hourly'?'rate':'bid'} is <b>${d===0?'equal to':Math.abs(d)+'% '+(d>0?'over':'under')}</b> the client's ${what}.${d>15?' Bids far above budget are less likely to be accepted.':''}</div>`}
+function draftCover(pid){
+ const p=pj(pid),f=fl(D.ui.fid),m=score(f,p);
+ $('#pp_cover').value=`Hi! I'm ${f.name.split(' ')[0]}, a ${f.title} with ${f.years} year${f.years===1?'':'s'} of experience.\n\nYour project needs ${andList(p.skills)}. I work with ${m.matched.length?andList(m.matched):'related tools'} every day${m.port?`, and recently built “${m.port.t}”: ${m.port.d.replace(/\.$/,'')}`:''}.${m.missing.length?`\n\nFor ${andList(m.missing)}, I'd ramp up quickly or bring in a trusted collaborator.`:''}\n\nI'd start with a short kickoff call to agree on scope, then share progress every few days. Happy to answer any questions!`;
+ toast('Draft written from your profile. Edit it before sending.');
+}
+function submitProposal(pid){
+ const f=fl(D.ui.fid),p=pj(pid),ex=propOf(pid,f.id),edit=!!ex&&['submitted','shortlisted'].includes(ex.status);
+ const cover=$('#pp_cover').value.trim(),bid=+$('#pp_bid').value,days=+$('#pp_days').value;
+ const answers=(p.questions||[]).map((q,i)=>($('#pp_a'+i)?.value||'').trim());
+ const links=($('#pp_links').value||'').split('\n').map(x=>x.trim()).filter(Boolean).slice(0,5);
+ if(cover.length<20)return toast('Write a short cover letter (or use the draft)'),$('#pp_cover').focus();
+ const miss=answers.findIndex(a=>!a);if(miss>=0)return toast("Answer the client's questions"),$('#pp_a'+miss).focus();
+ if(!(bid>0))return toast('Enter a bid'),$('#pp_bid').focus();if(!(days>0))return toast('Enter delivery time'),$('#pp_days').focus();
+ if(ex&&!edit)return toast('You already applied to this project');
+ if(edit){
+  Object.assign(ex,{cover,bid,days,answers,links,edited:NOW()});
+  sysMsg(pid,f.id,`${f.name} updated their proposal: ${bidTxt(ex,p)} · ${days} days`);
+  notifyClient(p,`${f.name} updated their proposal on “${p.title}”`,'#/proposals/'+pid);
+  save();closeSheet();toast('Proposal updated');soft();return;
+ }
+ const cost=invited(pid,f.id)?0:connCost(p);
+ if(f.connects<cost)return toast('Not enough Connects');
+ f.connects-=cost;
+ const q={id:'q'+(++D.seq),pid,fid:f.id,cover,bid,days,status:'submitted',ts:NOW(),answers,links,connects:cost};
+ D.props.push(q);
+ ensureThread(pid,f.id).msgs.push({f:'s',t:`${f.name} submitted a proposal: ${bidTxt(q,p)} · ${days} days`,ts:NOW()});
+ notifyClient(p,`New proposal from ${f.name} on “${p.title}”`,'#/proposals/'+pid);
+ logEv('proposal',pid,f.id);save();closeSheet();toast(`Proposal sent to ${cname(p)}${cost?` · ${cost} Connects used`:''}`);soft();
+}
+function withdrawProposal(qid,ok){
+ const q=D.props.find(x=>x.id===qid),p=pj(q.pid),f=fl(q.fid);
+ if(offerFor(qid))return toast('You have an offer on this proposal. Decline the offer instead.');
+ if(!ok){openSheet(sheetH('Withdraw your proposal?',esc(p.title))+`<p class="mute sm">The client will see it as withdrawn and you can't re-apply. Connects you spent are not refunded.</p><div class="row end"><button class="btn plain" onclick="closeSheet()">Cancel</button><button class="btn danger" onclick="closeSheet();withdrawProposal('${qid}',true)">Withdraw</button></div>`);return}
+ q.status='withdrawn';sysMsg(q.pid,q.fid,`${f.name} withdrew their proposal`);
+ notifyClient(p,`${f.name} withdrew their proposal on “${p.title}”`,'#/proposals/'+p.id);
+ save();toast('Proposal withdrawn');soft();
+}
+function propBox(pr,p){
+ const o=offerFor(pr.id),c=contractOf(p.id);
+ return `<div class="hint" style="margin:0">Your proposal: <b>${bidTxt(pr,p)}</b> · ${pr.days} days · <span class="pill st-${o?'offer':pr.status}">${o?'offer received':pr.status}</span></div>
+ ${o?`<button class="btn" style="width:100%;margin-top:8px" onclick="go('#/offer/${o.id}')">🎉 Review your offer</button>`:''}
+ ${c&&c.fid===pr.fid?`<button class="btn" style="width:100%;margin-top:8px" onclick="go('#/contract/${c.id}')">Open contract</button>`:''}
+ ${!o&&['submitted','shortlisted'].includes(pr.status)&&p.status==='open'?`<div class="row" style="margin-top:8px;flex-wrap:nowrap"><button class="btn ghost sm grow" onclick="openPropose('${p.id}')">Edit proposal</button><button class="btn danger sm" onclick="withdrawProposal('${pr.id}')">Withdraw</button></div>`:''}`;
+}
+
+/* ============ OFFERS, CONTRACTS, MILESTONES, REVIEWS ============ */
+const bidRef=p=>p.type==='hourly'?p.rateMax:p.budget;
+const bidTxt=(q,p)=>p.type==='hourly'?`$${q.bid}/hr`:money(q.bid);
+const safeUrl=u=>{u=String(u).trim();if(!/^https?:\/\//i.test(u))u='https://'+u;try{const x=new URL(u);return /^https?:$/.test(x.protocol)?esc(x.href):'#'}catch(e){return '#'}};
+const fts=ts=>new Date(ts).toLocaleDateString('en-US',{month:'short',day:'numeric'});
+const notifyClient=(p,t,l)=>{if(p.owner==='me')notify('c',t,l)};
+const offerFor=qid=>D.offers.find(o=>o.qid===qid&&o.status==='pending');
+const pendingOffer=pid=>D.offers.find(o=>o.pid===pid&&o.status==='pending');
+const contractOf=pid=>D.contracts.find(c=>c.pid===pid);
+const revOf=(cid,dir)=>D.reviews.find(r=>r.cid===cid&&r.dir===dir);
+const msTotal=x=>x.ms.reduce((a,m)=>a+(+m.amt||0),0);
+const termsTxt=x=>x.type==='hourly'?`<b>$${x.rate}/hr</b> · up to ${x.limit} hrs/week`:`Fixed price <b>${money(msTotal(x))}</b> · ${x.ms.length} milestone${x.ms.length>1?'s':''}`;
+const pstat=p=>{const po=pendingOffer(p.id);return p.status==='hired'?'<b style="color:var(--brand)">In progress with '+esc(fl(p.hired)?.name||'')+'</b>':p.status==='ended'?'<b>Completed</b>':po?'Open · offer sent to '+esc(fl(po.fid).name):'Open'};
+const myContracts=()=>D.contracts.filter(c=>D.ui.role==='client'?pj(c.pid)?.owner==='me':c.fid===D.ui.fid).sort((a,b)=>b.ts-a.ts);
+const myOffers=()=>D.offers.filter(o=>o.status==='pending'&&(D.ui.role==='client'?pj(o.pid)?.owner==='me':o.fid===D.ui.fid));
+
+function openOffer(qid){
+ const q=D.props.find(x=>x.id===qid),p=pj(q.pid),f=fl(q.fid);
+ if(pendingOffer(p.id))return toast('You already have an offer out on this project');
+ const a=Math.round(q.bid*0.4/50)*50;
+ S.offer={qid,msg:`Hi ${f.name.split(' ')[0]}, we'd love to work with you on “${p.title}”. Here's our offer.`,ms:p.type==='fixed'?(q.bid<1000?[{t:'Complete project',amt:q.bid,due:isoIn(q.days)}]:[{t:'First milestone',amt:a,due:isoIn(Math.ceil(q.days/2))},{t:'Final delivery',amt:q.bid-a,due:isoIn(q.days)}]):[],rate:q.bid,limit:Math.min(40,f.hpw||20)};
+ offerSheet();
+}
+function offerSheet(){
+ const O=S.offer,q=D.props.find(x=>x.id===O.qid),p=pj(q.pid),f=fl(q.fid),hourly=p.type==='hourly';
+ openSheet(sheetH(`Send an offer to ${esc(f.name)}`,`for “${esc(p.title)}” · their ${hourly?'rate':'bid'}: ${bidTxt(q,p)}`)+`
+ ${hourly?`<div class="grid2"><label>Hourly rate (USD)<input id="of_rate" type="number" min="1" value="${O.rate}" oninput="S.offer.rate=+this.value"></label><label>Weekly limit (hours)<input id="of_lim" type="number" min="1" value="${O.limit}" oninput="S.offer.limit=+this.value"></label></div>`
+ :`<div class="lbl">Milestones <span class="mute sm" style="font-weight:400">split the work into parts the freelancer delivers one by one</span></div>
+ ${O.ms.map((x,i)=>`<div class="mrow"><input value="${esc(x.t)}" aria-label="Milestone ${i+1} name" oninput="S.offer.ms[${i}].t=this.value"><input type="number" min="1" value="${x.amt}" aria-label="Milestone ${i+1} amount" oninput="S.offer.ms[${i}].amt=+this.value;ofTotal()"><input type="date" value="${x.due}" aria-label="Milestone ${i+1} due date" oninput="S.offer.ms[${i}].due=this.value">${O.ms.length>1?`<button class="x" type="button" onclick="S.offer.ms.splice(${i},1);offerSheet()" aria-label="Remove milestone ${i+1}">×</button>`:'<span></span>'}</div>`).join('')}
+ ${O.ms.length<5?`<button class="btn plain sm" type="button" onclick="S.offer.ms.push({t:'Milestone ${O.ms.length+1}',amt:0,due:isoIn(21)});offerSheet()">+ Add milestone</button>`:''}
+ <div id="of_total" style="margin-top:12px"></div>`}
+ <label>Message<textarea id="of_msg" rows="3" oninput="S.offer.msg=this.value">${esc(O.msg)}</textarea></label>
+ <p class="mute xs">No money moves in this demo. Payments and escrow are out of scope, so milestones only track the work.</p>
+ <div class="row end"><button class="btn plain" onclick="closeSheet()">Cancel</button><button class="btn" onclick="sendOffer()">Send offer</button></div>`);
+ ofTotal();
+}
+function ofTotal(){const el=$('#of_total');if(!el)return;const q=D.props.find(x=>x.id===S.offer.qid),t=S.offer.ms.reduce((a,x)=>a+(+x.amt||0),0),d=t-q.bid;el.innerHTML=`<div class="hint" style="margin:0">Total <b>${money(t)}</b>${d?` · ${money(Math.abs(d))} ${d>0?'above':'below'} their ${money(q.bid)} bid`:' · matches their bid'}</div>`}
+function sendOffer(){
+ const O=S.offer,q=D.props.find(x=>x.id===O.qid),p=pj(q.pid),f=fl(q.fid),hourly=p.type==='hourly';
+ if(hourly){if(!(O.rate>0))return toast('Enter an hourly rate');if(!(O.limit>0))return toast('Enter a weekly limit')}
+ else{const bad=O.ms.findIndex(x=>!x.t.trim()||!(x.amt>0)||!x.due);if(bad>=0)return toast(`Milestone ${bad+1} needs a name, amount and due date`)}
+ if(pendingOffer(p.id))return toast('You already have an offer out on this project');
+ const o={id:'o'+(++D.seq),pid:p.id,fid:f.id,qid:q.id,type:p.type,ms:hourly?[]:O.ms.map(x=>({t:x.t.trim(),amt:+x.amt,due:x.due})),rate:hourly?O.rate:null,limit:hourly?O.limit:null,msg:(O.msg||'').trim(),status:'pending',ts:NOW()};
+ D.offers.push(o);
+ const th=ensureThread(p.id,f.id);th.msgs.push({f:'s',t:`Pulse Fit sent an offer: ${hourly?`$${o.rate}/hr, up to ${o.limit} hrs/week`:`${money(msTotal(o))} in ${o.ms.length} milestone${o.ms.length>1?'s':''}`}`,ts:NOW()});
+ if(o.msg)th.msgs.push({f:'c',t:o.msg,ts:NOW()+1});th.read.c=NOW()+1;
+ notify(f.id,`Pulse Fit sent you an offer for “${p.title}”`,'#/offer/'+o.id);logEv('offer',p.id,f.id);
+ save();closeSheet();toast('Offer sent to '+f.name);soft();
+}
+function withdrawOffer(oid){const o=D.offers.find(x=>x.id===oid),p=pj(o.pid),f=fl(o.fid);o.status='withdrawn';sysMsg(o.pid,o.fid,'Pulse Fit withdrew the offer');notify(f.id,`Pulse Fit withdrew their offer for “${p.title}”`,'#/project/'+p.id);save();toast('Offer withdrawn');soft()}
+function acceptOffer(oid){
+ const o=D.offers.find(x=>x.id===oid),p=pj(o.pid),f=fl(o.fid),q=D.props.find(x=>x.id===o.qid);
+ if(o.status!=='pending'||p.status!=='open')return toast('This offer is no longer available');
+ o.status='accepted';if(q)q.status='accepted';p.status='hired';p.hired=f.id;
+ const c={id:'c'+(++D.seq),pid:p.id,fid:f.id,oid,type:o.type,ms:o.ms.map((x,i)=>({...x,st:i===0?'active':'pending'})),rate:o.rate,limit:o.limit,status:'active',ts:NOW()};
+ D.contracts.push(c);
+ sysMsg(p.id,f.id,`🎉 ${f.name} accepted the offer. Contract started.`);
+ notifyClient(p,`${f.name} accepted your offer for “${p.title}”`,'#/contract/'+c.id);logEv('hire',p.id,f.id);
+ save();toast('Offer accepted. Contract started.');go('#/contract/'+c.id);
+}
+function declineOffer(oid){const o=D.offers.find(x=>x.id===oid),p=pj(o.pid),f=fl(o.fid);o.status='declined';sysMsg(o.pid,o.fid,`${f.name} declined the offer`);notifyClient(p,`${f.name} declined your offer for “${p.title}”`,'#/proposals/'+p.id);logEv('offer_declined',p.id,f.id);save();toast('Offer declined');soft()}
+function offerCard(o){const p=pj(o.pid),f=fl(o.fid),isC=D.ui.role==='client';return `<div class="card offerbox"><span class="pill st-offer">Offer · ${ago(o.ts)}</span><h3 style="font-size:17px;margin:6px 0 2px">${esc(p.title)}</h3><div class="sm">${isC?'To <b>'+esc(f.name)+'</b>':'From <b>'+esc(cname(p))+'</b>'} · ${termsTxt(o)}</div><div class="row" style="margin-top:10px"><button class="btn sm" onclick="go('#/offer/${o.id}')">${isC?'View offer':'Review offer'}</button></div></div>`}
+function vOffer(id){
+ const o=D.offers.find(x=>x.id===id);if(!o)return notFound('Offer not found');
+ const p=pj(o.pid),f=fl(o.fid),isF=D.ui.role==='freelancer'&&D.ui.fid===o.fid,isC=D.ui.role==='client'&&p.owner==='me',c=contractOf(p.id);
+ return `<div class="wrap narrow page"><button class="link sm" onclick="history.back()">← Back</button><div class="card offerbox" style="margin-top:12px">
+ <div class="row between"><span class="pill st-${o.status==='pending'?'offer':o.status==='accepted'?'accepted':'declined'}">Offer ${o.status}</span><span class="mute xs">Sent ${ago(o.ts)}</span></div>
+ <h1 style="margin:10px 0 4px">${esc(p.title)}</h1><p class="mute">From ${esc(cname(p))} to ${esc(f.name)}</p>
+ ${o.msg?`<div class="qa"><b>Message</b><span style="white-space:pre-wrap">${esc(o.msg)}</span></div>`:''}
+ <div class="lbl" style="margin-top:14px">Terms</div>
+ ${o.type==='hourly'?`<div class="kv"><span>Hourly rate</span><b>$${o.rate}/hr</b></div><div class="kv"><span>Weekly limit</span><b>${o.limit} hrs</b></div>`:o.ms.map((x,i)=>`<div class="kv"><span>${i+1}. ${esc(x.t)} <span class="mute xs">due ${fdate(x.due)}</span></span><b>${money(x.amt)}</b></div>`).join('')+`<div class="kv"><b>Total</b><b>${money(msTotal(o))}</b></div>`}
+ <p class="mute xs" style="margin-top:12px">No money moves in this demo. Payments and escrow are out of scope.</p>
+ ${o.status==='pending'?(isF?`<div class="row end"><button class="btn danger" onclick="declineOffer('${o.id}')">Decline</button><button class="btn" onclick="acceptOffer('${o.id}')">Accept offer</button></div>`:isC?`<div class="row end"><button class="btn plain" onclick="go('#/chat/${tkey(p.id,f.id)}')">Message</button><button class="btn danger" onclick="withdrawOffer('${o.id}')">Withdraw offer</button></div>`:'<p class="mute sm">Switch to the right account to reply to this offer.</p>'):o.status==='accepted'&&c?`<div class="row end"><button class="btn" onclick="go('#/contract/${c.id}')">Open contract</button></div>`:''}
+ </div></div>`;
+}
+function cTodo(c){const isC=D.ui.role==='client';if(c.status==='ended')return revOf(c.id,isC?'c2f':'f2c')?'':'Leave feedback';if(c.type!=='fixed')return '';if(isC&&c.ms.some(x=>x.st==='submitted'))return 'Review submitted work';if(isC&&c.ms.every(x=>x.st==='approved'))return 'All milestones approved: end contract';if(!isC&&c.ms.some(x=>x.st==='active'&&x.changes))return 'Changes requested';if(!isC&&c.ms.some(x=>x.st==='active'))return 'Next milestone in progress';return ''}
+function vContracts(){
+ const isC=D.ui.role==='client',cs=myContracts(),tab=S.ct,list=cs.filter(c=>tab==='ended'?c.status==='ended':c.status==='active'),offers=myOffers();
+ return `<div class="wrap page"><div class="ph"><div><h1>Contracts</h1><p class="mute">${isC?'Work you have hired for':'Work you have been hired for'}. Milestones track the work; payments aren't part of this demo.</p></div></div>
+ ${offers.length?`<div class="secttl"><h2>${isC?'Offers you sent':'Offers for you'} (${offers.length})</h2></div><div class="jlist" style="margin-bottom:22px">${offers.map(offerCard).join('')}</div>`:''}
+ <div class="tabs" role="tablist"><button class="${tab!=='ended'?'on':''}" onclick="S.ct='active';render()">Active (${cs.filter(c=>c.status==='active').length})</button><button class="${tab==='ended'?'on':''}" onclick="S.ct='ended';render()">Ended (${cs.filter(c=>c.status==='ended').length})</button></div>
+ <div class="jlist">${list.map(c=>{const p=pj(c.pid),f=fl(c.fid),done=c.ms.filter(x=>x.st==='approved').length,todo=cTodo(c);return `<div class="card jcard" onclick="go('#/contract/${c.id}')" role="link" tabindex="0" onkeydown="if(event.key==='Enter')go('#/contract/${c.id}')">
+ <div class="row between" style="align-items:flex-start;flex-wrap:nowrap"><div class="grow" style="min-width:0"><div class="mute xs">Started ${fts(c.ts)}${c.endTs?' · ended '+fts(c.endTs):''}</div><h3 style="font-size:17px;margin:2px 0 6px">${esc(p.title)}</h3><div class="row sm" style="gap:8px">${isC?av(f,24)+`<b>${esc(f.name)}</b>`:`<b>${esc(cname(p))}</b>`}<span class="mute">·</span><span>${termsTxt(c)}</span></div></div><span class="pill st-${c.status}">${c.status}</span></div>
+ ${c.type==='fixed'?`<div class="row sm" style="gap:10px"><div class="bar grow" style="max-width:280px"><i style="width:${Math.round(done/c.ms.length*100)}%"></i></div><span class="mute">${done} of ${c.ms.length} milestones approved</span></div>`:''}
+ ${todo?`<div><span class="chip warn">${todo}</span></div>`:''}</div>`}).join('')||`<div class="card empty">${tab==='ended'?'No ended contracts yet.':isC?'No active contracts. Send an offer from a proposal to start one.':'No active contracts yet. Accepted offers show up here.'}</div>`}</div></div>`;
+}
+const revHtml=r=>`<div class="star" style="margin:4px 0">${'★'.repeat(r.r)}<span style="color:#d6dbd8">${'★'.repeat(5-r.r)}</span></div><p class="sm" style="margin:0">${esc(r.t)}</p>`;
+function msRow(c,x,i,isC){
+ const lbl={approved:'Approved',submitted:'Submitted for review',active:'In progress',pending:'Not started'}[x.st],cls={approved:'approved',submitted:'shortlisted',active:'active',pending:'withdrawn'}[x.st];
+ return `<div class="ms ${x.st}"><span class="ms-n">${x.st==='approved'?'✓':i+1}</span><div><b>${esc(x.t)}</b><div class="xs mute">${money(x.amt)} · due ${fdate(x.due)} · <span class="pill st-${cls}">${lbl}</span></div>
+ ${x.changes&&x.st==='active'?`<div class="qa" style="margin-top:8px"><b>Changes requested</b>${esc(x.changes)}</div>`:''}
+ ${x.note&&x.st!=='pending'&&x.st!=='active'?`<div class="qa" style="margin-top:8px"><b>${x.st==='approved'?'Delivered':'Submitted work'}</b>${esc(x.note)}${x.link?`<div><a href="${safeUrl(x.link)}" target="_blank" rel="noopener noreferrer">${esc(x.link)}</a></div>`:''}</div>`:''}</div>
+ <div>${c.status==='active'?(isC&&x.st==='submitted'?`<div class="row" style="flex-wrap:nowrap;gap:6px"><button class="btn plain sm" onclick="changesSheet('${c.id}',${i})">Request changes</button><button class="btn sm" onclick="approveMs('${c.id}',${i})">Approve</button></div>`:!isC&&x.st==='active'?`<button class="btn sm" onclick="submitSheet('${c.id}',${i})">Submit work</button>`:''):''}</div></div>`;
+}
+function vContract(id){
+ const c=D.contracts.find(x=>x.id===id);if(!c)return notFound('Contract not found');
+ const p=pj(c.pid),f=fl(c.fid),isC=D.ui.role==='client',mine=isC?p.owner==='me':c.fid===D.ui.fid;
+ if(!mine)return notFound('This contract belongs to another account. Switch roles to see it.');
+ const myRev=revOf(c.id,isC?'c2f':'f2c'),theirRev=revOf(c.id,isC?'f2c':'c2f'),allDone=c.type==='fixed'&&c.ms.every(x=>x.st==='approved'),other=isC?f.name:cname(p);
+ return `<div class="wrap page"><button class="link sm" onclick="go('#/contracts')">← All contracts</button>
+ <div class="prof" style="margin-top:12px"><div>
+ <div class="card"><div class="row between"><span class="pill st-${c.status}">${c.status==='active'?'Active contract':'Ended'}</span><span class="mute xs">Started ${fts(c.ts)}${c.endTs?' · ended '+fts(c.endTs):''}</span></div>
+ <h1 style="margin:10px 0 6px">${esc(p.title)}</h1>
+ <div class="row sm" style="gap:8px">${av(f,28)}<b>${esc(f.name)}</b><span class="mute">for</span><b>${esc(cname(p))}</b><span class="mute">·</span><span>${termsTxt(c)}</span></div></div>
+ ${c.type==='fixed'?`<h2 style="margin:24px 0 12px">Milestones</h2><div class="card" style="padding:6px 20px">${c.ms.map((x,i)=>msRow(c,x,i,isC)).join('')}</div>`:`<div class="card" style="margin-top:16px"><h3>Hourly contract</h3><p class="mute sm" style="margin:0">$${c.rate}/hr, up to ${c.limit} hours a week. Time tracking and payments aren't part of this demo, so agree on progress in chat.</p></div>`}
+ ${allDone&&c.status==='active'&&isC?`<div class="banner" style="margin-top:16px">✅ <span>All milestones approved. <button class="link" onclick="endContract('${c.id}')">End the contract and leave feedback</button></span></div>`:''}
+ ${c.status==='ended'?`<h2 style="margin:24px 0 12px">Feedback</h2><div class="card">
+ <div class="rev"><b>Your feedback for ${esc(other)}</b>${myRev?revHtml(myRev):`<p class="mute sm" style="margin:4px 0 8px">You haven't left feedback yet.</p><button class="btn sm" onclick="reviewSheet('${c.id}')">Leave feedback</button>`}</div>
+ <div class="rev"><b>${esc(other)}'s feedback for you</b>${theirRev?revHtml(theirRev):'<p class="mute sm" style="margin:4px 0 0">Not left yet.</p>'}</div></div>`:''}
+ </div><aside class="side"><div class="card"><h3>Actions</h3><div class="plist">
+ <button class="btn ghost" onclick="go('#/chat/${tkey(p.id,f.id)}')">Message ${esc(isC?f.name.split(' ')[0]:cname(p))}</button>
+ <button class="btn plain" onclick="go('#/project/${p.id}')">View project</button>
+ ${isC?`<button class="btn plain" onclick="go('#/profile/${f.id}')">View ${esc(f.name.split(' ')[0])}'s profile</button>`:''}
+ ${c.status==='active'?`<button class="btn danger" onclick="endContract('${c.id}')">End contract</button>`:''}</div></div>
+ ${c.type==='fixed'?`<div class="card"><div class="kv"><span class="mute">Total</span><b>${money(msTotal(c))}</b></div><div class="kv"><span class="mute">Approved</span><b>${money(c.ms.filter(x=>x.st==='approved').reduce((a,x)=>a+x.amt,0))}</b></div><div class="kv"><span class="mute">Remaining</span><b>${money(c.ms.filter(x=>x.st!=='approved').reduce((a,x)=>a+x.amt,0))}</b></div><p class="mute xs" style="margin:8px 0 0">Amounts are for tracking only. No payments in this demo.</p></div>`:''}
+ </aside></div></div>`;
+}
+function submitSheet(cid,i){const c=D.contracts.find(x=>x.id===cid),x=c.ms[i];openSheet(sheetH('Submit work for review',`${esc(x.t)} · ${money(x.amt)}`)+`<label>What did you deliver?<textarea id="sw_note" rows="4" autofocus placeholder="Summarise the work and anything the client should check."></textarea></label><label>Link <span class="mute sm" style="font-weight:400">(optional) to the files or demo</span><input id="sw_link" placeholder="e.g. drive.example.com/folder"></label><div class="row end"><button class="btn plain" onclick="closeSheet()">Cancel</button><button class="btn" onclick="submitWork('${cid}',${i})">Submit for review</button></div>`)}
+function submitWork(cid,i){const note=$('#sw_note').value.trim(),link=$('#sw_link').value.trim();if(note.length<5)return toast('Describe what you delivered'),$('#sw_note').focus();const c=D.contracts.find(x=>x.id===cid),x=c.ms[i],p=pj(c.pid),f=fl(c.fid);Object.assign(x,{st:'submitted',note,link,changes:''});sysMsg(c.pid,c.fid,`${f.name} submitted “${x.t}” for review`);notifyClient(p,`${f.name} submitted “${x.t}” for your review`,'#/contract/'+cid);save();closeSheet();toast('Submitted for review');soft()}
+function approveMs(cid,i){const c=D.contracts.find(x=>x.id===cid),x=c.ms[i],f=fl(c.fid);x.st='approved';const nx=c.ms.find(y=>y.st==='pending');if(nx)nx.st='active';sysMsg(c.pid,c.fid,`Pulse Fit approved “${x.t}”`);notify(c.fid,`Pulse Fit approved “${x.t}”${nx?`. Next up: “${nx.t}”`:''}`,'#/contract/'+cid);save();toast(nx?'Approved. Next milestone started.':'All milestones approved');soft()}
+function changesSheet(cid,i){const c=D.contracts.find(x=>x.id===cid),x=c.ms[i];openSheet(sheetH('Request changes',esc(x.t))+`<label>What needs to change?<textarea id="ch_note" rows="4" autofocus></textarea></label><div class="row end"><button class="btn plain" onclick="closeSheet()">Cancel</button><button class="btn" onclick="requestChanges('${cid}',${i})">Send request</button></div>`)}
+function requestChanges(cid,i){const note=$('#ch_note').value.trim();if(note.length<5)return toast('Say what needs changing'),$('#ch_note').focus();const c=D.contracts.find(x=>x.id===cid),x=c.ms[i];x.st='active';x.changes=note;sysMsg(c.pid,c.fid,`Pulse Fit requested changes on “${x.t}”`);notify(c.fid,`Pulse Fit requested changes on “${x.t}”`,'#/contract/'+cid);save();closeSheet();toast('Changes requested');soft()}
+function endContract(cid,ok){
+ const c=D.contracts.find(x=>x.id===cid),p=pj(c.pid),f=fl(c.fid),isC=D.ui.role==='client';
+ if(!ok){const open=c.type==='fixed'?c.ms.filter(x=>x.st!=='approved').length:0;openSheet(sheetH('End this contract?',esc(p.title))+`<p class="mute sm">${open?`${open} milestone${open>1?'s are':' is'} not approved yet. `:''}Ending closes the contract for both sides, and you'll be asked to leave feedback.</p><div class="row end"><button class="btn plain" onclick="closeSheet()">Cancel</button><button class="btn danger" onclick="closeSheet();endContract('${cid}',true)">End contract</button></div>`);return}
+ c.status='ended';c.endTs=NOW();p.status='ended';
+ sysMsg(c.pid,c.fid,`${isC?'Pulse Fit':f.name} ended the contract`);
+ if(isC)notify(c.fid,`Pulse Fit ended the contract for “${p.title}”. Leave feedback.`,'#/contract/'+cid);else notifyClient(p,`${f.name} ended the contract for “${p.title}”. Leave feedback.`,'#/contract/'+cid);
+ save();soft();reviewSheet(cid);
+}
+function reviewSheet(cid){
+ const c=D.contracts.find(x=>x.id===cid),p=pj(c.pid),f=fl(c.fid),isC=D.ui.role==='client';S.rv=5;
+ openSheet(sheetH('Leave feedback',`for ${esc(isC?f.name:cname(p))} on “${esc(p.title)}”`)+`<div class="lbl">Rating</div><div class="starpick" role="group" aria-label="Rating">${[1,2,3,4,5].map(i=>`<button type="button" class="on" aria-label="${i} star${i>1?'s':''}" onclick="S.rv=${i};document.querySelectorAll('.starpick button').forEach((b,j)=>b.classList.toggle('on',j<${i}))">★</button>`).join('')}</div>
+ <label style="margin-top:12px">Your review<textarea id="rv_t" rows="4" placeholder="${isC?'How was working with them? This appears on their profile.':'How was working with this client?'}"></textarea></label>
+ ${isC?'<p class="mute xs">Your rating updates their profile rating and Job Success. Ratings feed 7% of future match scores.</p>':''}
+ <div class="row end"><button class="btn plain" onclick="closeSheet()">Later</button><button class="btn" onclick="submitReview('${cid}')">Submit feedback</button></div>`);
+}
+function submitReview(cid){
+ const t=$('#rv_t').value.trim(),r=S.rv||5;if(t.length<5)return toast('Write a short review'),$('#rv_t').focus();
+ const c=D.contracts.find(x=>x.id===cid),p=pj(c.pid),f=fl(c.fid),isC=D.ui.role==='client',dir=isC?'c2f':'f2c';
+ if(revOf(cid,dir))return toast('You already left feedback');
+ D.reviews.push({cid,pid:c.pid,fid:c.fid,dir,r,t,ts:NOW()});
+ if(isC){const n=f.jobs,o=f.rating;f.rating=o?Math.round((o*n+r)/(n+1)*10)/10:r;f.jobs=n+1;f.jss=Math.round(((f.jss??100)*n+(r>=4?100:r*20))/(n+1));notify(c.fid,`Pulse Fit left you ${r}★ feedback`,'#/contract/'+cid);logEv('review',c.pid,c.fid)}
+ else notifyClient(p,`${f.name} left you ${r}★ feedback`,'#/contract/'+cid);
+ save();closeSheet();toast('Thanks for your feedback');soft();
+}
+
+/* ============ FREELANCER DASHBOARD ============ */
+function vDash(){
+ const f=fl(D.ui.fid);
+ const ranked=rankProjectsFor(f),invs=Object.values(D.th).filter(t=>t.fid===f.id&&t.invited&&!propOf(t.pid,f.id)&&pj(t.pid)?.status==='open');
+ const mine=D.props.filter(q=>q.fid===f.id).sort((a,b)=>b.ts-a.ts);
+ const recs=ranked.filter(m=>!propOf(m.p.id,f.id)&&!invs.some(t=>t.pid===m.p.id)).slice(0,5);
+ return `<div class="wrap page"><div class="ph"><div><h1>Hi ${esc(f.name.split(' ')[0])} 👋</h1><p class="mute">Projects ranked by how well they fit your profile.</p></div><button class="btn ghost" onclick="go('#/projects')">Browse all projects</button></div>
+ ${!f.available?`<div class="banner amber">You're marked as unavailable, so clients won't see you in their match results. <button class="link" onclick="go('#/me')">Update availability</button></div>`:''}
+ <div class="dash"><div>
+ ${myOffers().length?`<div class="secttl"><h2>Offers for you (${myOffers().length})</h2></div><div class="jlist">${myOffers().map(offerCard).join('')}</div>`:''}
+ ${invs.length?`<div class="secttl"><h2>Invitations (${invs.length})</h2></div><div class="jlist">${invs.map(t=>{const p=pj(t.pid),m=score(f,p);return `<div class="card" style="border-color:#c9dafb"><div class="row between" style="align-items:flex-start"><div class="grow"><span class="chip tag">✉️ Invited by ${esc(p.client.replace(' (you)',''))}</span><h3 style="font-size:17px;margin:6px 0 2px">${esc(p.title)}</h3><div class="meta"><span>${btxt(p)}</span><span>${esc(p.level)}</span></div></div>${spill(m.total)}</div><p class="sm" style="margin:8px 0"><b>Why you fit:</b> ${esc(reasonFree(m))}</p><div class="row"><button class="btn sm" onclick="go('#/project/${p.id}');setTimeout(()=>openPropose('${p.id}'),50)">Submit proposal</button><button class="btn ghost sm" onclick="go('#/chat/${tkey(p.id,f.id)}')">Reply in chat</button><button class="btn plain sm" onclick="go('#/project/${p.id}')">View project</button></div></div>`}).join('')}</div>`:''}
+ <div class="secttl"><h2>Best matches for you</h2><span class="mute sm">${ranked.length} open projects use your skills</span></div>
+ <div class="jlist">${recs.map(m=>jobCard(m.p,m)).join('')||'<div class="card empty"><h3>You\'ve applied to every match</h3><p>New projects that fit you will show up here.</p></div>'}</div>
+ <div class="secttl"><h2>My proposals</h2></div>
+ ${mine.length?`<div class="tw"><table style="min-width:760px"><thead><tr><th>Project</th><th>Match</th><th>Bid</th><th>Delivery</th><th>Status</th><th></th></tr></thead><tbody>${mine.map(q=>{const p=pj(q.pid);return p?`<tr><td><a href="#/project/${p.id}"><b>${esc(p.title)}</b></a><div class="xs mute">${esc(p.client.replace(' (you)',''))} · ${ago(q.ts)}</div></td><td>${spill(score(f,p).total)}</td><td>${bidTxt(q,p)}</td><td>${q.days} days</td><td><span class="pill st-${offerFor(q.id)?'offer':q.status}">${offerFor(q.id)?'offer received':q.status}</span></td><td><div class="row" style="gap:6px;flex-wrap:nowrap">${offerFor(q.id)?`<button class="btn sm" onclick="go('#/offer/${offerFor(q.id).id}')">View offer</button>`:''}${contractOf(p.id)&&contractOf(p.id).fid===f.id?`<button class="btn sm" onclick="go('#/contract/${contractOf(p.id).id}')">Contract</button>`:''}${!offerFor(q.id)&&['submitted','shortlisted'].includes(q.status)&&p.status==='open'?`<button class="btn ghost sm" onclick="go('#/project/${p.id}');setTimeout(()=>openPropose('${p.id}'),50)">Edit</button><button class="btn danger sm" onclick="withdrawProposal('${q.id}')">Withdraw</button>`:''}<button class="btn plain sm" onclick="go('#/chat/${tkey(p.id,f.id)}')">Chat</button></div></td></tr>`:''}).join('')}</tbody></table></div>`:'<div class="card empty" style="padding:24px">No proposals yet. Pick a match above and apply in a minute.</div>'}
+ </div><aside class="side"><div class="card"><div class="row">${av(f,48)}<div><b>${esc(f.name)}</b><div class="mute sm">${esc(f.title)}</div></div></div>
+ <div class="meta" style="margin:10px 0"><span><b>$${f.rate}</b>/hr</span><span>${stars(f)}</span><span>${f.years} yrs</span></div>
+ <div class="chips">${f.skills.map(s=>`<span class="chip">${esc(s)}</span>`).join('')}</div>
+ <div style="margin-top:10px">${bdgs(f)}</div><div style="margin-top:10px"><div class="kv"><span class="mute">Connects</span><b>${f.connects}</b></div><div class="kv"><span class="mute">Active contracts</span><b><a href="#/contracts">${D.contracts.filter(c=>c.fid===f.id&&c.status==='active').length}</a></b></div></div>
+ <div class="row" style="margin-top:12px"><button class="btn ghost sm" onclick="go('#/me')">Edit profile</button><button class="btn plain sm" onclick="go('#/profile/${f.id}')">Public view</button></div></div>
+ <div class="card"><h3>Improve your matches</h3><ul class="mute sm" style="padding-left:18px;margin:6px 0 0">${tips(f,ranked).map(t=>`<li style="margin-bottom:6px">${t}</li>`).join('')}</ul></div></aside></div></div>`;
+}
+function tips(f,ranked){
+ const miss={};ranked.slice(0,6).forEach(m=>m.missing.forEach(s=>miss[s]=(miss[s]||0)+1));
+ const top=Object.entries(miss).sort((a,b)=>b[1]-a[1]).slice(0,2).map(x=>x[0]);
+ const t=[];
+ if(top.length)t.push(`Your best-fit projects often ask for <b style="color:var(--ink)">${top.map(esc).join(' and ')}</b>. Add them if you have them (skill coverage is 45% of the score).`);
+ if(f.port.length<2)t.push('Add portfolio items. Their text feeds the similarity signal (20%).');
+ const over=ranked.slice(0,5).filter(m=>m.f.rate>m.target).length;
+ if(over)t.push(`Your rate is above budget on ${over} of your top 5 matches. Budget fit is 20% of the score.`);
+ if(!t.length)t.push('Your profile is in great shape. Keep your availability up to date.');
+ return t;
+}
+
+/* ============ MY PROFILE (create / edit) ============ */
+function vMe(){
+ if(!S.me){const f=fl(D.ui.fid);S.me=JSON.parse(JSON.stringify(f));S.me.isNew=false}
+ const d=S.me;
+ return `<div class="wrap narrow page"><div class="ph"><div><h1>${d.isNew?'Create your freelancer profile':'Edit profile'}</h1><p class="mute">Clients only see facts from your profile in match reasons. Your name and location are never used for scoring.</p></div></div>
+ <div class="card">
+ <div class="grid2"><label>Display name<input id="me_name" value="${esc(d.name)}" placeholder="e.g. Sam T."></label><label>Professional title<input id="me_title" value="${esc(d.title)}" placeholder="e.g. Flutter developer"></label></div>
+ <div class="lbl">Skills</div><div class="skillbox" onclick="$('#me_skill').focus()"><span id="meskills" class="chips">${d.skills.map((s,i)=>`<span class="chip ok">${esc(s)}<button onclick="event.stopPropagation();S.me.skills.splice(${i},1);keepMe()" aria-label="Remove ${esc(s)}">×</button></span>`).join('')}</span><input id="me_skill" list="allsk2" placeholder="Type a skill, press Enter" onkeydown="if(event.key==='Enter'||event.key===','){event.preventDefault();meSkill(this.value)}"></div>
+ <datalist id="allsk2">${allSkills().map(s=>`<option value="${esc(s)}">`).join('')}</datalist>
+ <div class="grid3" style="margin-top:14px"><label>Hourly rate (USD)<input id="me_rate" type="number" min="5" value="${esc(d.rate)}"></label><label>Years of experience<input id="me_years" type="number" min="0" value="${esc(d.years)}"></label><label>Hours per week<input id="me_hpw" type="number" min="0" value="${esc(d.hpw)}"></label></div>
+ <label>Location <span class="mute sm" style="font-weight:400">(shown on your profile, never scored)</span><input id="me_loc" value="${esc(d.loc)}"></label>
+ <label>Bio<textarea id="me_bio" rows="4" placeholder="What do you build, and for whom?">${esc(d.bio)}</textarea></label>
+ <label class="row" style="gap:8px;font-weight:500"><input id="me_av" type="checkbox" style="width:auto;margin:0" ${d.available?'checked':''}> Available for new projects</label>
+ <div class="lbl" style="margin-top:6px">Portfolio</div>
+ <div class="plist" style="margin-bottom:10px">${d.port.map((x,i)=>`<div class="pitem" style="cursor:default"><span class="grow"><b>${esc(x.t)}</b><br><span class="mute sm">${esc(x.d)}</span></span><button class="btn danger sm" onclick="S.me.port.splice(${i},1);keepMe()">Remove</button></div>`).join('')||'<span class="mute sm">No items yet.</span>'}</div>
+ <div class="grid2"><input id="pt_t" placeholder="Project name"><input id="pt_d" placeholder="One line on what you built"></div>
+ <button class="btn ghost sm" style="margin:10px 0 18px" onclick="addPort()">+ Add portfolio item</button>
+ ${['emp','edu','cert','lang'].map(plistEd).join('')}
+ <div style="height:18px"></div>
+ <div class="row end"><button class="btn plain" onclick="S.me=null;go(${d.isNew?"'#/'":"'#/dashboard'"})">Cancel</button><button class="btn" onclick="saveMe()">${d.isNew?'Create profile & see matches':'Save profile'}</button></div></div></div>`;
+}
+const PLISTS={
+ emp:{label:'Employment history',f:[['role','Role'],['co','Company'],['from','From (year)'],['to','To (year or Present)']],cols:'1.3fr 1.3fr 110px 150px 40px',show:x=>`<b>${esc(x.role)}</b> · ${esc(x.co)} <span class="mute">${esc(x.from)}–${esc(x.to)}</span>`},
+ edu:{label:'Education',f:[['school','School'],['deg','Degree'],['yr','Year']],cols:'1.4fr 1.4fr 90px 40px',show:x=>`<b>${esc(x.school)}</b> · ${esc(x.deg)} <span class="mute">${esc(x.yr)}</span>`},
+ cert:{label:'Certifications',f:[['name','Certification'],['by','Issuer'],['yr','Year']],cols:'1.4fr 1.2fr 90px 40px',show:x=>`<b>${esc(x.name)}</b> · ${esc(x.by)} <span class="mute">${esc(x.yr)}</span>`},
+ lang:{label:'Languages',f:[['l','Language'],['lv','Level, e.g. Fluent']],cols:'1fr 1fr 40px',show:x=>`<b>${esc(x.l)}</b> <span class="mute">${esc(x.lv)}</span>`}};
+function plistEd(k){
+ const L=PLISTS[k],items=S.me[k]||[];
+ return `<div class="lbl" style="margin-top:14px">${L.label}</div>
+ ${items.map((x,i)=>`<div class="row between sm" style="padding:7px 0;border-top:1px solid var(--line);flex-wrap:nowrap"><span>${L.show(x)}</span><button class="link sm" style="color:var(--red)" onclick="S.me.${k}.splice(${i},1);keepMe()">Remove</button></div>`).join('')}
+ <div class="lrow" style="grid-template-columns:${L.cols};margin-top:6px">${L.f.map(([fk,lab])=>`<input id="pl_${k}_${fk}" placeholder="${lab}" aria-label="${L.label}: ${lab}">`).join('')}<button class="btn plain sm" type="button" onclick="addPl('${k}')" aria-label="Add to ${L.label}">+</button></div>`;
+}
+function addPl(k){const L=PLISTS[k],o={};L.f.forEach(([fk])=>o[fk]=($('#pl_'+k+'_'+fk).value||'').trim());if(!o[L.f[0][0]])return toast(`Add the ${L.f[0][1].toLowerCase()} first`);if(k==='emp'&&!o.to)o.to='Present';(S.me[k]=S.me[k]||[]).push(o);keepMe()}
+function readMe(){const d=S.me;d.name=$('#me_name').value.trim();d.title=$('#me_title').value.trim();d.rate=+$('#me_rate').value;d.years=+$('#me_years').value;d.hpw=+$('#me_hpw').value;d.loc=$('#me_loc').value.trim();d.bio=$('#me_bio').value.trim();d.available=$('#me_av').checked}
+function keepMe(){readMe();S.me.keep=true;const y=scrollY;render();scrollTo(0,y)}
+function meSkill(v){v=v.trim().replace(/,$/,'');if(!v)return;const k=allSkills().find(s=>nk(s)===nk(v));v=k||v;if(!S.me.skills.some(s=>nk(s)===nk(v)))S.me.skills.push(v);keepMe();setTimeout(()=>$('#me_skill')?.focus(),0)}
+function addPort(){const t=$('#pt_t').value.trim(),d=$('#pt_d').value.trim();if(!t)return toast('Add a project name');S.me.port.push({t,d});keepMe()}
+function saveMe(){
+ readMe();const d=S.me;if($('#me_skill').value.trim()){meSkill($('#me_skill').value);readMe()}
+ if(!d.name||!d.title)return toast('Add your name and title');if(!d.skills.length)return toast('Add at least one skill');if(!(d.rate>0))return toast('Add your hourly rate');
+ const clean={name:d.name,title:d.title,skills:d.skills,rate:d.rate,years:Math.max(0,d.years||0),hpw:d.hpw||0,loc:d.loc,bio:d.bio||d.title,available:d.available,port:d.port,emp:d.emp||[],edu:d.edu||[],cert:d.cert||[],lang:d.lang||[]};
+ if(d.isNew){const f={id:++D.seq,rating:null,jobs:0,jss:null,connects:40,...clean};D.fl.push(f);D.ui.fid=f.id;D.ui.role='freelancer';toast('Profile created. Here are your matches.')}
+ else{Object.assign(fl(D.ui.fid),clean);toast('Profile saved. Match scores updated.')}
+ save();S.me=null;go('#/dashboard');
+}
+
+/* ============ CHAT ============ */
+function vChat(key){
+ const ts=myThreads(),t=key?D.th[key]:null,s=side();
+ if(t&&!ts.includes(t))return notFound('Conversation not found for this view. Switch roles to see it.');
+ if(t){t.read[s]=NOW();save();setTimeout(hdr,0)}
+ const other=t=>s==='c'?fl(t.fid).name:pj(t.pid).client.replace(' (you)','');
+ const lastText=t=>{const m=[...t.msgs].reverse().find(x=>x.f!=='s')||t.msgs[t.msgs.length-1];return m?(m.f===s?'You: ':'')+m.t:''};
+ return `<div class="wrap page"><h1 style="margin-bottom:14px">Messages</h1>
+ <div class="chat ${t?'has':''}"><div class="tlist">${ts.length?ts.map(x=>{const f=fl(x.fid),u=unread(x);return `<a class="titem ${x===t?'on':''}" href="#/chat/${tkey(x.pid,x.fid)}">${s==='c'?av(f,38):`<span class="av" style="width:38px;height:38px;background:#2b3a33;font-size:14px">${esc(pj(x.pid).client[0])}</span>`}<div class="tx"><div class="row between" style="flex-wrap:nowrap"><b class="sm">${esc(other(x))}</b><span class="xs mute">${ago(lastTs(x))}</span></div><div class="xs mute" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(pj(x.pid).title)}</div><div class="last">${esc(lastText(x))}</div></div>${u?'<span class="dot" aria-label="unread"></span>':''}</a>`}).join(''):`<div class="empty sm">No conversations yet.<br>${s==='c'?'Invite a freelancer from your matches to start one.':'Threads open when a client invites you or you send a proposal.'}</div>`}</div>
+ <div class="conv">${t?convo(t,s):'<div class="empty" style="margin:auto"><h3>Select a conversation</h3><p>One thread per project and freelancer.</p></div>'}</div></div></div>`;
+}
+function convo(t,s){
+ const f=fl(t.fid),p=pj(t.pid),m=score(f,p),pr=propOf(t.pid,t.fid),k=tkey(t.pid,t.fid);
+ return `<div class="conv-h"><button class="link chat-back" onclick="go('#/chat')" aria-label="Back to conversations">←</button>${s==='c'?av(f,36):''}<div class="grow" style="min-width:0"><b>${s==='c'?`<a href="#/profile/${f.id}" style="color:inherit">${esc(f.name)}</a>`:esc(p.client.replace(' (you)',''))}</b> <span class="mute sm">· <a href="${s==='c'?'#/matches/'+p.id:'#/project/'+p.id}">${esc(p.title)}</a></span><div class="row xs" style="gap:6px;margin-top:2px">${spill(m.total)}${pr?`<span class="pill st-${pr.status}">Proposal ${pr.status}</span>`:''}</div></div>
+ ${s==='c'&&pr?`<button class="btn ghost sm" onclick="go('#/proposals/${p.id}')">Compare</button>`:''}${s==='f'&&!pr&&p.status==='open'?`<button class="btn sm" onclick="go('#/project/${p.id}');setTimeout(()=>openPropose('${p.id}'),50)">Send proposal</button>`:''}</div>
+ <div class="msgs">${t.msgs.map(x=>x.f==='s'?`<div class="msg sys">${esc(x.t)} · ${hhmm(x.ts)}</div>`:`<div class="msg ${x.f===s?'me':'them'}">${esc(x.t)}<time>${hhmm(x.ts)}</time></div>`).join('')}${S.typing[k]&&S.typing[k]!==s?`<div class="typing">${esc(s==='c'?f.name:p.client.replace(' (you)',''))} is typing…</div>`:''}</div>
+ <form class="composer" onsubmit="event.preventDefault();sendMsg('${k}')"><textarea id="cmp" rows="1" placeholder="Write a message…" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMsg('${k}')}" aria-label="Message"></textarea><button class="btn">Send</button></form>`;
+}
+function sendMsg(k){
+ const el=$('#cmp'),v=el.value.trim();if(!v)return;
+ const t=D.th[k],s=side();t.msgs.push({f:s,t:v,ts:NOW()});t.read[s]=NOW();save();el.value='';
+ render();$('#cmp')?.focus();autoReply(k,s);
+}
+// Demo-only: the other side replies once per thread so a conversation can be shown solo
+function autoReply(k,from){
+ const t=D.th[k],to=from==='c'?'f':'c';if(t.auto[to])return;t.auto[to]=true;save();
+ const f=fl(t.fid),p=pj(t.pid),m=score(f,p);
+ setTimeout(()=>{S.typing[k]=to;if(route().id===k)soft()},700);
+ setTimeout(()=>{
+  delete S.typing[k];
+  const txt=to==='f'?`Thanks for reaching out! “${p.title}” looks like a great fit. I've worked with ${andList(m.matched)}${m.port?` and built “${m.port.t}”`:''}. I'll send a proposal with a timeline today. Any must-have features for the first version?`
+   :`Thanks ${f.name.split(' ')[0]}! Appreciate the quick reply. Could you share a rough plan for the first two weeks and how you'd handle ${m.missing.length?andList(m.missing):'testing and launch'}?`;
+  t.msgs.push({f:to,t:txt,ts:NOW()});save();
+  const viewing=route().r==='chat'&&route().id===k&&side()===from;
+  soft();if(!viewing)toast('New message from '+(to==='f'?f.name:p.client.replace(' (you)','')));
+ },2400);
+}
+function notFound(msg){return `<div class="wrap page"><div class="card empty"><h3>${esc(msg)}</h3><button class="btn" onclick="go('#/')">Go home</button></div></div>`}
+
+/* ============ boot ============ */
+load();
+window.addEventListener('hashchange',render);
+render();
+</script>
+</body>
+</html>
