@@ -924,20 +924,25 @@ _STATE_TABLES = {
 }
 
 
+# A permanent pool: its threads (and each thread's open Supabase connection, see app/db.py)
+# are reused across requests, so loads don't pay for new secure connections every time.
+# Sized to load every table at once.
+from concurrent.futures import ThreadPoolExecutor as _Pool
+
+_STATE_POOL = _Pool(max_workers=len(_STATE_TABLES), thread_name_prefix="gw-state")
+
+
+def _load_table(item):
+    table, order = item
+    # db() inside the worker: each thread has its own connection (see app/db.py)
+    return table, db().table(table).select("*").order(order).execute().data or []
+
+
 @app.get("/demo/state", tags=["demo"])
 def demo_state():
     """Everything the frontend needs to draw every screen, loaded in parallel."""
-    from concurrent.futures import ThreadPoolExecutor
-
     db()  # fail fast with a clear message if not configured
-
-    def load(item):
-        table, order = item
-        # db() inside the worker: each thread gets its own connection (see app/db.py)
-        return table, db().table(table).select("*").order(order).execute().data or []
-
-    with ThreadPoolExecutor(max_workers=8) as pool:
-        data = dict(pool.map(load, _STATE_TABLES.items()))
+    data = dict(_STATE_POOL.map(_load_table, _STATE_TABLES.items()))
     data["me"] = next((c for c in data["clients"] if c.get("is_demo_user")), None)
     if not data["me"]:
         raise HTTPException(500, "No demo client found. Run the seed script: python -m seed.seed")
