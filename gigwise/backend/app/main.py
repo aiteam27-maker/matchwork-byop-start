@@ -8,6 +8,8 @@ actions take a freelancer_id.
 """
 from __future__ import annotations
 
+import time
+from concurrent.futures import ThreadPoolExecutor
 from datetime import date, datetime, timezone
 from typing import Any, Dict, List, Literal, Optional
 
@@ -58,11 +60,36 @@ def one(table: str, id_: str, what: str) -> Dict[str, Any]:
     return r[0]
 
 
+# One shared pool of workers. Each worker keeps its own open Supabase connection (see app/db.py),
+# so independent database calls can run at the same time instead of one after another.
+_POOL = ThreadPoolExecutor(max_workers=24, thread_name_prefix="gw-db")
+
+
+def parallel(*calls):
+    """Run independent database calls at the same time and return their results in order.
+    If one fails, its error is raised (the first failing call in the list wins).
+    Don't call parallel() from inside a call passed to parallel()."""
+    futures = [_POOL.submit(c) for c in calls]
+    return [f.result() for f in futures]
+
+
+_DEMO = {"client": None, "at": 0.0}
+
+
 def demo_client() -> Dict[str, Any]:
-    r = rows(db().table("clients").select("*").eq("is_demo_user", True).limit(1))
-    if not r:
-        raise HTTPException(500, "No demo client found. Run the seed script: python -m seed.seed")
-    return r[0]
+    """The client you act as until real login exists. Cached for 60 seconds: it's looked up
+    on almost every action and almost never changes, so this saves a database round trip."""
+    now = time.time()
+    if _DEMO["client"] is None or now - _DEMO["at"] > 60:
+        r = rows(db().table("clients").select("*").eq("is_demo_user", True).limit(1))
+        if not r:
+            raise HTTPException(500, "No demo client found. Run the seed script: python -m seed.seed")
+        _DEMO.update(client=r[0], at=now)
+    return _DEMO["client"]
+
+
+def forget_demo_client() -> None:
+    _DEMO["client"] = None
 
 
 def all_freelancers() -> List[Dict[str, Any]]:
@@ -74,8 +101,8 @@ def with_badges(f: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def own_project(project_id: str) -> Dict[str, Any]:
-    p = one("projects", project_id, "Project")
-    if p["client_id"] != demo_client()["id"]:
+    p, client = parallel(lambda: one("projects", project_id, "Project"), demo_client)
+    if p["client_id"] != client["id"]:
         raise HTTPException(403, "This project belongs to another client")
     return p
 
@@ -103,6 +130,12 @@ def ensure_thread(project_id: str, freelancer_id: str) -> Dict[str, Any]:
 
 def post_message(thread_id: str, sender: str, body: str) -> Dict[str, Any]:
     return rows(db().table("messages").insert({"thread_id": thread_id, "sender": sender, "body": body}))[0]
+
+
+def thread_note(project_id: str, freelancer_id: str, *messages, thread: Optional[Dict[str, Any]] = None):
+    """Find or open the chat thread, then post messages in order. Returns (thread, [messages])."""
+    t = thread or ensure_thread(project_id, freelancer_id)
+    return t, [post_message(t["id"], sender, body) for sender, body in messages]
 
 
 def pending_offer_for(proposal_id: str) -> bool:
@@ -271,7 +304,7 @@ def get_project(project_id: str):
 @app.post("/projects", status_code=201, tags=["projects"])
 def create_project(body: ProjectIn):
     """Post a project as the demo client. Returns the project and its ranked matches."""
-    freelancers = all_freelancers()
+    client, freelancers = parallel(demo_client, all_freelancers)
     if body.type == "fixed":
         if not body.budget:
             raise HTTPException(422, "Fixed-price projects need a budget")
@@ -289,7 +322,7 @@ def create_project(body: ProjectIn):
         if not skills:
             raise HTTPException(422, "Couldn't detect skills from the description. Add at least one skill.")
     row = {
-        "client_id": demo_client()["id"], "title": body.title.strip(), "description": body.description.strip(),
+        "client_id": client["id"], "title": body.title.strip(), "description": body.description.strip(),
         "skills": skills, "skills_auto": auto, "type": body.type, "budget": budget,
         "rate_min": body.rate_min if body.type == "hourly" else None,
         "rate_max": body.rate_max if body.type == "hourly" else None,
@@ -311,18 +344,23 @@ def matches_for_project(project_id: str):
 
 @app.post("/projects/{project_id}/invites", status_code=201, tags=["projects"])
 def invite(project_id: str, body: InviteIn):
-    p = own_project(project_id)
+    p, client, f = parallel(lambda: one("projects", project_id, "Project"), demo_client,
+                            lambda: one("freelancers", body.freelancer_id, "Freelancer"))
+    if p["client_id"] != client["id"]:
+        raise HTTPException(403, "This project belongs to another client")
     if p["status"] != "open":
         raise HTTPException(409, "This project is no longer open")
-    f = one("freelancers", body.freelancer_id, "Freelancer")
-    client = demo_client()
-    t = ensure_thread(p["id"], f["id"])
-    post_message(t["id"], "system", f"{client['name']} invited {f['name']} to this project")
-    msg = post_message(t["id"], "client", body.message.strip())
-    # Read markers use database timestamps, so clock differences can't hide new messages.
-    db().table("threads").update({"invited": True, "client_read_at": msg["created_at"]}).eq("id", t["id"]).execute()
-    notify("freelancer", f["id"], f"{client['name']} invited you to “{p['title']}”", f"#/project/{p['id']}")
-    log_event("invite", p, f)
+
+    def chat():
+        t, (_, msg) = thread_note(p["id"], f["id"], ("system", f"{client['name']} invited {f['name']} to this project"),
+                                  ("client", body.message.strip()))
+        # Read markers use database timestamps, so clock differences can't hide new messages.
+        db().table("threads").update({"invited": True, "client_read_at": msg["created_at"]}).eq("id", t["id"]).execute()
+        return t
+
+    t, _, _ = parallel(chat,
+                       lambda: notify("freelancer", f["id"], f"{client['name']} invited you to “{p['title']}”", f"#/project/{p['id']}"),
+                       lambda: log_event("invite", p, f))
     return {"thread_id": t["id"]}
 
 
@@ -341,31 +379,34 @@ def list_proposals(project_id: str):
 
 @app.post("/projects/{project_id}/proposals", status_code=201, tags=["proposals"])
 def submit_proposal(project_id: str, body: ProposalIn):
-    p = one("projects", project_id, "Project")
-    f = one("freelancers", body.freelancer_id, "Freelancer")
+    p, f, already, thread = parallel(
+        lambda: one("projects", project_id, "Project"),
+        lambda: one("freelancers", body.freelancer_id, "Freelancer"),
+        lambda: rows(db().table("proposals").select("id").eq("project_id", project_id).eq("freelancer_id", body.freelancer_id)),
+        lambda: rows(db().table("threads").select("*").eq("project_id", project_id).eq("freelancer_id", body.freelancer_id)),
+    )
     if p["status"] != "open":
         raise HTTPException(409, "This project is no longer open")
-    if rows(db().table("proposals").select("id").eq("project_id", p["id"]).eq("freelancer_id", f["id"])):
+    if already:
         raise HTTPException(409, "You already applied to this project")
     answers = [a.strip() for a in body.answers]
     if len(answers) != len(p["questions"]) or any(not a for a in answers):
         raise HTTPException(422, f"Answer all {len(p['questions'])} screening question(s)")
-    thread = rows(db().table("threads").select("*").eq("project_id", p["id"]).eq("freelancer_id", f["id"]))
     invited = bool(thread and thread[0]["invited"])
     cost = 0 if invited else matching.connects_cost(p)
     if f["connects"] < cost:
         raise HTTPException(402, f"Not enough Connects: this costs {cost}, you have {f['connects']}")
-    if cost:
-        db().table("freelancers").update({"connects": f["connects"] - cost}).eq("id", f["id"]).execute()
-    q = rows(db().table("proposals").insert({
+    insert = lambda: rows(db().table("proposals").insert({
         "project_id": p["id"], "freelancer_id": f["id"], "cover_letter": body.cover_letter.strip(),
         "bid": body.bid, "days": body.days, "answers": answers,
         "links": [l.strip() for l in body.links if l.strip()], "connects_spent": cost,
     }))[0]
-    t = thread[0] if thread else ensure_thread(p["id"], f["id"])
-    post_message(t["id"], "system", f"{f['name']} submitted a proposal: {bid_text(body.bid, p)} · {body.days} days")
-    notify("client", p["client_id"], f"New proposal from {f['name']} on “{p['title']}”", f"#/proposals/{p['id']}")
-    log_event("proposal", p, f)
+    pay = lambda: db().table("freelancers").update({"connects": f["connects"] - cost}).eq("id", f["id"]).execute()
+    q = parallel(insert, *([pay] if cost else []))[0]
+    parallel(lambda: thread_note(p["id"], f["id"], ("system", f"{f['name']} submitted a proposal: {bid_text(body.bid, p)} · {body.days} days"),
+                                 thread=thread[0] if thread else None),
+             lambda: notify("client", p["client_id"], f"New proposal from {f['name']} on “{p['title']}”", f"#/proposals/{p['id']}"),
+             lambda: log_event("proposal", p, f))
     return {**q, "connects_left": f["connects"] - cost}
 
 
@@ -373,7 +414,9 @@ def _proposal_for(proposal_id: str, freelancer_id: Optional[str] = None):
     q = one("proposals", proposal_id, "Proposal")
     if freelancer_id is not None and q["freelancer_id"] != freelancer_id:
         raise HTTPException(403, "This proposal belongs to another freelancer")
-    return q, one("projects", q["project_id"], "Project"), one("freelancers", q["freelancer_id"], "Freelancer")
+    p, f = parallel(lambda: one("projects", q["project_id"], "Project"),
+                    lambda: one("freelancers", q["freelancer_id"], "Freelancer"))
+    return q, p, f
 
 
 @app.patch("/proposals/{proposal_id}", tags=["proposals"])
@@ -388,32 +431,35 @@ def edit_proposal(proposal_id: str, body: ProposalEdit):
         raise HTTPException(422, f"Answer all {len(p['questions'])} screening question(s)")
     changes["edited_at"] = now_iso()
     updated = rows(db().table("proposals").update(changes).eq("id", q["id"]))[0]
-    t = ensure_thread(p["id"], f["id"])
-    post_message(t["id"], "system", f"{f['name']} updated their proposal: {bid_text(updated['bid'], p)} · {updated['days']} days")
-    notify("client", p["client_id"], f"{f['name']} updated their proposal on “{p['title']}”", f"#/proposals/{p['id']}")
+    parallel(lambda: thread_note(p["id"], f["id"], ("system", f"{f['name']} updated their proposal: {bid_text(updated['bid'], p)} · {updated['days']} days")),
+             lambda: notify("client", p["client_id"], f"{f['name']} updated their proposal on “{p['title']}”", f"#/proposals/{p['id']}"))
     return updated
 
 
 def _set_status(proposal_id: str, status: str, by_client: bool, freelancer_id: Optional[str] = None):
     q, p, f = _proposal_for(proposal_id, freelancer_id)
-    if by_client:
-        own_project(p["id"])
+    client, me, has_offer = parallel(lambda: one("clients", p["client_id"], "Client"), demo_client,
+                                     lambda: pending_offer_for(q["id"]))
+    if by_client and p["client_id"] != me["id"]:
+        raise HTTPException(403, "This project belongs to another client")
     allowed_from = {"shortlisted": ("submitted",), "declined": ("submitted", "shortlisted"),
                     "withdrawn": ("submitted", "shortlisted")}[status]
     if q["status"] not in allowed_from:
         raise HTTPException(409, f"Can't change a {q['status']} proposal to {status}")
-    if pending_offer_for(q["id"]):
+    if has_offer:
         raise HTTPException(409, "There's a pending offer on this proposal. Withdraw or answer it first.")
-    updated = rows(db().table("proposals").update({"status": status}).eq("id", q["id"]))[0]
-    t = ensure_thread(p["id"], f["id"])
-    client = one("clients", p["client_id"], "Client")
+    update = lambda: rows(db().table("proposals").update({"status": status}).eq("id", q["id"]))[0]
     if status == "withdrawn":
-        post_message(t["id"], "system", f"{f['name']} withdrew their proposal")
-        notify("client", p["client_id"], f"{f['name']} withdrew their proposal on “{p['title']}”", f"#/proposals/{p['id']}")
+        updated, _, _ = parallel(
+            update,
+            lambda: thread_note(p["id"], f["id"], ("system", f"{f['name']} withdrew their proposal")),
+            lambda: notify("client", p["client_id"], f"{f['name']} withdrew their proposal on “{p['title']}”", f"#/proposals/{p['id']}"))
     else:
-        post_message(t["id"], "system", f"{client['name']} {status} {f['name']}'s proposal")
-        notify("freelancer", f["id"], f"Your proposal for “{p['title']}” was {status}", f"#/project/{p['id']}")
-        log_event("shortlist" if status == "shortlisted" else "decline", p, f)
+        updated, _, _, _ = parallel(
+            update,
+            lambda: thread_note(p["id"], f["id"], ("system", f"{client['name']} {status} {f['name']}'s proposal")),
+            lambda: notify("freelancer", f["id"], f"Your proposal for “{p['title']}” was {status}", f"#/project/{p['id']}"),
+            lambda: log_event("shortlist" if status == "shortlisted" else "decline", p, f))
     return updated
 
 
@@ -561,12 +607,15 @@ def check_role(role: str, project: Dict[str, Any], contract_or_offer: Dict[str, 
 def send_offer(proposal_id: str, body: OfferIn):
     """Client sends an offer on a proposal. One pending offer per project at a time."""
     q, p, f = _proposal_for(proposal_id)
-    own_project(p["id"])
+    client, pending = parallel(demo_client,
+                               lambda: rows(db().table("offers").select("id").eq("project_id", p["id"]).eq("status", "pending")))
+    if p["client_id"] != client["id"]:
+        raise HTTPException(403, "This project belongs to another client")
     if p["status"] != "open":
         raise HTTPException(409, "This project is no longer open")
     if q["status"] not in ("submitted", "shortlisted"):
         raise HTTPException(409, f"Can't send an offer on a {q['status']} proposal")
-    if rows(db().table("offers").select("id").eq("project_id", p["id"]).eq("status", "pending")):
+    if pending:
         raise HTTPException(409, "You already have an offer out on this project")
     if p["type"] == "hourly":
         if not body.rate or not body.weekly_limit:
@@ -581,13 +630,10 @@ def send_offer(proposal_id: str, body: OfferIn):
         "project_id": p["id"], "freelancer_id": f["id"], "proposal_id": q["id"], "type": p["type"],
         "message": body.message.strip(), **terms,
     }))[0]
-    client = demo_client()
-    t = ensure_thread(p["id"], f["id"])
-    post_message(t["id"], "system", f"{client['name']} sent an offer: {offer_terms(o)}")
-    if o["message"]:
-        post_message(t["id"], "client", o["message"])
-    notify("freelancer", f["id"], f"{client['name']} sent you an offer for “{p['title']}”", f"#/offer/{o['id']}")
-    log_event("offer", p, f)
+    msgs = [("system", f"{client['name']} sent an offer: {offer_terms(o)}")] + ([("client", o["message"])] if o["message"] else [])
+    parallel(lambda: thread_note(p["id"], f["id"], *msgs),
+             lambda: notify("freelancer", f["id"], f"{client['name']} sent you an offer for “{p['title']}”", f"#/offer/{o['id']}"),
+             lambda: log_event("offer", p, f))
     return o
 
 
@@ -618,7 +664,9 @@ def _pending_offer(offer_id: str):
     o = one("offers", offer_id, "Offer")
     if o["status"] != "pending":
         raise HTTPException(409, f"This offer was already {o['status']}")
-    return o, one("projects", o["project_id"], "Project"), one("freelancers", o["freelancer_id"], "Freelancer")
+    p, f = parallel(lambda: one("projects", o["project_id"], "Project"),
+                    lambda: one("freelancers", o["freelancer_id"], "Freelancer"))
+    return o, p, f
 
 
 @app.post("/offers/{offer_id}/accept", status_code=201, tags=["offers"])
@@ -628,26 +676,35 @@ def accept_offer(offer_id: str, body: FreelancerAction):
     check_role("freelancer", p, o, body.freelancer_id)
     if p["status"] != "open":
         raise HTTPException(409, "This project is no longer open")
-    db().table("offers").update({"status": "accepted"}).eq("id", o["id"]).execute()
+
+    def count_hire():
+        client = one("clients", p["client_id"], "Client")
+        db().table("clients").update({"hires": int(client["hires"] or 0) + 1}).eq("id", client["id"]).execute()
+
+    updates = [
+        lambda: rows(db().table("contracts").insert({
+            "project_id": p["id"], "freelancer_id": f["id"], "offer_id": o["id"], "type": o["type"],
+            "rate": o.get("rate"), "weekly_limit": o.get("weekly_limit"),
+        }))[0],
+        lambda: db().table("offers").update({"status": "accepted"}).eq("id", o["id"]).execute(),
+        lambda: db().table("projects").update({"status": "hired", "hired_freelancer_id": f["id"]}).eq("id", p["id"]).execute(),
+        count_hire,
+    ]
     if o.get("proposal_id"):
-        db().table("proposals").update({"status": "accepted"}).eq("id", o["proposal_id"]).execute()
-    db().table("projects").update({"status": "hired", "hired_freelancer_id": f["id"]}).eq("id", p["id"]).execute()
-    client = one("clients", p["client_id"], "Client")
-    db().table("clients").update({"hires": int(client["hires"] or 0) + 1}).eq("id", client["id"]).execute()
-    c = rows(db().table("contracts").insert({
-        "project_id": p["id"], "freelancer_id": f["id"], "offer_id": o["id"], "type": o["type"],
-        "rate": o.get("rate"), "weekly_limit": o.get("weekly_limit"),
-    }))[0]
+        updates.append(lambda: db().table("proposals").update({"status": "accepted"}).eq("id", o["proposal_id"]).execute())
+    c = parallel(*updates)[0]
+    after = [
+        lambda: thread_note(p["id"], f["id"], ("system", f"🎉 {f['name']} accepted the offer. Contract started.")),
+        lambda: notify("client", p["client_id"], f"{f['name']} accepted your offer for “{p['title']}”", f"#/contract/{c['id']}"),
+        lambda: log_event("hire", p, f),
+    ]
     if o["milestones"]:
-        db().table("milestones").insert([
+        after.append(lambda: db().table("milestones").insert([
             {"contract_id": c["id"], "position": i + 1, "title": m["title"], "amount": m["amount"],
              "due_date": m["due_date"], "status": "active" if i == 0 else "pending"}
             for i, m in enumerate(o["milestones"])
-        ]).execute()
-    t = ensure_thread(p["id"], f["id"])
-    post_message(t["id"], "system", f"🎉 {f['name']} accepted the offer. Contract started.")
-    notify("client", p["client_id"], f"{f['name']} accepted your offer for “{p['title']}”", f"#/contract/{c['id']}")
-    log_event("hire", p, f)
+        ]).execute())
+    parallel(*after)
     return get_contract(c["id"])
 
 
@@ -655,10 +712,11 @@ def accept_offer(offer_id: str, body: FreelancerAction):
 def decline_offer(offer_id: str, body: FreelancerAction):
     o, p, f = _pending_offer(offer_id)
     check_role("freelancer", p, o, body.freelancer_id)
-    updated = rows(db().table("offers").update({"status": "declined"}).eq("id", o["id"]))[0]
-    post_message(ensure_thread(p["id"], f["id"])["id"], "system", f"{f['name']} declined the offer")
-    notify("client", p["client_id"], f"{f['name']} declined your offer for “{p['title']}”", f"#/proposals/{p['id']}")
-    log_event("offer_declined", p, f)
+    updated = parallel(
+        lambda: rows(db().table("offers").update({"status": "declined"}).eq("id", o["id"]))[0],
+        lambda: thread_note(p["id"], f["id"], ("system", f"{f['name']} declined the offer")),
+        lambda: notify("client", p["client_id"], f"{f['name']} declined your offer for “{p['title']}”", f"#/proposals/{p['id']}"),
+        lambda: log_event("offer_declined", p, f))[0]
     return updated
 
 
@@ -666,10 +724,11 @@ def decline_offer(offer_id: str, body: FreelancerAction):
 def withdraw_offer(offer_id: str):
     o, p, f = _pending_offer(offer_id)
     check_role("client", p, o, None)
-    updated = rows(db().table("offers").update({"status": "withdrawn"}).eq("id", o["id"]))[0]
     client = demo_client()
-    post_message(ensure_thread(p["id"], f["id"])["id"], "system", f"{client['name']} withdrew the offer")
-    notify("freelancer", f["id"], f"{client['name']} withdrew their offer for “{p['title']}”", f"#/project/{p['id']}")
+    updated = parallel(
+        lambda: rows(db().table("offers").update({"status": "withdrawn"}).eq("id", o["id"]))[0],
+        lambda: thread_note(p["id"], f["id"], ("system", f"{client['name']} withdrew the offer")),
+        lambda: notify("freelancer", f["id"], f"{client['name']} withdrew their offer for “{p['title']}”", f"#/project/{p['id']}"))[0]
     return updated
 
 
@@ -701,24 +760,26 @@ def list_contracts(role: Literal["client", "freelancer"], freelancer_id: Optiona
 
 @app.get("/contracts/{contract_id}", tags=["contracts"])
 def get_contract(contract_id: str):
-    r = rows(db().table("contracts").select("*, projects(title, client_id, clients(name)), freelancers(name)")
-             .eq("id", contract_id))
+    r, ms, rv = parallel(
+        lambda: rows(db().table("contracts").select("*, projects(title, client_id, clients(name)), freelancers(name)")
+                     .eq("id", contract_id)),
+        lambda: rows(db().table("milestones").select("*").eq("contract_id", contract_id).order("position")),
+        lambda: rows(db().table("reviews").select("*").eq("contract_id", contract_id)))
     if not r:
         raise HTTPException(404, "Contract not found")
-    c = r[0]
-    c["milestones"] = rows(db().table("milestones").select("*").eq("contract_id", contract_id).order("position"))
-    c["reviews"] = rows(db().table("reviews").select("*").eq("contract_id", contract_id))
-    return c
+    return {**r[0], "milestones": ms, "reviews": rv}
 
 
 def _milestone(contract_id: str, position: int):
-    c = one("contracts", contract_id, "Contract")
+    c, r = parallel(lambda: one("contracts", contract_id, "Contract"),
+                    lambda: rows(db().table("milestones").select("*").eq("contract_id", contract_id).eq("position", position)))
     if c["status"] != "active":
         raise HTTPException(409, "This contract has ended")
-    r = rows(db().table("milestones").select("*").eq("contract_id", contract_id).eq("position", position))
     if not r:
         raise HTTPException(404, "Milestone not found")
-    return c, r[0], one("projects", c["project_id"], "Project"), one("freelancers", c["freelancer_id"], "Freelancer")
+    p, f = parallel(lambda: one("projects", c["project_id"], "Project"),
+                    lambda: one("freelancers", c["freelancer_id"], "Freelancer"))
+    return c, r[0], p, f
 
 
 @app.post("/contracts/{contract_id}/milestones/{position}/submit", tags=["contracts"])
@@ -727,11 +788,12 @@ def submit_milestone(contract_id: str, position: int, body: SubmitWorkIn):
     check_role("freelancer", p, c, body.freelancer_id)
     if m["status"] != "active":
         raise HTTPException(409, f"Only the active milestone can be submitted (this one is {m['status']})")
-    updated = rows(db().table("milestones").update({
-        "status": "submitted", "note": body.note.strip(), "link": body.link.strip() or None, "changes_requested": None,
-    }).eq("id", m["id"]))[0]
-    post_message(ensure_thread(p["id"], f["id"])["id"], "system", f"{f['name']} submitted “{m['title']}” for review")
-    notify("client", p["client_id"], f"{f['name']} submitted “{m['title']}” for your review", f"#/contract/{c['id']}")
+    updated = parallel(
+        lambda: rows(db().table("milestones").update({
+            "status": "submitted", "note": body.note.strip(), "link": body.link.strip() or None, "changes_requested": None,
+        }).eq("id", m["id"]))[0],
+        lambda: thread_note(p["id"], f["id"], ("system", f"{f['name']} submitted “{m['title']}” for review")),
+        lambda: notify("client", p["client_id"], f"{f['name']} submitted “{m['title']}” for your review", f"#/contract/{c['id']}"))[0]
     return updated
 
 
@@ -741,16 +803,20 @@ def approve_milestone(contract_id: str, position: int):
     check_role("client", p, c, None)
     if m["status"] != "submitted":
         raise HTTPException(409, "Only submitted work can be approved")
-    db().table("milestones").update({"status": "approved"}).eq("id", m["id"]).execute()
-    nxt = rows(db().table("milestones").select("*").eq("contract_id", contract_id).eq("status", "pending")
-               .order("position").limit(1))
-    if nxt:
-        db().table("milestones").update({"status": "active"}).eq("id", nxt[0]["id"]).execute()
     client = demo_client()
-    post_message(ensure_thread(p["id"], f["id"])["id"], "system", f"{client['name']} approved “{m['title']}”")
-    notify("freelancer", f["id"],
-           f"{client['name']} approved “{m['title']}”" + (f". Next up: “{nxt[0]['title']}”" if nxt else ""),
-           f"#/contract/{c['id']}")
+    _, nxt = parallel(
+        lambda: db().table("milestones").update({"status": "approved"}).eq("id", m["id"]).execute(),
+        lambda: rows(db().table("milestones").select("*").eq("contract_id", contract_id).eq("status", "pending")
+                     .order("position").limit(1)))
+    after = [
+        lambda: thread_note(p["id"], f["id"], ("system", f"{client['name']} approved “{m['title']}”")),
+        lambda: notify("freelancer", f["id"],
+                       f"{client['name']} approved “{m['title']}”" + (f". Next up: “{nxt[0]['title']}”" if nxt else ""),
+                       f"#/contract/{c['id']}"),
+    ]
+    if nxt:
+        after.append(lambda: db().table("milestones").update({"status": "active"}).eq("id", nxt[0]["id"]).execute())
+    parallel(*after)
     return get_contract(contract_id)
 
 
@@ -760,11 +826,12 @@ def request_changes(contract_id: str, position: int, body: ChangesIn):
     check_role("client", p, c, None)
     if m["status"] != "submitted":
         raise HTTPException(409, "You can only request changes on submitted work")
-    updated = rows(db().table("milestones").update({"status": "active", "changes_requested": body.note.strip()})
-                   .eq("id", m["id"]))[0]
     client = demo_client()
-    post_message(ensure_thread(p["id"], f["id"])["id"], "system", f"{client['name']} requested changes on “{m['title']}”")
-    notify("freelancer", f["id"], f"{client['name']} requested changes on “{m['title']}”", f"#/contract/{c['id']}")
+    updated = parallel(
+        lambda: rows(db().table("milestones").update({"status": "active", "changes_requested": body.note.strip()})
+                     .eq("id", m["id"]))[0],
+        lambda: thread_note(p["id"], f["id"], ("system", f"{client['name']} requested changes on “{m['title']}”")),
+        lambda: notify("freelancer", f["id"], f"{client['name']} requested changes on “{m['title']}”", f"#/contract/{c['id']}"))[0]
     return updated
 
 
@@ -772,19 +839,19 @@ def request_changes(contract_id: str, position: int, body: ChangesIn):
 def end_contract(contract_id: str, body: EndIn):
     """Either side can end an active contract. Both are then asked for feedback."""
     c = one("contracts", contract_id, "Contract")
-    p, f = one("projects", c["project_id"], "Project"), one("freelancers", c["freelancer_id"], "Freelancer")
+    p, f = parallel(lambda: one("projects", c["project_id"], "Project"),
+                    lambda: one("freelancers", c["freelancer_id"], "Freelancer"))
     check_role(body.role, p, c, body.freelancer_id)
     if c["status"] != "active":
         raise HTTPException(409, "This contract has already ended")
-    db().table("contracts").update({"status": "ended", "ended_at": now_iso()}).eq("id", c["id"]).execute()
-    db().table("projects").update({"status": "ended"}).eq("id", p["id"]).execute()
-    client = one("clients", p["client_id"], "Client")
-    who = client["name"] if body.role == "client" else f["name"]
-    post_message(ensure_thread(p["id"], f["id"])["id"], "system", f"{who} ended the contract")
-    if body.role == "client":
-        notify("freelancer", f["id"], f"{who} ended the contract for “{p['title']}”. Leave feedback.", f"#/contract/{c['id']}")
-    else:
-        notify("client", p["client_id"], f"{who} ended the contract for “{p['title']}”. Leave feedback.", f"#/contract/{c['id']}")
+    client = one("clients", p["client_id"], "Client") if body.role == "client" else None
+    who = client["name"] if client else f["name"]
+    message = f"{who} ended the contract for “{p['title']}”. Leave feedback."
+    parallel(lambda: db().table("contracts").update({"status": "ended", "ended_at": now_iso()}).eq("id", c["id"]).execute(),
+             lambda: db().table("projects").update({"status": "ended"}).eq("id", p["id"]).execute(),
+             lambda: thread_note(p["id"], f["id"], ("system", f"{who} ended the contract")),
+             lambda: (notify("freelancer", f["id"], message, f"#/contract/{c['id']}") if body.role == "client"
+                      else notify("client", p["client_id"], message, f"#/contract/{c['id']}")))
     return get_contract(contract_id)
 
 
@@ -792,31 +859,35 @@ def end_contract(contract_id: str, body: EndIn):
 def leave_review(contract_id: str, body: ReviewIn):
     """Two-way feedback after a contract ends. A client's rating updates the freelancer's rating
     and Job Success, which feeds the Ratings signal (7%) of future match scores."""
-    c = one("contracts", contract_id, "Contract")
-    p, f = one("projects", c["project_id"], "Project"), one("freelancers", c["freelancer_id"], "Freelancer")
+    direction = "client_to_freelancer" if body.role == "client" else "freelancer_to_client"
+    c, existing = parallel(lambda: one("contracts", contract_id, "Contract"),
+                           lambda: rows(db().table("reviews").select("id").eq("contract_id", contract_id).eq("direction", direction)))
+    p, f = parallel(lambda: one("projects", c["project_id"], "Project"),
+                    lambda: one("freelancers", c["freelancer_id"], "Freelancer"))
     check_role(body.role, p, c, body.freelancer_id)
     if c["status"] != "ended":
         raise HTTPException(409, "Feedback opens once the contract has ended")
-    direction = "client_to_freelancer" if body.role == "client" else "freelancer_to_client"
-    if rows(db().table("reviews").select("id").eq("contract_id", c["id"]).eq("direction", direction)):
+    if existing:
         raise HTTPException(409, "You already left feedback on this contract")
-    review = rows(db().table("reviews").insert({
-        "contract_id": c["id"], "direction": direction, "rating": body.rating, "body": body.body.strip(),
-    }))[0]
-    client = one("clients", p["client_id"], "Client")
+    review, client = parallel(
+        lambda: rows(db().table("reviews").insert({
+            "contract_id": c["id"], "direction": direction, "rating": body.rating, "body": body.body.strip(),
+        }))[0],
+        lambda: one("clients", p["client_id"], "Client"))
     r = body.rating
     if body.role == "client":
         n, old = int(f["jobs"] or 0), f.get("rating")
         new_rating = js_round1((float(old) * n + r) / (n + 1)) if old else float(r)
         new_jss = matching.js_round(((f.get("jss") or 100) * n + (100 if r >= 4 else r * 20)) / (n + 1))
-        db().table("freelancers").update({"rating": new_rating, "jobs": n + 1, "jss": new_jss}).eq("id", f["id"]).execute()
-        notify("freelancer", f["id"], f"{client['name']} left you {r}★ feedback", f"#/contract/{c['id']}")
-        log_event("review", p, f)
+        parallel(lambda: db().table("freelancers").update({"rating": new_rating, "jobs": n + 1, "jss": new_jss}).eq("id", f["id"]).execute(),
+                 lambda: notify("freelancer", f["id"], f"{client['name']} left you {r}★ feedback", f"#/contract/{c['id']}"),
+                 lambda: log_event("review", p, f))
     else:
         n, old = int(client["hires"] or 1), client.get("rating")
         new_rating = js_round1((float(old) * n + r) / (n + 1)) if old else float(r)
-        db().table("clients").update({"rating": new_rating}).eq("id", client["id"]).execute()
-        notify("client", p["client_id"], f"{f['name']} left you {r}★ feedback", f"#/contract/{c['id']}")
+        parallel(lambda: db().table("clients").update({"rating": new_rating}).eq("id", client["id"]).execute(),
+                 lambda: notify("client", p["client_id"], f"{f['name']} left you {r}★ feedback", f"#/contract/{c['id']}"))
+        forget_demo_client()
     return review
 
 
@@ -927,9 +998,6 @@ _STATE_TABLES = {
 # A permanent pool: its threads (and each thread's open Supabase connection, see app/db.py)
 # are reused across requests, so loads don't pay for new secure connections every time.
 # Sized to load every table at once.
-from concurrent.futures import ThreadPoolExecutor as _Pool
-
-_STATE_POOL = _Pool(max_workers=len(_STATE_TABLES), thread_name_prefix="gw-state")
 
 
 def _load_table(item):
@@ -942,7 +1010,7 @@ def _load_table(item):
 def demo_state():
     """Everything the frontend needs to draw every screen, loaded in parallel."""
     db()  # fail fast with a clear message if not configured
-    data = dict(_STATE_POOL.map(_load_table, _STATE_TABLES.items()))
+    data = dict(_POOL.map(_load_table, _STATE_TABLES.items()))
     data["me"] = next((c for c in data["clients"] if c.get("is_demo_user")), None)
     if not data["me"]:
         raise HTTPException(500, "No demo client found. Run the seed script: python -m seed.seed")
@@ -958,7 +1026,9 @@ def demo_reset():
         raise HTTPException(403, "Demo reset is turned off on this server")
     from seed.seed import reset_demo
 
-    return {"ok": True, "rows": reset_demo(db(), log=lambda *_: None)}
+    counts = reset_demo(db(), log=lambda *_: None)
+    forget_demo_client()
+    return {"ok": True, "rows": counts}
 
 
 # Serve the frontend from this server too, so one command runs everything:
