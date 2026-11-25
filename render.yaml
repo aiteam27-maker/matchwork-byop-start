@@ -1,0 +1,23 @@
+# Render deployment for Gigwise: one web service that serves the app and the API.
+# Every change merged into main deploys automatically (about 2-5 minutes).
+# Secrets are NOT stored here: paste SUPABASE_SERVICE_ROLE_KEY in Render's dashboard when asked.
+services:
+  - type: web
+    name: gigwise
+    runtime: python
+    plan: free
+    branch: main
+    autoDeploy: true
+    rootDir: gigwise
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: cd backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: SUPABASE_URL
+        value: https://ivvzjyxakcppvzknizma.supabase.co
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false # Render asks you for this; it stays private in Render
+      - key: DEMO_RESET_ENABLED
+        value: "false" # so visitors can't wipe everyone's data

@@ -549,7 +549,7 @@ function hdr(){
  ${r==='freelancer'&&me?`<button class="who" onclick="pickFreelancer()" title="Switch freelancer">${av(me,26)}<span>${esc(me.name)}</span></button>`:''}`
  :`<button class="btn plain sm" onclick="roleSheet()">Log in</button><button class="btn sm" onclick="roleSheet()">Sign up</button>`}</div></div>`;
 }
-function ftr(){$('#ftr').innerHTML=`<div class="wrap row between"><span>${API.on?`<b style="color:var(--brand)">● Live data</b> · saved in Supabase · <button class="link" onclick="useOffline()">Use offline demo</button>`:`Offline demo · data is saved in this browser only${API.reachable?' · <button class="link" onclick="useLive()">Switch to live data</button>':''}`}</span><span class="row"><button class="link" onclick="howScroll()">How scoring works</button><button class="link" onclick="resetDemo()">Reset demo data</button></span></div>`}
+function ftr(){$('#ftr').innerHTML=`<div class="wrap row between"><span>${API.on?`<b style="color:var(--brand)">● Live data</b> · saved in Supabase · <button class="link" onclick="useOffline()">Use offline demo</button>`:`Offline demo · data is saved in this browser only${API.reachable?' · <button class="link" onclick="useLive()">Switch to live data</button>':''}`}</span><span class="row"><button class="link" onclick="howScroll()">How scoring works</button>${API.on&&!API.resetOk?'':'<button class="link" onclick="resetDemo()">Reset demo data</button>'}</span></div>`}
 function howScroll(){if(route().r!==''){go('#/');setTimeout(()=>$('#how')?.scrollIntoView(),60)}else $('#how')?.scrollIntoView()}
 
 /* ============ night / day mode ============ */
@@ -1315,7 +1315,7 @@ async function boot(){
  try{
   const ctl=new AbortController(),tm=setTimeout(()=>ctl.abort(),2500);
   const h=await fetch(API.base+'/health',{signal:ctl.signal}).then(r=>r.json());clearTimeout(tm);
-  API.reachable=!!(h&&h.ok);
+  API.reachable=!!(h&&h.ok);API.resetOk=h&&h.demo_reset!==false;
   if(API.reachable&&!forcedOffline){D=null;await API.sync();API.on=true}
  }catch(e){}
  if(!API.on)load();
