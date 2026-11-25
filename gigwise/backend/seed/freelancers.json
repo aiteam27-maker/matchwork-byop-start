@@ -1,0 +1,758 @@
+[
+ {
+  "id": "f01",
+  "name": "Maya R.",
+  "title": "Mobile + AI engineer",
+  "skills": [
+   "Flutter",
+   "Dart",
+   "LLM",
+   "Firebase",
+   "Node.js",
+   "UI Design"
+  ],
+  "rate": 48,
+  "years": 6,
+  "rating": 4.9,
+  "jobs": 31,
+  "jss": 98,
+  "available": true,
+  "hours_per_week": 30,
+  "location": "Lisbon, Portugal",
+  "bio": "Mobile engineer building Flutter apps with AI features: chat coaches, personalised plans and progress tracking. Shipped several health and fitness apps with Firebase backends and push reminders.",
+  "portfolio": [
+   {
+    "title": "Habit coach app",
+    "description": "Flutter app with an LLM chat coach, streaks and push reminders."
+   },
+   {
+    "title": "Run tracker",
+    "description": "GPS workout tracking with weekly progress charts and Firebase sync."
+   }
+  ],
+  "employment": [
+   {
+    "role": "Senior mobile engineer",
+    "company": "FitLab health app studio",
+    "from": "2022",
+    "to": "Present"
+   },
+   {
+    "role": "Mobile developer",
+    "company": "Freelance",
+    "from": "2020",
+    "to": "2022"
+   }
+  ],
+  "education": [
+   {
+    "school": "University of Lisbon",
+    "degree": "BSc Computer Science",
+    "year": "2019"
+   }
+  ],
+  "certifications": [
+   {
+    "name": "Associate Android Developer",
+    "issuer": "Google",
+    "year": "2021"
+   }
+  ],
+  "languages": [
+   {
+    "language": "English",
+    "level": "Fluent"
+   },
+   {
+    "language": "Portuguese",
+    "level": "Native"
+   }
+  ],
+  "connects": 40
+ },
+ {
+  "id": "f02",
+  "name": "Daniel K.",
+  "title": "Full-stack web developer",
+  "skills": [
+   "React",
+   "Node.js",
+   "PostgreSQL",
+   "TypeScript",
+   "REST API",
+   "Firebase"
+  ],
+  "rate": 55,
+  "years": 8,
+  "rating": 4.8,
+  "jobs": 52,
+  "jss": 95,
+  "available": true,
+  "hours_per_week": 35,
+  "location": "Toronto, Canada",
+  "bio": "Full-stack developer building SaaS dashboards, booking systems and APIs with React and Node. Clean code, clear updates, on-time delivery.",
+  "portfolio": [
+   {
+    "title": "Clinic booking platform",
+    "description": "React + Node booking system with payments and admin dashboard."
+   },
+   {
+    "title": "Analytics dashboard",
+    "description": "Realtime metrics dashboard on PostgreSQL."
+   }
+  ],
+  "employment": [
+   {
+    "role": "Full-stack developer",
+    "company": "Freelance",
+    "from": "2018",
+    "to": "Present"
+   },
+   {
+    "role": "Software engineer",
+    "company": "Shopwise",
+    "from": "2016",
+    "to": "2018"
+   }
+  ],
+  "education": [
+   {
+    "school": "University of Waterloo",
+    "degree": "BMath Computer Science",
+    "year": "2016"
+   }
+  ],
+  "certifications": [
+   {
+    "name": "AWS Certified Developer",
+    "issuer": "Amazon Web Services",
+    "year": "2022"
+   }
+  ],
+  "languages": [
+   {
+    "language": "English",
+    "level": "Native"
+   },
+   {
+    "language": "French",
+    "level": "Conversational"
+   }
+  ],
+  "connects": 40
+ },
+ {
+  "id": "f03",
+  "name": "Aisha B.",
+  "title": "AI / LLM engineer",
+  "skills": [
+   "Python",
+   "LLM",
+   "NLP",
+   "LangChain",
+   "Prompt Engineering"
+  ],
+  "rate": 70,
+  "years": 5,
+  "rating": 4.9,
+  "jobs": 19,
+  "jss": 100,
+  "available": true,
+  "hours_per_week": 25,
+  "location": "Nairobi, Kenya",
+  "bio": "Builds AI assistants, RAG search and chatbots with large language models. Focus on accurate, grounded answers and evaluation.",
+  "portfolio": [
+   {
+    "title": "Help-center RAG bot",
+    "description": "Chatbot answering support questions from 2,000 help articles."
+   },
+   {
+    "title": "Contract Q&A assistant",
+    "description": "LLM assistant for legal document search."
+   }
+  ],
+  "employment": [
+   {
+    "role": "ML engineer",
+    "company": "Freelance",
+    "from": "2021",
+    "to": "Present"
+   },
+   {
+    "role": "Data scientist",
+    "company": "Telecom analytics team",
+    "from": "2019",
+    "to": "2021"
+   }
+  ],
+  "education": [
+   {
+    "school": "University of Nairobi",
+    "degree": "MSc Artificial Intelligence",
+    "year": "2019"
+   }
+  ],
+  "certifications": [
+   {
+    "name": "Generative AI with LLMs",
+    "issuer": "DeepLearning.AI",
+    "year": "2023"
+   }
+  ],
+  "languages": [
+   {
+    "language": "English",
+    "level": "Fluent"
+   },
+   {
+    "language": "Swahili",
+    "level": "Native"
+   }
+  ],
+  "connects": 40
+ },
+ {
+  "id": "f04",
+  "name": "Tomás G.",
+  "title": "Product designer (UI/UX)",
+  "skills": [
+   "UI Design",
+   "Figma",
+   "UX Research",
+   "Prototyping",
+   "Branding"
+  ],
+  "rate": 40,
+  "years": 7,
+  "rating": 4.8,
+  "jobs": 64,
+  "jss": 97,
+  "available": true,
+  "hours_per_week": 30,
+  "location": "Buenos Aires, Argentina",
+  "bio": "Designs clean, motivating app interfaces from research to high-fidelity Figma prototypes. Mobile apps, onboarding flows and design systems.",
+  "portfolio": [
+   {
+    "title": "Meditation app redesign",
+    "description": "Onboarding and habit screens, +18% day-7 retention."
+   },
+   {
+    "title": "Fintech design system",
+    "description": "Component library in Figma."
+   }
+  ],
+  "employment": [
+   {
+    "role": "Product designer",
+    "company": "Freelance",
+    "from": "2019",
+    "to": "Present"
+   },
+   {
+    "role": "UI designer",
+    "company": "Fintech startup",
+    "from": "2017",
+    "to": "2019"
+   }
+  ],
+  "education": [
+   {
+    "school": "Universidad de Buenos Aires",
+    "degree": "BA Graphic Design",
+    "year": "2017"
+   }
+  ],
+  "certifications": [
+   {
+    "name": "Google UX Design Certificate",
+    "issuer": "Google",
+    "year": "2020"
+   }
+  ],
+  "languages": [
+   {
+    "language": "English",
+    "level": "Fluent"
+   },
+   {
+    "language": "Spanish",
+    "level": "Native"
+   }
+  ],
+  "connects": 40
+ },
+ {
+  "id": "f05",
+  "name": "Wei L.",
+  "title": "React Native developer",
+  "skills": [
+   "React Native",
+   "TypeScript",
+   "Firebase",
+   "Node.js",
+   "UI Design"
+  ],
+  "rate": 38,
+  "years": 4,
+  "rating": 4.7,
+  "jobs": 22,
+  "jss": 93,
+  "available": true,
+  "hours_per_week": 40,
+  "location": "Singapore",
+  "bio": "Cross-platform mobile apps with React Native and Firebase: auth, chat, notifications and in-app subscriptions.",
+  "portfolio": [
+   {
+    "title": "Meal planner app",
+    "description": "React Native app with recipes, shopping lists and reminders."
+   }
+  ],
+  "employment": [
+   {
+    "role": "React Native developer",
+    "company": "Freelance",
+    "from": "2022",
+    "to": "Present"
+   }
+  ],
+  "education": [],
+  "certifications": [],
+  "languages": [
+   {
+    "language": "English",
+    "level": "Fluent"
+   }
+  ],
+  "connects": 40
+ },
+ {
+  "id": "f06",
+  "name": "Sofia M.",
+  "title": "Flutter developer",
+  "skills": [
+   "Flutter",
+   "Dart",
+   "Firebase",
+   "UI Design"
+  ],
+  "rate": 32,
+  "years": 3,
+  "rating": 4.6,
+  "jobs": 11,
+  "jss": 91,
+  "available": true,
+  "hours_per_week": 30,
+  "location": "Kraków, Poland",
+  "bio": "Flutter developer focused on smooth, pixel-perfect mobile apps with Firebase auth and Firestore.",
+  "portfolio": [
+   {
+    "title": "Yoga class app",
+    "description": "Class schedule, bookings and reminders in Flutter."
+   }
+  ],
+  "employment": [
+   {
+    "role": "Flutter developer",
+    "company": "Freelance",
+    "from": "2023",
+    "to": "Present"
+   }
+  ],
+  "education": [],
+  "certifications": [],
+  "languages": [
+   {
+    "language": "English",
+    "level": "Fluent"
+   }
+  ],
+  "connects": 40
+ },
+ {
+  "id": "f07",
+  "name": "Kwame A.",
+  "title": "Backend & cloud engineer",
+  "skills": [
+   "Node.js",
+   "Python",
+   "PostgreSQL",
+   "AWS",
+   "Docker",
+   "REST API"
+  ],
+  "rate": 60,
+  "years": 9,
+  "rating": 4.9,
+  "jobs": 47,
+  "jss": 99,
+  "available": true,
+  "hours_per_week": 30,
+  "location": "Accra, Ghana",
+  "bio": "Designs scalable backends and APIs on AWS. User accounts, payments, background jobs and monitoring.",
+  "portfolio": [
+   {
+    "title": "Subscription billing API",
+    "description": "Node.js service handling 40k subscribers."
+   }
+  ],
+  "employment": [
+   {
+    "role": "Backend & cloud engineer",
+    "company": "Freelance",
+    "from": "2017",
+    "to": "Present"
+   }
+  ],
+  "education": [],
+  "certifications": [],
+  "languages": [
+   {
+    "language": "English",
+    "level": "Fluent"
+   }
+  ],
+  "connects": 40
+ },
+ {
+  "id": "f08",
+  "name": "Elena P.",
+  "title": "Data scientist",
+  "skills": [
+   "Python",
+   "Machine Learning",
+   "SQL",
+   "Data Analysis",
+   "TensorFlow"
+  ],
+  "rate": 65,
+  "years": 6,
+  "rating": 4.8,
+  "jobs": 28,
+  "jss": 96,
+  "available": true,
+  "hours_per_week": 20,
+  "location": "Athens, Greece",
+  "bio": "Machine learning for recommendations and prediction. Turns messy data into models and clear dashboards.",
+  "portfolio": [
+   {
+    "title": "Workout recommender",
+    "description": "ML model recommending workouts from user history."
+   }
+  ],
+  "employment": [
+   {
+    "role": "Data scientist",
+    "company": "Freelance",
+    "from": "2020",
+    "to": "Present"
+   }
+  ],
+  "education": [],
+  "certifications": [],
+  "languages": [
+   {
+    "language": "English",
+    "level": "Fluent"
+   }
+  ],
+  "connects": 40
+ },
+ {
+  "id": "f09",
+  "name": "Ravi S.",
+  "title": "Shopify & e-commerce developer",
+  "skills": [
+   "Shopify",
+   "Liquid",
+   "JavaScript",
+   "SEO"
+  ],
+  "rate": 30,
+  "years": 5,
+  "rating": 4.7,
+  "jobs": 80,
+  "jss": 89,
+  "available": true,
+  "hours_per_week": 40,
+  "location": "Pune, India",
+  "bio": "Shopify stores that convert: custom themes, product pages, payment setup and on-page SEO.",
+  "portfolio": [
+   {
+    "title": "Organic skincare store",
+    "description": "Custom Shopify theme, +32% conversion."
+   }
+  ],
+  "employment": [
+   {
+    "role": "Shopify & e-commerce developer",
+    "company": "Freelance",
+    "from": "2021",
+    "to": "Present"
+   }
+  ],
+  "education": [],
+  "certifications": [],
+  "languages": [
+   {
+    "language": "English",
+    "level": "Fluent"
+   }
+  ],
+  "connects": 40
+ },
+ {
+  "id": "f10",
+  "name": "Hannah W.",
+  "title": "Content writer & SEO",
+  "skills": [
+   "Copywriting",
+   "SEO",
+   "Content Strategy",
+   "Blogging"
+  ],
+  "rate": 45,
+  "years": 6,
+  "rating": 4.9,
+  "jobs": 58,
+  "jss": 98,
+  "available": true,
+  "hours_per_week": 25,
+  "location": "Dublin, Ireland",
+  "bio": "Writes SEO blog posts and website copy for health, fitness and food brands. Keyword plans included.",
+  "portfolio": [
+   {
+    "title": "Fitness blog program",
+    "description": "40 SEO articles, 3x organic traffic in 6 months."
+   }
+  ],
+  "employment": [
+   {
+    "role": "Content writer & SEO",
+    "company": "Freelance",
+    "from": "2020",
+    "to": "Present"
+   },
+   {
+    "role": "Editor",
+    "company": "Health magazine",
+    "from": "2018",
+    "to": "2020"
+   }
+  ],
+  "education": [
+   {
+    "school": "Trinity College Dublin",
+    "degree": "BA English",
+    "year": "2018"
+   }
+  ],
+  "certifications": [
+   {
+    "name": "HubSpot Content Marketing",
+    "issuer": "HubSpot",
+    "year": "2022"
+   }
+  ],
+  "languages": [
+   {
+    "language": "English",
+    "level": "Native"
+   },
+   {
+    "language": "Irish",
+    "level": "Conversational"
+   }
+  ],
+  "connects": 40
+ },
+ {
+  "id": "f11",
+  "name": "Lucas F.",
+  "title": "Senior iOS engineer",
+  "skills": [
+   "Swift",
+   "iOS",
+   "HealthKit",
+   "Firebase",
+   "UI Design"
+  ],
+  "rate": 75,
+  "years": 10,
+  "rating": 5.0,
+  "jobs": 40,
+  "jss": 100,
+  "available": false,
+  "hours_per_week": 0,
+  "location": "Berlin, Germany",
+  "bio": "Native iOS apps with HealthKit, Apple Watch and subscriptions. Currently booked.",
+  "portfolio": [
+   {
+    "title": "Strength training app",
+    "description": "Native iOS app with HealthKit and Watch support."
+   }
+  ],
+  "employment": [
+   {
+    "role": "Senior iOS engineer",
+    "company": "Freelance",
+    "from": "2016",
+    "to": "Present"
+   }
+  ],
+  "education": [],
+  "certifications": [],
+  "languages": [
+   {
+    "language": "English",
+    "level": "Fluent"
+   }
+  ],
+  "connects": 40
+ },
+ {
+  "id": "f12",
+  "name": "Nadia H.",
+  "title": "Junior Flutter developer",
+  "skills": [
+   "Flutter",
+   "Dart",
+   "Firebase"
+  ],
+  "rate": 22,
+  "years": 1,
+  "rating": null,
+  "jobs": 0,
+  "jss": null,
+  "available": true,
+  "hours_per_week": 40,
+  "location": "Casablanca, Morocco",
+  "bio": "Recent graduate building Flutter apps. Eager to take on first client projects with fast turnaround.",
+  "portfolio": [
+   {
+    "title": "Student budget app",
+    "description": "Flutter app with Firebase sync."
+   }
+  ],
+  "employment": [
+   {
+    "role": "Junior Flutter developer",
+    "company": "Freelance",
+    "from": "2025",
+    "to": "Present"
+   }
+  ],
+  "education": [],
+  "certifications": [],
+  "languages": [
+   {
+    "language": "English",
+    "level": "Fluent"
+   }
+  ],
+  "connects": 40
+ },
+ {
+  "id": "f13",
+  "name": "Omar Z.",
+  "title": "Brand & logo designer",
+  "skills": [
+   "Branding",
+   "Logo Design",
+   "Illustration",
+   "Figma"
+  ],
+  "rate": 35,
+  "years": 4,
+  "rating": 4.8,
+  "jobs": 33,
+  "jss": 94,
+  "available": true,
+  "hours_per_week": 30,
+  "location": "Amman, Jordan",
+  "bio": "Brand identities for small businesses: logo, colours, type and social templates.",
+  "portfolio": [
+   {
+    "title": "Bakery brand kit",
+    "description": "Logo, menu and Instagram templates."
+   }
+  ],
+  "employment": [
+   {
+    "role": "Brand & logo designer",
+    "company": "Freelance",
+    "from": "2022",
+    "to": "Present"
+   }
+  ],
+  "education": [],
+  "certifications": [],
+  "languages": [
+   {
+    "language": "English",
+    "level": "Fluent"
+   }
+  ],
+  "connects": 40
+ },
+ {
+  "id": "f14",
+  "name": "Grace O.",
+  "title": "Full-stack AI developer",
+  "skills": [
+   "Next.js",
+   "React",
+   "LLM",
+   "Node.js",
+   "Stripe",
+   "PostgreSQL"
+  ],
+  "rate": 85,
+  "years": 7,
+  "rating": 4.9,
+  "jobs": 26,
+  "jss": 97,
+  "available": true,
+  "hours_per_week": 30,
+  "location": "Lagos, Nigeria",
+  "bio": "Ships AI-powered web products end to end: Next.js front ends, LLM features and Stripe subscriptions.",
+  "portfolio": [
+   {
+    "title": "AI writing SaaS",
+    "description": "Next.js app with LLM drafts and Stripe billing."
+   }
+  ],
+  "employment": [
+   {
+    "role": "Full-stack AI developer",
+    "company": "Freelance",
+    "from": "2021",
+    "to": "Present"
+   },
+   {
+    "role": "Software engineer",
+    "company": "Payments startup",
+    "from": "2018",
+    "to": "2021"
+   }
+  ],
+  "education": [
+   {
+    "school": "University of Lagos",
+    "degree": "BSc Computer Engineering",
+    "year": "2018"
+   }
+  ],
+  "certifications": [],
+  "languages": [
+   {
+    "language": "English",
+    "level": "Native"
+   },
+   {
+    "language": "Yoruba",
+    "level": "Native"
+   }
+  ],
+  "connects": 40
+ }
+]
