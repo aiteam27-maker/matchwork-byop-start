@@ -39,13 +39,15 @@ The earlier demo, with an AI job-post wizard, service packages, a simulated Safe
 
 ## Live website (Render)
 
+**Live site: https://gigwise-sg.onrender.com** (Render, Singapore region, next to the Supabase database in Seoul).
+
 Gigwise is set up to deploy to [Render](https://render.com) as one website that serves both the app and the API. The settings are in `render.yaml`.
 
 **One-time setup** (the repo owner):
 1. Sign in to Render with GitHub and allow access to this repository.
 2. Click **New → Blueprint**, pick this repository, and Render reads `render.yaml`.
 3. When asked for `SUPABASE_SERVICE_ROLE_KEY`, paste the Supabase **secret** key. It stays private in Render and never goes into GitHub.
-4. Click **Apply**. After a few minutes the site is live at a link like `https://gigwise.onrender.com`. Share that link with the team.
+4. Click **Apply**. After a few minutes the site is live. Share the link with the team.
 
 **After that:**
 - Every change merged into `main` goes live automatically within about 2–5 minutes. Branches and open pull requests don't affect the live site.
