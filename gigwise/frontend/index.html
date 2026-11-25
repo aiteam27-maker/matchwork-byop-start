@@ -260,6 +260,7 @@ tr.declined td{opacity:.55}
 .kv:first-child{border-top:0}
 .dl{padding:8px 0;border-top:1px solid var(--line);font-size:14px}.dl:first-of-type{border-top:0}
 .offerbox{border:1px solid var(--purple-b);background:var(--purple-l)}
+.aitag{display:inline-block;margin-left:4px;font-size:11px;font-weight:700;color:var(--purple);background:var(--purple-l);border-radius:999px;padding:1px 7px;white-space:nowrap;vertical-align:middle}
 footer{border-top:1px solid var(--line);padding:22px 0;color:var(--mute);font-size:13px;background:var(--card)}
 @media (max-width:1060px){.nav a,.nav button{padding:7px 8px;font-size:14px}.hdr-in{gap:12px}.who span{display:none}}
 @media (max-width:900px){
@@ -299,6 +300,7 @@ footer{border-top:1px solid var(--line);padding:22px 0;color:var(--mute);font-si
 <footer id="ftr"></footer>
 <div id="sheet" class="sheet" onclick="if(event.target===this)closeSheet()" role="dialog" aria-modal="true"><div class="sheet-body" id="sheetBody"></div></div>
 <div id="toast" role="status" aria-live="polite"></div>
+<script src="taxonomy.js"></script>
 <script>
 /* ============ helpers ============ */
 const $=s=>document.querySelector(s);
@@ -396,7 +398,7 @@ function seed(){
  Object.values(D.th).forEach(th=>{th.read.c=t;th.read.f=t});
 }
 const KEY='gigwise-demo-v2';let D;
-function load(){try{const s=localStorage.getItem(KEY);if(s){D=JSON.parse(s);if(D&&D.v===2)return}}catch(e){}seed();save()}
+function load(){try{const s=localStorage.getItem(KEY);if(s){D=JSON.parse(s);if(D&&D.v===2){D.pr.forEach(p=>{if(!CATS.some(c=>c[0]===p.cat))p.cat=catOf(p.skills)});return}}}catch(e){}seed();save()}
 function save(){try{if(API.on)localStorage.setItem(UI_KEY,JSON.stringify(D.ui));else localStorage.setItem(KEY,JSON.stringify(D))}catch(e){}}
 function resetDemo(ok){if(!ok){openSheet(sheetH('Reset demo data?','Projects, proposals, profiles and messages you created will be removed.')+`<div class="row end"><button class="btn plain" onclick="closeSheet()">Cancel</button><button class="btn danger" onclick="closeSheet();resetDemo(true)">Reset</button></div>`);return}if(API.on){API.auto={};API.took={};return act(()=>api('POST','/demo/reset'),()=>{S.open={};location.hash='#/';render();toast('Demo data reset in the database')})}seed();save();S.open={};location.hash='#/';render();toast('Demo data reset')}
 
@@ -478,8 +480,18 @@ function budPhrase(m,you){
  const t=Math.round(m.target);return f.rate<=m.target?`${Y}$${f.rate}/hr fits ${yr} ~$${t}/hr budget`:`${Y}$${f.rate}/hr is ${Math.round((f.rate/m.target-1)*100)}% above ${yr} ~$${t}/hr budget`;
 }
 /* categories, levels, badges, Connects */
-const CATS=[['Mobile apps',['Flutter','React Native','Swift','iOS','Dart']],['Web development',['React','Next.js','Node.js','TypeScript','PostgreSQL','REST API','JavaScript']],['AI & data',['LLM','Python','Machine Learning','NLP','LangChain','Data Analysis','SQL']],['Design',['UI Design','Figma','Branding','Logo Design','UX Research','Illustration']],['Writing & SEO',['Copywriting','SEO','Blogging','Content Strategy']],['E-commerce',['Shopify','Liquid','Stripe']]];
-function catOf(skills){let best='Other',bn=0;CATS.forEach(([c,sk])=>{const n=skills.filter(s=>sk.some(x=>nk(x)===nk(s))).length;if(n>bn){bn=n;best=c}});return best}
+/* skill catalog (taxonomy.js, shared with the backend) */
+const GWT=window.GW_TAXONOMY||{categories:[],aliases:{},noDetect:[]};
+const CATS=GWT.categories.map(c=>[c.name,[...new Set(c.specialties.flatMap(sp=>sp.skills))].sort()]);
+const CATALOG=[...new Set(GWT.categories.flatMap(c=>c.specialties.flatMap(sp=>sp.skills)))].sort();
+const NO_DETECT=new Set(GWT.noDetect||[]);
+Object.entries(GWT.aliases||{}).forEach(([alt,canon])=>{const k=alt.toLowerCase();if(!(k in ALIAS))ALIAS[k]=canon.toLowerCase()});
+const SKILL_KEY={};CATALOG.forEach(x=>SKILL_KEY[x.toLowerCase()]=x);Object.entries(GWT.aliases||{}).forEach(([alt,canon])=>SKILL_KEY[alt.toLowerCase()]=canon);
+const canonSkill=v=>{const k=String(v).trim().toLowerCase();return SKILL_KEY[k]||SKILL_KEY[ALIAS[k]]||null};
+const specsOf=cat=>(GWT.categories.find(c=>c.name===cat)||{specialties:[]}).specialties;
+function bestSpec(cat,skills){let best=null,bn=0;specsOf(cat).forEach(sp=>{const n=skills.filter(x=>sp.skills.includes(x)).length;if(n>bn){bn=n;best=sp.name}});return best}
+// Most skills wins; ties go to the category of the earliest skill (same rule as the backend).
+function catOf(skills){let best='Other',bk=null;const keys=skills.map(nk);CATS.forEach(([c,sk])=>{const set=new Set(sk.map(nk));const hits=keys.map((k,i)=>set.has(k)?i:-1).filter(i=>i>=0);if(!hits.length)return;if(!bk||hits.length>bk[0]||(hits.length===bk[0]&&-hits[0]>bk[1])){best=c;bk=[hits.length,-hits[0]]}});return best}
 const fcats=f=>CATS.filter(([c,sk])=>f.skills.some(s=>sk.some(x=>nk(x)===nk(s)))).map(c=>c[0]);
 const LEVELS=['Entry','Intermediate','Expert'],LENS=['Less than 1 month','1 to 3 months','3 to 6 months','More than 6 months'];
 const btxt=p=>p.type==='hourly'?`Hourly <b>$${p.rateMin}–$${p.rateMax}</b>/hr`:`Fixed price <b>${money(p.budget)}</b>`;
@@ -494,16 +506,16 @@ const skillChips=m=>m.matched.map(s=>`<span class="chip ok">✓ ${esc(s)}</span>
 
 /* skill detection (PRD 6.1) */
 const KW=[[/\bmobile|\bios\b|\bandroid|\biphone/,['Flutter']],[/chat ?bot|\bai\b|\bgpt|\bllm|language model|\bassistant/,['LLM']],[/\bwebsite|\bweb ?app|\blanding page/,['React']],[/\bstore\b|\bshopify|e-?commerce/,['Shopify']],[/\bpayment|\bcheckout|\bsubscription/,['Stripe']],[/\bbackend|\bapi\b|\baccounts?\b|\blogin/,['Node.js','Firebase']],[/\blogo|\bbrand(ing| kit)/,['Branding']],[/\bdesign|\bui\b|\bux\b|\binterface/,['UI Design']],[/\bblog|\bseo\b|\bcopy\b/,['SEO','Copywriting']],[/\bdatabase|\bsql\b/,['PostgreSQL']],[/\brecommend|\bpredict|machine learning|\bml\b/,['Machine Learning']],[/\bdashboard|\banalytics/,['React','Data Analysis']],[/\bpython\b/,['Python']],[/\brag\b|help (center|articles)|knowledge base/,['NLP']]];
-const allSkills=()=>[...new Set(D.fl.flatMap(f=>f.skills))].sort();
+const allSkills=()=>CATALOG;
 function detect(text){
  const t=String(text).toLowerCase(),out=[];
  KW.forEach(([re,sk])=>{if(re.test(t))out.push(...sk)});
- allSkills().forEach(s=>{const re=new RegExp('(^|[^a-z0-9])'+s.toLowerCase().replace(/[.+#*?()[\]\\/]/g,'\\$&')+'($|[^a-z0-9])');if(re.test(t))out.push(s)});
+ allSkills().forEach(s=>{if(NO_DETECT.has(s))return;const re=new RegExp('(^|[^a-z0-9])'+s.toLowerCase().replace(/[.+#*?()[\]\\/]/g,'\\$&')+'($|[^a-z0-9])');if(re.test(t))out.push(s)});
  const seen=new Set(),res=[];out.forEach(s=>{const k=nk(s);if(!seen.has(k)){seen.add(k);res.push(s)}});return res.slice(0,6);
 }
 
 /* ============ UI state + router ============ */
-let S={notesOpen:false,ct:'active',bf:{tab:'all',cat:'',type:'',level:'',len:'',minb:'',minScore:''},tf:{tab:'all',cat:'',maxRate:'',minRating:'',avail:'',badge:''},hero:'hire',open:{},postSkills:[],draft:null,postStart:0,tq:'',tp:'',bq:'',bsort:'match',msort:'match',psort:'score',showHidden:false,me:null,lastRoute:null,typing:{}};
+let S={ai:{},aiPending:{},notesOpen:false,ct:'active',bf:{tab:'all',cat:'',type:'',level:'',len:'',minb:'',minScore:''},tf:{tab:'all',cat:'',maxRate:'',minRating:'',avail:'',badge:''},hero:'hire',open:{},postSkills:[],draft:null,postStart:0,tq:'',tp:'',bq:'',bsort:'match',msort:'match',psort:'score',showHidden:false,me:null,lastRoute:null,typing:{}};
 function route(){const p=(location.hash.slice(1)||'/').split('/');return{r:p[1]||'',id:p[2]?decodeURIComponent(p[2]):''}}
 const go=h=>{if(location.hash===h)render();else location.hash=h};
 function render(){
@@ -527,6 +539,8 @@ function render(){
  S.lastRoute=rk;
  if(r==='post'){paintSkills();rateHint()}
  if(r==='chat'){const m=$('.msgs');if(m)m.scrollTop=m.scrollHeight}
+ if(r==='matches')aiMatches(id);
+ if(r==='project')aiProject(id);
 }
 function soft(){
  const a=document.activeElement;
@@ -549,8 +563,27 @@ function hdr(){
  ${r==='freelancer'&&me?`<button class="who" onclick="pickFreelancer()" title="Switch freelancer">${av(me,26)}<span>${esc(me.name)}</span></button>`:''}`
  :`<button class="btn plain sm" onclick="roleSheet()">Log in</button><button class="btn sm" onclick="roleSheet()">Sign up</button>`}</div></div>`;
 }
-function ftr(){$('#ftr').innerHTML=`<div class="wrap row between"><span>${API.on?`<b style="color:var(--brand)">● Live data</b> · saved in Supabase · <button class="link" onclick="useOffline()">Use offline demo</button>`:`Offline demo · data is saved in this browser only${API.reachable?' · <button class="link" onclick="useLive()">Switch to live data</button>':''}`}</span><span class="row"><button class="link" onclick="howScroll()">How scoring works</button>${API.on&&!API.resetOk?'':'<button class="link" onclick="resetDemo()">Reset demo data</button>'}</span></div>`}
+function ftr(){$('#ftr').innerHTML=`<div class="wrap row between"><span>${API.on?`<b style="color:var(--brand)">● Live data</b> · saved in Supabase${API.ai?' · ✨ AI explanations on':''} · <button class="link" onclick="useOffline()">Use offline demo</button>`:`Offline demo · data is saved in this browser only${API.reachable?' · <button class="link" onclick="useLive()">Switch to live data</button>':''}`}</span><span class="row"><button class="link" onclick="howScroll()">How scoring works</button>${API.on&&!API.resetOk?'':'<button class="link" onclick="resetDemo()">Reset demo data</button>'}</span></div>`}
 function howScroll(){if(route().r!==''){go('#/');setTimeout(()=>$('#how')?.scrollIntoView(),60)}else $('#how')?.scrollIntoView()}
+
+/* ============ Claude-written reasons (live mode with an API key) ============ */
+// Show Claude's reason once it has arrived; until then (or without AI) the template reason.
+function reasonHtml(m,forFreelancer){
+ const a=S.ai[m.p.id]&&S.ai[m.p.id][m.f.id];
+ if(!a)return esc(forFreelancer?reasonFree(m):reasonClient(m));
+ return `${esc(forFreelancer?a.freelancer_reason:a.client_reason)}<span class="aitag" title="Written by Claude using only facts from the profile and project">✨ AI</span>`;
+}
+function aiLoad(pid,nums){
+ if(!API.on||!API.ai)return;
+ const need=nums.filter(n=>!(S.ai[pid]&&S.ai[pid][n])&&!S.aiPending[pid+':'+n]&&fid(n));
+ if(!need.length)return;
+ need.forEach(n=>S.aiPending[pid+':'+n]=1);
+ api('POST','/ai/explain',{project_id:pid,freelancer_ids:need.map(fid)})
+  .then(r=>{S.ai[pid]=S.ai[pid]||{};Object.entries((r&&r.explanations)||{}).forEach(([id,v])=>S.ai[pid][fnum(id)]=v);if(r&&Object.keys(r.explanations||{}).length)soft()})
+  .catch(()=>{});
+}
+function aiMatches(pid){const p=pj(pid);if(p)aiLoad(pid,rankFor(p).list.slice(0,6).map(m=>m.f.id))}
+function aiProject(pid){if(D.ui.role==='freelancer'&&fl(D.ui.fid)&&pj(pid))aiLoad(pid,[D.ui.fid])}
 
 /* ============ night / day mode ============ */
 const isDark=()=>document.documentElement.dataset.theme==='dark';
@@ -607,7 +640,8 @@ function sampleCard(){
 }
 function vLanding(){
  const hire=S.hero==='hire';
- const cats=[['Mobile apps',['Flutter','React Native','Swift','iOS'],'📱'],['Web development',['React','Next.js','Node.js'],'🌐'],['AI & data',['LLM','Python','Machine Learning'],'🤖'],['Design',['UI Design','Figma','Branding'],'🎨'],['Writing & SEO',['Copywriting','SEO'],'✍️'],['E-commerce',['Shopify'],'🛒']];
+ const ICONS={'Web Development':'🌐','Mobile Development':'📱','AI & Machine Learning':'🤖','Data Science & Analytics':'📊','Design & Creative':'🎨','Writing & Translation':'✍️','Sales & Marketing':'📣','E-commerce':'🛒','IT & DevOps':'🛠️','Admin & Support':'🗂️','Finance & Accounting':'💼','Legal':'⚖️'};
+ const cats=CATS.slice(0,9).map(([n,sk])=>[n,sk,ICONS[n]||'•']);
  const feat=[...D.fl].filter(f=>f.rating).sort((a,b)=>b.rating-a.rating||b.jobs-a.jobs).slice(0,4);
  return `<section class="hero"><div class="wrap hero-in"><div>
  <div class="seg" role="tablist"><button class="${hire?'on':''}" onclick="S.hero='hire';render()">Hire</button><button class="${!hire?'on':''}" onclick="S.hero='work';render()">Work</button></div>
@@ -627,12 +661,12 @@ function vLanding(){
  <section class="sec"><div class="sec-h"><h2>How the match score works</h2><p>The same transparent formula ranks freelancers for clients and projects for freelancers.</p></div>
  <div class="weights"><div class="card">${Object.keys(W).map(k=>`<div class="w-row"><div><b>${WL[k]}</b><div class="mute xs">${{skills:'Share of required skills the freelancer has',text:'Overlap between project text and profile + portfolio',budget:'Hourly rate vs budget ÷ estimated hours',exp:'Years of experience, capped at 10',rating:'Average client rating'}[k]}</div></div><div class="w-bar"><i style="width:${Math.round(W[k]*100)/0.45}%"></i></div><b style="text-align:right">${Math.round(W[k]*100)}%</b></div>`).join('')}</div>
  <div class="card"><h3>Fair by design</h3><ul class="guard mute sm" style="padding-left:18px;margin:8px 0 0"><li><b style="color:var(--ink)">Never scored:</b> name, gender, location, photo or any other personal attribute.</li><li><b style="color:var(--ink)">Grounded reasons:</b> explanations cite only facts from the freelancer's profile.</li><li><b style="color:var(--ink)">Hard filters first:</b> only available freelancers with at least one required skill are ranked.</li><li><b style="color:var(--ink)">Learns from outcomes:</b> invites, shortlists, hires and declines are logged to tune the weights.</li></ul></div></div></section>
- <section class="sec"><div class="sec-h"><h2>Find freelancers for every kind of work</h2></div><div class="cats">${cats.map(([n,sk,ic])=>{const c=D.fl.filter(f=>f.available&&f.skills.some(s=>sk.includes(s))).length;return`<button class="cat" onclick="S.tq='${sk[0]}';setRole('client','#/talent')"><span style="font-size:22px">${ic}</span><b>${n}</b><span class="mute sm">${c} available · ${sk.slice(0,3).join(', ')}</span></button>`}).join('')}</div></section>
+ <section class="sec"><div class="sec-h"><h2>Find freelancers for every kind of work</h2></div><div class="cats">${cats.map(([n,sk,ic])=>{const c=D.fl.filter(f=>f.available&&f.skills.some(s=>sk.includes(s))).length;return`<button class="cat" onclick="S.tq='';S.tf.cat='${esc(n)}';setRole('client','#/talent')"><span style="font-size:22px">${ic}</span><b>${esc(n)}</b><span class="mute sm">${c} available · ${specsOf(n).length} specialties</span></button>`}).join('')}</div></section>
  <section class="sec"><div class="sec-h"><h2>Top-rated freelancers</h2></div><div class="fgrid">${feat.map(f=>fCard(f)).join('')}</div></section>
  <section class="sec"><div class="cta"><div><h2>Ready to see who fits?</h2><p>Post a project and get your ranked shortlist in under a minute.</p></div><div class="row"><button class="btn" onclick="startPost('')">Post a project</button><button class="btn ghost" onclick="setRole('freelancer','#/dashboard')">I'm a freelancer</button></div></div></section>
  </div>`;
 }
-function startPost(q){q=(q||'').trim();S.postSkills=[];if(EX[q]){const e=EX[q];S.draft={type:'fixed',title:e.title,desc:e.desc,budget:e.budget,hours:e.hours,deadline:isoIn(e.days),level:'Intermediate',duration:'1 to 3 months',questions:[QSUG[catOf(detect(e.title+' '+e.desc))]]}}else S.draft=q?{title:q.length<70?q.charAt(0).toUpperCase()+q.slice(1):'',desc:q.length>=70?q:''}:{};D.ui.role='client';save();closeSheet();S.lastRoute=null;go('#/post')}
+function startPost(q){q=(q||'').trim();S.postSkills=[];if(EX[q]){const e=EX[q];S.draft={type:'fixed',title:e.title,desc:e.desc,budget:e.budget,hours:e.hours,deadline:isoIn(e.days),level:'Intermediate',duration:'1 to 3 months',questions:[QSUG[catOf(detect(e.title+' '+e.desc))]||QSUG.Other]}}else S.draft=q?{title:q.length<70?q.charAt(0).toUpperCase()+q.slice(1):'',desc:q.length>=70?q:''}:{};D.ui.role='client';save();closeSheet();S.lastRoute=null;go('#/post')}
 function fCard(f,m){
  return `<div class="card fcard"><div class="top">${av(f)}<div class="grow" style="min-width:0"><b>${esc(f.name)}</b><div class="mute sm">${esc(f.title)}</div></div>${m?`<div class="mscore">${ring(m.total,'sm')}</div>`:''}${D.ui.role==='client'?heart('talent',f.id):''}</div>
  <div class="meta"><span><b>$${f.rate}</b>/hr</span><span>${stars(f)}</span><span>${f.years} yrs</span><span class="avail ${f.available?'':'no'}">${f.available?'Available':'Booked'}</span></div>
@@ -648,9 +682,11 @@ function vPost(){
  <div class="card">
  <label>Project title<input id="f_title" value="${esc(d.title||'')}" placeholder="e.g. AI fitness coaching app" oninput="S.draft.title=this.value"></label>
  <label>Description<textarea id="f_desc" rows="6" placeholder="What are you building, what should it do, and what do you need help with?" oninput="S.draft.desc=this.value;paintSkills()">${esc(d.desc||'')}</textarea></label>
- <div class="lbl">Required skills <span class="mute sm" style="font-weight:400">optional. Leave blank and we'll detect them from your description</span></div>
- <div class="skillbox" onclick="$('#f_skill').focus()"><span id="skchips" class="chips"></span><input id="f_skill" list="allsk" placeholder="Type a skill, press Enter" onkeydown="skKey(event)" aria-label="Add skill"></div>
+ ${catPicker(d)}
+ <div class="lbl">Skills <span class="mute sm" style="font-weight:400">up to 10 from the catalog. Leave empty and we'll use the suggestions</span> <span id="skcount" class="mute sm"></span></div>
+ <div class="skillbox" onclick="$('#f_skill').focus()"><span id="skchips" class="chips"></span><input id="f_skill" list="allsk" placeholder="Search ${CATALOG.length} skills, e.g. React" onkeydown="skKey(event)" onchange="if(canonSkill(this.value))addSkill(this.value)" aria-label="Search skills"></div>
  <datalist id="allsk">${allSkills().map(s=>`<option value="${esc(s)}">`).join('')}</datalist>
+ <div id="sksugg" class="detected"></div>
  <div id="detected" class="detected"></div>
  <div class="lbl">How do you want to pay?</div>
  <div class="seg" role="group" aria-label="Payment type" style="margin-bottom:14px"><button type="button" class="${ty==='fixed'?'on':''}" onclick="S.draft.type='fixed';render()">Fixed price</button><button type="button" class="${ty==='hourly'?'on':''}" onclick="S.draft.type='hourly';render()">Hourly</button></div>
@@ -665,14 +701,34 @@ function vPost(){
  <div class="row end"><button class="btn plain" onclick="go('#/client')">Cancel</button><button class="btn" onclick="postProject()">Post &amp; see matches</button></div>
  </div></div>`;
 }
+const chipBtn=(x,fn)=>`<button type="button" class="chip tag" style="border:0;cursor:pointer" onclick="${fn}('${x.replace(/'/g,"\\'")}')">+ ${esc(x)}</button>`;
+function catPicker(d){
+ const cat=d.cat||'',spec=d.spec||'';
+ return `<div class="grid2"><label>Category<select id="f_cat" onchange="S.draft.cat=this.value;S.draft.spec='';render()"><option value="">Choose a category</option>${CATS.map(([c])=>`<option ${c===cat?'selected':''}>${esc(c)}</option>`).join('')}</select></label>
+ <label>Specialty<select id="f_spec" onchange="S.draft.spec=this.value;paintSkills()" ${cat?'':'disabled'}><option value="">${cat?'Choose a specialty':'Pick a category first'}</option>${specsOf(cat).map(sp=>`<option ${sp.name===spec?'selected':''}>${esc(sp.name)}</option>`).join('')}</select></label></div>`;
+}
 function paintSkills(){
  const el=$('#skchips');if(!el)return;
  el.innerHTML=S.postSkills.map((s,i)=>`<span class="chip ok">${esc(s)}<button onclick="event.stopPropagation();S.postSkills.splice(${i},1);paintSkills()" aria-label="Remove ${esc(s)}">×</button></span>`).join('');
- const det=detect(($('#f_title')?.value||'')+' '+($('#f_desc')?.value||''));
- $('#detected').innerHTML=!S.postSkills.length&&det.length?`<span class="mute">✨ Detected from your description:</span> ${det.map(s=>`<span class="chip tag">${esc(s)}</span>`).join(' ')} <button class="link sm" onclick="S.postSkills=detect(($('#f_title').value)+' '+$('#f_desc').value);paintSkills()">Edit these</button>`:'';
+ $('#skcount').textContent=S.postSkills.length?`${S.postSkills.length} of 10`:'';
+ const text=($('#f_title')?.value||'')+' '+($('#f_desc')?.value||''),det=detect(text),fresh=det.filter(x=>!S.postSkills.includes(x));
+ const spec=specsOf(S.draft.cat).find(x=>x.name===S.draft.spec);
+ $('#sksugg').innerHTML=spec?`<span class="mute">Popular in ${esc(spec.name)}:</span> ${spec.skills.filter(x=>!S.postSkills.includes(x)).map(x=>chipBtn(x,'addSkill')).join(' ')}`:'';
+ let h='';
+ if(fresh.length)h+=`<span class="mute">✨ From your description:</span> ${fresh.map(x=>chipBtn(x,'addSkill')).join(' ')}`;
+ const base=S.postSkills.length?S.postSkills:det;
+ if(!S.draft.cat&&base.length){const c=catOf(base);if(c!=='Other'){const sp=bestSpec(c,base);h+=`<div style="margin-top:6px"><span class="mute">Looks like</span> <b>${esc(c)}${sp?' › '+esc(sp):''}</b> <button type="button" class="link sm" onclick="S.draft.cat='${esc(c)}';S.draft.spec='${esc(sp||'')}';render()">Use this category</button></div>`}}
+ if(!S.postSkills.length&&det.length)h+=`<div class="mute xs" style="margin-top:4px">Leave skills empty to use: ${det.map(esc).join(', ')}</div>`;
+ $('#detected').innerHTML=h;
 }
 function skKey(e){if(e.key==='Enter'||e.key===','){e.preventDefault();addSkill(e.target.value)}else if(e.key==='Backspace'&&!e.target.value&&S.postSkills.length){S.postSkills.pop();paintSkills()}}
-function addSkill(v){v=v.trim().replace(/,$/,'');if(!v)return;const known=allSkills().find(s=>nk(s)===nk(v));v=known||v;if(!S.postSkills.some(s=>nk(s)===nk(v)))S.postSkills.push(v);$('#f_skill').value='';paintSkills()}
+function addSkill(v){
+ v=String(v).trim().replace(/,$/,'');if(!v)return;
+ const c=canonSkill(v),inp=$('#f_skill');
+ if(!c)return toast('Pick a skill from the list');
+ if(!S.postSkills.includes(c)){if(S.postSkills.length>=10)return toast('You can pick up to 10 skills');S.postSkills.push(c)}
+ if(inp)inp.value='';paintSkills();
+}
 function rateHint(){
  const el=$('#ratehint');if(!el)return;const h=+$('#f_hours')?.value,av=D.fl.filter(f=>f.available);
  let r=0,txt='';
@@ -680,9 +736,9 @@ function rateHint(){
  else{const b=+$('#f_budget').value;if(b>0&&h>0){r=b/h;txt=`Your budget works out to about <b>$${Math.round(r)}/hr</b>.`}}
  el.innerHTML=r?`<div class="hint">${txt} ${av.filter(f=>f.rate<=r).length} of ${av.length} available freelancers charge that or less. Budget fit is 20% of each match score.</div>`:'';
 }
-const QSUG={'Mobile apps':'Which apps have you published to the App Store or Play Store?','Web development':'Share a link to a similar site or app you have built.','AI & data':'Describe an AI or data project you have shipped.','Design':'Share 2–3 portfolio pieces closest to this brief.','Writing & SEO':'Share a writing sample in a similar niche.','E-commerce':'Share an online store you have built.','Other':'What similar work have you done?'};
-function suggestQ(){const sk=S.postSkills.length?S.postSkills:detect(($('#f_title').value||'')+' '+($('#f_desc').value||''));const q=QSUG[catOf(sk)];S.draft.questions=S.draft.questions||[];if(S.draft.questions.includes(q))return toast('Already added');S.draft.questions.push(q);render()}
-function fillExample(){const e=EX['AI fitness coaching app'];S.postSkills=[];S.draft={type:'fixed',title:e.title,desc:e.desc,budget:e.budget,hours:e.hours,deadline:isoIn(e.days),level:'Intermediate',duration:'1 to 3 months',questions:[QSUG[catOf(detect(e.title+' '+e.desc))]]};S.lastRoute=null;render();S.lastRoute='post/';toast('Example filled. Skills left blank so they get detected.')}
+const QSUG={'Web Development':'Share a link to a similar site or app you have built.','Mobile Development':'Which apps have you published to the App Store or Play Store?','AI & Machine Learning':'Describe an AI or machine learning project you have shipped.','Data Science & Analytics':'Share a dashboard or analysis you are proud of.','Design & Creative':'Share 2–3 portfolio pieces closest to this brief.','Writing & Translation':'Share a writing sample in a similar niche.','Sales & Marketing':'What results did your last similar campaign get?','E-commerce':'Share an online store you have built.','IT & DevOps':'Describe a system you set up or kept running.','Admin & Support':'What tools do you use day to day?','Finance & Accounting':'Which accounting tools are you certified in?','Legal':'Which jurisdictions do you work in?','Other':'What similar work have you done?'};
+function suggestQ(){const sk=S.postSkills.length?S.postSkills:detect(($('#f_title').value||'')+' '+($('#f_desc').value||''));const q=QSUG[catOf(sk)]||QSUG.Other;S.draft.questions=S.draft.questions||[];if(S.draft.questions.includes(q))return toast('Already added');S.draft.questions.push(q);render()}
+function fillExample(){const e=EX['AI fitness coaching app'];S.postSkills=[];S.draft={type:'fixed',title:e.title,desc:e.desc,budget:e.budget,hours:e.hours,deadline:isoIn(e.days),level:'Intermediate',duration:'1 to 3 months',questions:[QSUG[catOf(detect(e.title+' '+e.desc))]||QSUG.Other]};S.lastRoute=null;render();S.lastRoute='post/';toast('Example filled. Skills left blank so they get detected.')}
 function postProject(){
  const g=id=>$('#'+id),type=S.draft.type||'fixed',title=g('f_title').value.trim(),desc=g('f_desc').value.trim(),hours=+g('f_hours').value,deadline=g('f_deadline').value;
  if(g('f_skill').value.trim())addSkill(g('f_skill').value);
@@ -695,9 +751,9 @@ function postProject(){
  let skills=S.postSkills.slice(),auto=false;
  if(!skills.length){skills=detect(title+' '+desc);auto=true}
  if(!skills.length)return toast('We couldn\'t detect skills. Add at least one.'),g('f_skill').focus();
- const questions=(S.draft.questions||[]).map(q=>q.trim()).filter(Boolean).slice(0,3);
- if(API.on){const took=Math.max(1,Math.round((NOW()-S.postStart)/1000));return act(()=>api('POST','/projects',{title,description:desc,skills:S.postSkills.slice(),type,budget:type==='fixed'?budget:null,rate_min:type==='hourly'?rateMin:null,rate_max:type==='hourly'?rateMax:null,hours,level:g('f_level').value,duration:g('f_len').value,deadline:deadline||null,questions}),r=>{API.took[r.project.id]=took;const lp=pj(r.project.id);if(lp)lp.took=took;S.draft=null;S.postSkills=[];go('#/matches/'+r.project.id);simulateProposals(r.project.id)})}
- const p={id:'p'+(++D.seq),title,desc,skills,auto,type,budget:type==='hourly'?rateMax*hours:budget,rateMin,rateMax,hours,deadline,level:g('f_level').value,duration:g('f_len').value,questions,cat:catOf(skills),owner:'me',client:'Pulse Fit (you)',status:'open',ts:NOW(),took:Math.max(1,Math.round((NOW()-S.postStart)/1000))};
+ const questions=(S.draft.questions||[]).map(q=>String(q||'').trim()).filter(Boolean).slice(0,3),category=S.draft.cat||null;
+ if(API.on){const took=Math.max(1,Math.round((NOW()-S.postStart)/1000));return act(()=>api('POST','/projects',{title,description:desc,skills:S.postSkills.slice(),type,budget:type==='fixed'?budget:null,rate_min:type==='hourly'?rateMin:null,rate_max:type==='hourly'?rateMax:null,hours,level:g('f_level').value,duration:g('f_len').value,deadline:deadline||null,questions,category}),r=>{API.took[r.project.id]=took;const lp=pj(r.project.id);if(lp)lp.took=took;S.draft=null;S.postSkills=[];go('#/matches/'+r.project.id);simulateProposals(r.project.id)})}
+ const p={id:'p'+(++D.seq),title,desc,skills,auto,type,budget:type==='hourly'?rateMax*hours:budget,rateMin,rateMax,hours,deadline,level:g('f_level').value,duration:g('f_len').value,questions,cat:category||catOf(skills),owner:'me',client:'Pulse Fit (you)',status:'open',ts:NOW(),took:Math.max(1,Math.round((NOW()-S.postStart)/1000))};
  D.pr.push(p);save();S.draft=null;S.postSkills=[];
  go('#/matches/'+p.id);simulateProposals(p.id);
 }
@@ -747,7 +803,7 @@ function matchCard(m,i){
  ${av(f,50)}
  <div><div class="mhead"><h3><a href="#/profile/${f.id}" style="color:inherit">${esc(f.name)}</a></h3><span class="mute sm">${esc(f.title)}</span></div>
  <div class="meta"><span><b>$${f.rate}</b>/hr</span><span>${stars(f)}</span><span>${f.years} yrs exp</span><span>${esc(f.loc)}</span></div><div style="margin-top:6px">${bdgs(f)}</div>
- <p class="reason">${esc(reasonClient(m))}</p><div class="chips">${skillChips(m)}</div></div>
+ <p class="reason">${reasonHtml(m,false)}</p><div class="chips">${skillChips(m)}</div></div>
  <div class="mscore">${ring(m.total)}<span class="tierlbl ${tc}">${tl}</span></div>
  <div class="mact">${th?.invited?'<span class="chip ok">✓ Invited</span>':`<button class="btn sm" onclick="openInvite('${p.id}',${f.id})" ${p.status!=='open'?'disabled':''}>Invite to project</button>`}
  ${pr?`<span class="pill st-${pr.status}">Proposal ${pr.status}</span>`:''}
@@ -907,7 +963,7 @@ function vProject(pid){
  <div class="card" style="margin-top:16px"><h3>About the client</h3><div class="meta"><span><b>${esc(cname(p))}</b></span>${clientStats(p).r?`<span><span class="star">★</span> <b>${clientStats(p).r.toFixed(1)}</b></span>`:''}<span>${clientStats(p).n} hires</span><span>${D.pr.filter(x=>x.client===p.client).length} projects posted</span></div></div></div>
  <aside class="side">
  ${me?`<div class="card"><div class="row" style="gap:12px">${ring(m.total)}<div><div class="tierlbl ${tier(m.total)[1]}">${tier(m.total)[0]}</div><b>Your match score</b></div></div>
- <p class="sm" style="margin:12px 0 10px"><b>Why you fit:</b> ${esc(reasonFree(m))}</p><div class="chips" style="margin-bottom:12px">${skillChips(m)}</div>
+ <p class="sm" style="margin:12px 0 10px"><b>Why you fit:</b> ${reasonHtml(m,true)}</p><div class="chips" style="margin-bottom:12px">${skillChips(m)}</div>
  ${pr?propBox(pr,p):p.status==='open'?`<button class="btn" style="width:100%" onclick="openPropose('${pid}')">Submit a proposal</button><p class="xs mute" style="margin:6px 0 0;text-align:center">${invited(pid,me.id)?'Free: you were invited':`Costs ${connCost(p)} Connects · you have ${me.connects}`}</p>`:'<div class="hint" style="margin:0">This project is no longer open.</div>'}
  ${th?`<button class="btn ghost" style="width:100%;margin-top:8px" onclick="go('#/chat/${tkey(pid,me.id)}')">Open chat</button>`:''}
  <button class="link sm" style="margin-top:12px" onclick="S.open['pd']=!S.open['pd'];soft()">${S.open.pd?'Hide':'Show'} score breakdown ▾</button>${S.open.pd?`<div style="margin-top:8px">${breakdown(m)}</div>`:''}</div>`
@@ -923,7 +979,7 @@ function openPropose(pid){
  const bid=edit?ex.bid:hourly?Math.min(f.rate,p.rateMax):(Math.round(Math.min(p.budget,f.rate*p.hours)/50)*50||p.budget);
  const days=edit?ex.days:Math.max(5,Math.ceil(p.hours/Math.max(10,f.hpw||30)*7));
  openSheet(sheetH(edit?'Edit your proposal':'Submit a proposal',`${esc(p.title)} · ${esc(cname(p))} · ${hourly?`$${p.rateMin}–$${p.rateMax}/hr`:'budget '+money(p.budget)}`)+`
- <div class="hint row" style="gap:10px;flex-wrap:nowrap">${spill(m.total)}<span>${esc(reasonFree(m))}</span></div>
+ <div class="hint row" style="gap:10px;flex-wrap:nowrap">${spill(m.total)}<span>${reasonHtml(m,true)}</span></div>
  <label><span class="row between">Cover letter <button class="link sm" type="button" onclick="draftCover('${pid}')">✨ Draft from my profile</button></span><textarea id="pp_cover" rows="7" autofocus placeholder="Why are you a good fit? Mention relevant work.">${edit?esc(ex.cover):''}</textarea></label>
  ${(p.questions||[]).length?`<div class="lbl">The client's questions</div>${p.questions.map((q,i)=>`<label style="font-weight:500">${esc(q)}<textarea id="pp_a${i}" rows="2">${edit?esc(ex.answers?.[i]||''):''}</textarea></label>`).join('')}`:''}
  <div class="grid2"><label>${hourly?'Your hourly rate (USD)':'Bid (USD)'}<input id="pp_bid" type="number" min="1" value="${bid}" oninput="bidHint('${pid}')"></label><label>Delivery time (days)<input id="pp_days" type="number" min="1" value="${days}"></label></div>
@@ -935,6 +991,14 @@ function openPropose(pid){
 }
 function bidHint(pid){const p=pj(pid),b=+$('#pp_bid')?.value,el=$('#pp_hint');if(!el)return;if(!(b>0)){el.innerHTML='';return}const ref=bidRef(p),d=Math.round((b/ref-1)*100),what=p.type==='hourly'?`max rate of $${ref}/hr`:`${money(ref)} budget`;el.innerHTML=`<div class="hint">Your ${p.type==='hourly'?'rate':'bid'} is <b>${d===0?'equal to':Math.abs(d)+'% '+(d>0?'over':'under')}</b> the client's ${what}.${d>15?' Bids far above budget are less likely to be accepted.':''}</div>`}
 function draftCover(pid){
+ if(!(API.on&&API.ai))return templateDraft(pid);
+ const el=$('#pp_cover'),f=fl(D.ui.fid);if(!el)return;
+ el.value='Writing your draft with Claude…';el.disabled=true;
+ api('POST','/ai/draft-proposal',{project_id:pid,freelancer_id:f._id,bid:+($('#pp_bid')?.value)||null,days:+($('#pp_days')?.value)||null})
+  .then(r=>{el.disabled=false;if(r&&r.cover_letter){el.value=r.cover_letter;toast('Draft written by Claude from your profile. Edit it before sending.')}else templateDraft(pid)})
+  .catch(()=>{el.disabled=false;templateDraft(pid)});
+}
+function templateDraft(pid){
  const p=pj(pid),f=fl(D.ui.fid),m=score(f,p);
  $('#pp_cover').value=`Hi! I'm ${f.name.split(' ')[0]}, a ${f.title} with ${f.years} year${f.years===1?'':'s'} of experience.\n\nYour project needs ${andList(p.skills)}. I work with ${m.matched.length?andList(m.matched):'related tools'} every day${m.port?`, and recently built “${m.port.t}”: ${m.port.d.replace(/\.$/,'')}`:''}.${m.missing.length?`\n\nFor ${andList(m.missing)}, I'd ramp up quickly or bring in a trusted collaborator.`:''}\n\nI'd start with a short kickoff call to agree on scope, then share progress every few days. Happy to answer any questions!`;
  toast('Draft written from your profile. Edit it before sending.');
@@ -1173,8 +1237,10 @@ function vMe(){
  return `<div class="wrap narrow page"><div class="ph"><div><h1>${d.isNew?'Create your freelancer profile':'Edit profile'}</h1><p class="mute">Clients only see facts from your profile in match reasons. Your name and location are never used for scoring.</p></div></div>
  <div class="card">
  <div class="grid2"><label>Display name<input id="me_name" value="${esc(d.name)}" placeholder="e.g. Sam T."></label><label>Professional title<input id="me_title" value="${esc(d.title)}" placeholder="e.g. Flutter developer"></label></div>
- <div class="lbl">Skills</div><div class="skillbox" onclick="$('#me_skill').focus()"><span id="meskills" class="chips">${d.skills.map((s,i)=>`<span class="chip ok">${esc(s)}<button onclick="event.stopPropagation();S.me.skills.splice(${i},1);keepMe()" aria-label="Remove ${esc(s)}">×</button></span>`).join('')}</span><input id="me_skill" list="allsk2" placeholder="Type a skill, press Enter" onkeydown="if(event.key==='Enter'||event.key===','){event.preventDefault();meSkill(this.value)}"></div>
+ <div class="lbl">Skills <span class="mute sm" style="font-weight:400">up to 15 from the catalog</span> <span class="mute sm">${d.skills.length} of 15</span></div><div class="skillbox" onclick="$('#me_skill').focus()"><span id="meskills" class="chips">${d.skills.map((s,i)=>`<span class="chip ok">${esc(s)}<button onclick="event.stopPropagation();S.me.skills.splice(${i},1);keepMe()" aria-label="Remove ${esc(s)}">×</button></span>`).join('')}</span><input id="me_skill" list="allsk2" placeholder="Search ${CATALOG.length} skills" onchange="if(canonSkill(this.value))meSkill(this.value)" onkeydown="if(event.key==='Enter'||event.key===','){event.preventDefault();meSkill(this.value)}" aria-label="Search skills"></div>
  <datalist id="allsk2">${allSkills().map(s=>`<option value="${esc(s)}">`).join('')}</datalist>
+ <div class="row sm" style="margin:6px 0"><span class="mute">Browse:</span><select style="width:auto" aria-label="Browse skills by specialty" onchange="S.me.browse=this.value;keepMe()"><option value="">Choose a specialty</option>${GWT.categories.map(c=>`<optgroup label="${esc(c.name)}">${c.specialties.map(sp=>`<option value="${esc(c.name+'|'+sp.name)}" ${d.browse===c.name+'|'+sp.name?'selected':''}>${esc(sp.name)}</option>`).join('')}</optgroup>`).join('')}</select></div>
+ ${(()=>{if(!d.browse)return '';const [cn,sn]=d.browse.split('|'),sp=specsOf(cn).find(x=>x.name===sn);return sp?`<div class="chips" style="margin-bottom:8px">${sp.skills.filter(x=>!d.skills.includes(x)).map(x=>chipBtn(x,'meSkill')).join(' ')||'<span class="mute sm">You have all of these.</span>'}</div>`:''})()}
  <div class="grid3" style="margin-top:14px"><label>Hourly rate (USD)<input id="me_rate" type="number" min="5" value="${esc(d.rate)}"></label><label>Years of experience<input id="me_years" type="number" min="0" value="${esc(d.years)}"></label><label>Hours per week<input id="me_hpw" type="number" min="0" value="${esc(d.hpw)}"></label></div>
  <label>Location <span class="mute sm" style="font-weight:400">(shown on your profile, never scored)</span><input id="me_loc" value="${esc(d.loc)}"></label>
  <label>Bio<textarea id="me_bio" rows="4" placeholder="What do you build, and for whom?">${esc(d.bio)}</textarea></label>
@@ -1201,7 +1267,7 @@ function plistEd(k){
 function addPl(k){const L=PLISTS[k],o={};L.f.forEach(([fk])=>o[fk]=($('#pl_'+k+'_'+fk).value||'').trim());if(!o[L.f[0][0]])return toast(`Add the ${L.f[0][1].toLowerCase()} first`);if(k==='emp'&&!o.to)o.to='Present';(S.me[k]=S.me[k]||[]).push(o);keepMe()}
 function readMe(){const d=S.me;d.name=$('#me_name').value.trim();d.title=$('#me_title').value.trim();d.rate=+$('#me_rate').value;d.years=+$('#me_years').value;d.hpw=+$('#me_hpw').value;d.loc=$('#me_loc').value.trim();d.bio=$('#me_bio').value.trim();d.available=$('#me_av').checked}
 function keepMe(){readMe();S.me.keep=true;const y=scrollY;render();scrollTo(0,y)}
-function meSkill(v){v=v.trim().replace(/,$/,'');if(!v)return;const k=allSkills().find(s=>nk(s)===nk(v));v=k||v;if(!S.me.skills.some(s=>nk(s)===nk(v)))S.me.skills.push(v);keepMe();setTimeout(()=>$('#me_skill')?.focus(),0)}
+function meSkill(v){v=String(v).trim().replace(/,$/,'');if(!v)return;const c=canonSkill(v);if(!c)return toast('Pick a skill from the list');if(!S.me.skills.includes(c)){if(S.me.skills.length>=15)return toast('You can list up to 15 skills');S.me.skills.push(c)}keepMe();setTimeout(()=>$('#me_skill')?.focus(),0)}
 function addPort(){const t=$('#pt_t').value.trim(),d=$('#pt_d').value.trim();if(!t)return toast('Add a project name');S.me.port.push({t,d});keepMe()}
 function saveMe(){
  readMe();const d=S.me;if($('#me_skill').value.trim()){meSkill($('#me_skill').value);readMe()}
@@ -1315,7 +1381,7 @@ async function boot(){
  try{
   const ctl=new AbortController(),tm=setTimeout(()=>ctl.abort(),2500);
   const h=await fetch(API.base+'/health',{signal:ctl.signal}).then(r=>r.json());clearTimeout(tm);
-  API.reachable=!!(h&&h.ok);API.resetOk=h&&h.demo_reset!==false;
+  API.reachable=!!(h&&h.ok);API.resetOk=h&&h.demo_reset!==false;API.ai=!!(h&&h.ai);
   if(API.reachable&&!forcedOffline){D=null;await API.sync();API.on=true}
  }catch(e){}
  if(!API.on)load();

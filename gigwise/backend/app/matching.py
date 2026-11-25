@@ -12,8 +12,10 @@ attributes are never read here.
 """
 from __future__ import annotations
 
+import json
 import math
 import re
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 WEIGHTS = {"skills": 0.45, "text": 0.20, "budget": 0.20, "exp": 0.08, "rating": 0.07}
@@ -57,14 +59,34 @@ KW = [
     (r"\brag\b|help (center|articles)|knowledge base", ["NLP"]),
 ]
 
-CATEGORIES = [
-    ("Mobile apps", ["Flutter", "React Native", "Swift", "iOS", "Dart"]),
-    ("Web development", ["React", "Next.js", "Node.js", "TypeScript", "PostgreSQL", "REST API", "JavaScript"]),
-    ("AI & data", ["LLM", "Python", "Machine Learning", "NLP", "LangChain", "Data Analysis", "SQL"]),
-    ("Design", ["UI Design", "Figma", "Branding", "Logo Design", "UX Research", "Illustration"]),
-    ("Writing & SEO", ["Copywriting", "SEO", "Blogging", "Content Strategy"]),
-    ("E-commerce", ["Shopify", "Liquid", "Stripe"]),
-]
+# The skill catalog (categories > specialties > skills) lives in gigwise/frontend/taxonomy.js,
+# shared with the frontend so both always agree.
+_TAXONOMY_FILE = Path(__file__).resolve().parents[2] / "frontend" / "taxonomy.js"
+
+
+def _load_taxonomy() -> Dict[str, Any]:
+    src = _TAXONOMY_FILE.read_text(encoding="utf-8")
+    marker = "window.GW_TAXONOMY ="
+    return json.loads(src[src.index(marker) + len(marker):src.rindex(";")])
+
+
+TAXONOMY = _load_taxonomy()
+CATEGORIES = [(c["name"], sorted({s for sp in c["specialties"] for s in sp["skills"]})) for c in TAXONOMY["categories"]]
+CATALOG = sorted({s for c in TAXONOMY["categories"] for sp in c["specialties"] for s in sp["skills"]})
+NO_DETECT = set(TAXONOMY.get("noDetect", []))
+for _alt, _canon in TAXONOMY.get("aliases", {}).items():
+    ALIAS.setdefault(_alt.lower(), _canon.lower())
+_BY_KEY: Dict[str, str] = {}
+for _skill in CATALOG:
+    _BY_KEY[_skill.lower()] = _skill
+for _alt, _canon in TAXONOMY.get("aliases", {}).items():
+    _BY_KEY[_alt.lower()] = _canon
+
+
+def canonical_skill(name: str) -> Optional[str]:
+    """Return the catalog spelling of a skill (accepting known alternative spellings), or None."""
+    key = str(name).strip().lower()
+    return _BY_KEY.get(key) or _BY_KEY.get(ALIAS.get(key, ""))
 
 
 def js_round(x: float) -> int:
@@ -92,14 +114,17 @@ def all_skills(freelancers: List[Dict[str, Any]]) -> List[str]:
     return sorted({s for f in freelancers for s in f.get("skills") or []})
 
 
-def detect_skills(text: str, freelancers: List[Dict[str, Any]]) -> List[str]:
-    """Detect up to 6 skills from a project title and description."""
+def detect_skills(text: str, freelancers: Optional[List[Dict[str, Any]]] = None) -> List[str]:
+    """Suggest up to 6 catalog skills from a project title and description.
+    (`freelancers` is accepted for backwards compatibility and no longer used.)"""
     t = str(text).lower()
     found: List[str] = []
     for pattern, skills in KW:
         if re.search(pattern, t):
             found.extend(skills)
-    for s in all_skills(freelancers):
+    for s in CATALOG:
+        if s in NO_DETECT:
+            continue
         if re.search(r"(^|[^a-z0-9])" + re.escape(s.lower()) + r"($|[^a-z0-9])", t):
             found.append(s)
     seen, res = set(), []
@@ -112,11 +137,18 @@ def detect_skills(text: str, freelancers: List[Dict[str, Any]]) -> List[str]:
 
 
 def category_of(skills: List[str]) -> str:
-    best, best_n = "Other", 0
+    """The category covering the most of these skills. Ties go to the category of the earliest
+    skill in the list (clients usually list their main skill first)."""
+    best, best_key = "Other", None
+    keys = [nk(s) for s in skills]
     for name, cat_skills in CATEGORIES:
-        n = sum(1 for s in skills if any(nk(x) == nk(s) for x in cat_skills))
-        if n > best_n:
-            best, best_n = name, n
+        cat = {nk(x) for x in cat_skills}
+        hits = [i for i, k in enumerate(keys) if k in cat]
+        if not hits:
+            continue
+        key = (len(hits), -hits[0])
+        if best_key is None or key > best_key:
+            best, best_key = name, key
     return best
 
 
