@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import os
+import re
 import threading
 from pathlib import Path
 from typing import Optional
@@ -15,16 +16,33 @@ class NotConfigured(RuntimeError):
     pass
 
 
+def _clean(value: str) -> str:
+    """Remove spaces, line breaks and invisible characters that sneak in when a key is pasted
+    into a web form (Render, a text editor). Keys never contain them."""
+    return re.sub(r"[\s\u200b-\u200d\u2060\ufeff]+", "", value or "")
+
+
+def supabase_url() -> str:
+    return _clean(os.getenv("SUPABASE_URL", "")).rstrip("/")
+
+
+def supabase_key() -> str:
+    return _clean(os.getenv("SUPABASE_SERVICE_ROLE_KEY", ""))
+
+
 def settings_problem() -> Optional[str]:
     """Return a human-readable problem with the settings, or None if they look fine."""
-    url = os.getenv("SUPABASE_URL", "").strip()
-    key = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "").strip()
+    url, key = supabase_url(), supabase_key()
     if not url:
-        return "SUPABASE_URL is missing from gigwise/backend/.env"
+        return "SUPABASE_URL is missing"
     if not url.startswith("https://") or ".supabase.co" not in url:
         return "SUPABASE_URL should look like https://<project>.supabase.co"
     if not key:
-        return "SUPABASE_SERVICE_ROLE_KEY is missing from gigwise/backend/.env"
+        return "SUPABASE_SERVICE_ROLE_KEY is missing"
+    if not key.isascii() or not key.isprintable():
+        return "SUPABASE_SERVICE_ROLE_KEY contains unusual characters. Copy it again with Supabase's copy button."
+    if key.startswith("sb_publishable_"):
+        return "SUPABASE_SERVICE_ROLE_KEY is the public (publishable) key. Use the secret key instead."
     return None
 
 
@@ -32,16 +50,20 @@ _local = threading.local()
 
 
 def get_client():
-    """One Supabase client per thread. The client's HTTP/2 connection isn't safe to share between
-    threads, and FastAPI runs requests on several threads at once."""
+    """One Supabase client per thread (FastAPI runs requests on several threads at once).
+
+    The connection uses plain HTTP/1.1: HTTP/2 to Supabase failed on Render with protocol
+    errors, and HTTP/1.1 behaves the same everywhere."""
     client = getattr(_local, "client", None)
     if client is None:
         problem = settings_problem()
         if problem:
             raise NotConfigured(problem)
-        from supabase import create_client
+        import httpx
+        from supabase import ClientOptions, create_client
 
-        client = create_client(os.environ["SUPABASE_URL"].strip(), os.environ["SUPABASE_SERVICE_ROLE_KEY"].strip())
+        http = httpx.Client(http2=False, timeout=httpx.Timeout(30.0, connect=10.0))
+        client = create_client(supabase_url(), supabase_key(), options=ClientOptions(httpx_client=http))
         _local.client = client
     return client
 
