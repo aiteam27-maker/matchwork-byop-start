@@ -724,7 +724,7 @@ def accept_offer(offer_id: str, body: FreelancerAction):
         updates.append(lambda: db().table("proposals").update({"status": "accepted"}).eq("id", o["proposal_id"]).execute())
     c = parallel(*updates)[0]
     after = [
-        lambda: thread_note(p["id"], f["id"], ("system", f"🎉 {f['name']} accepted the offer. Contract started.")),
+        lambda: thread_note(p["id"], f["id"], ("system", f"{f['name']} accepted the offer. Contract started.")),
         lambda: notify("client", p["client_id"], f"{f['name']} accepted your offer for “{p['title']}”", f"#/contract/{c['id']}"),
         lambda: log_event("hire", p, f),
     ]
