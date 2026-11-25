@@ -233,48 +233,89 @@ def _list3(items: List[str]) -> str:
     return ", ".join(items) if len(items) <= 3 else ", ".join(items[:3]) + f" +{len(items) - 3}"
 
 
-def _budget_phrase(m: Dict[str, Any], for_freelancer: bool) -> str:
+def _names(items: List[str]) -> str:
+    """'A', 'A and B', 'A, B and C', or 'A, B, C and 2 more'."""
+    if len(items) > 3:
+        return ", ".join(items[:3]) + f" and {len(items) - 3} more"
+    if len(items) <= 1:
+        return "".join(items)
+    return ", ".join(items[:-1]) + " and " + items[-1]
+
+
+def _money(x: float) -> str:
+    return f"${float(x):g}"
+
+
+def _plural(n: int, word: str) -> str:
+    return f"{n} {word}{'' if n == 1 else 's'}"
+
+
+def _budget_line(m: Dict[str, Any], for_freelancer: bool) -> str:
+    """Client view: a verb phrase after 'They' ("charge $48/hr, which fits..."). Freelancer view: a sentence."""
     f, p = m["_f"], m["_p"]
-    yr = "their" if for_freelancer else "your"
-    lead = "Your " if for_freelancer else ""
-    rate = f["rate"]
-    rate_s = f"${rate:g}"
+    rate = float(f["rate"])
+    r = _money(rate)
     if p.get("type") == "hourly":
-        hi, lo = p["rate_max"], p["rate_min"]
-        if rate > hi:
-            return f"{lead}{rate_s}/hr is {js_round((rate / hi - 1) * 100)}% above {yr} ${hi:g}/hr max"
-        where = "below" if rate < lo else "within"
-        return f"{lead}{rate_s}/hr is {where} {yr} ${lo:g}–${hi:g}/hr range"
-    t = js_round(m["target_rate"])
-    if rate <= m["target_rate"]:
-        return f"{lead}{rate_s}/hr fits {yr} ~${t}/hr budget"
-    return f"{lead}{rate_s}/hr is {js_round((rate / m['target_rate'] - 1) * 100)}% above {yr} ~${t}/hr budget"
+        lo, hi = _money(p["rate_min"]), _money(p["rate_max"])
+        if rate > float(p["rate_max"]):
+            pct = js_round((rate / float(p["rate_max"]) - 1) * 100)
+            return (f"Your {r}/hr is about {pct}% above their {hi}/hr maximum, so be ready to explain the value or adjust your rate."
+                    if for_freelancer else f"charge {r}/hr, about {pct}% above your {hi}/hr maximum")
+        if rate < float(p["rate_min"]):
+            return (f"Your {r}/hr is below their {lo}–{hi}/hr range, which makes you a budget-friendly pick."
+                    if for_freelancer else f"charge {r}/hr, below your {lo}–{hi}/hr range")
+        return (f"Your {r}/hr sits within their {lo}–{hi}/hr range."
+                if for_freelancer else f"charge {r}/hr, within your {lo}–{hi}/hr range")
+    target = m["target_rate"]
+    t = f"${js_round(target)}"
+    if rate > target:
+        pct = js_round((rate / target - 1) * 100)
+        return (f"Your {r}/hr is about {pct}% above their budget of roughly {t}/hr, so be ready to explain the value or adjust your bid."
+                if for_freelancer else f"charge {r}/hr, about {pct}% above your budget of roughly {t}/hr")
+    if rate <= target * 0.8:
+        return (f"Your {r}/hr comes in well under their budget of roughly {t}/hr."
+                if for_freelancer else f"charge {r}/hr, well under your budget of roughly {t}/hr")
+    return (f"Your {r}/hr fits their budget of roughly {t}/hr."
+            if for_freelancer else f"charge {r}/hr, which fits your budget of roughly {t}/hr")
 
 
 def reason_for_client(m: Dict[str, Any]) -> str:
-    """Grounded one-line reason shown to the client. Cites profile facts only."""
-    f, p, matched = m["_f"], m["_p"], m["matched"]
-    s = f"Covers {len(matched)} of {len(p['skills'])} required skills"
-    if matched:
-        s += f" ({_list3(matched)})"
-    s += ". " + _budget_phrase(m, False)
+    """Plain-English reason shown to the client, strongest point first. Cites profile facts only."""
+    f, p = m["_f"], m["_p"]
+    n, k, missing = len(p["skills"]), len(m["matched"]), m["missing"]
+    if k == 0:
+        lead = "Doesn't have any of the skills you listed."
+    elif k == n:
+        lead = "Has the skill you asked for." if n == 1 else f"Has all {n} skills you asked for."
+    elif k * 2 >= n:
+        lead = f"Covers {k} of your {n} skills: {_names(m['matched'])}."
+        lead += f" The only gap is {missing[0]}." if len(missing) == 1 else f" Gaps: {_names(missing)}."
+    else:
+        lead = f"Has only {k} of the {n} skills you need ({_names(m['matched'])})."
     years = int(f.get("years") or 0)
-    s += f", {years} yr{'' if years == 1 else 's'} experience"
-    s += f", {float(f['rating']):.1f}★ over {f.get('jobs', 0)} jobs." if f.get("rating") else ", no ratings yet."
+    experience = "are just starting out" if years == 0 else f"bring {_plural(years, 'year')} of experience"
+    if f.get("rating"):
+        experience += f" and a {float(f['rating']):.1f}★ rating over {_plural(int(f.get('jobs') or 0), 'job')}"
+    else:
+        experience += ", though they're new here with no reviews yet"
+    s = f"{lead} They {_budget_line(m, False)}, and {experience}."
     if m["portfolio_item"]:
-        s += f" Built “{m['portfolio_item']['title']}”."
+        s += f" Their “{m['portfolio_item']['title']}” project looks closely related."
     return s
 
 
 def reason_for_freelancer(m: Dict[str, Any]) -> str:
-    """Grounded 'why you fit' note shown to the freelancer."""
-    p, matched, missing = m["_p"], m["matched"], m["missing"]
-    s = f"You have {len(matched)} of {len(p['skills'])} skills they need"
-    if missing:
-        s += f" (missing {_list3(missing)})"
-    s += ". " + _budget_phrase(m, True) + "."
+    """Plain-English 'why you fit' note shown to the freelancer."""
+    p = m["_p"]
+    n, k, missing = len(p["skills"]), len(m["matched"]), m["missing"]
+    if k == n:
+        s = "You have every skill they asked for."
+    else:
+        s = f"You match {k} of the {n} skills they need ({_names(m['matched'])})"
+        s += f"; {_names(missing)} would be new for you." if missing else "."
+    s += " " + _budget_line(m, True)
     if m["portfolio_item"]:
-        s += f" Mention your “{m['portfolio_item']['title']}” project."
+        s += f" Lead with your “{m['portfolio_item']['title']}” project, since it's the closest match."
     return s
 
 

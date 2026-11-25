@@ -455,29 +455,44 @@ const spill=s=>`<span class="spill ${tier(s)[1]}" title="${tier(s)[0]}"><i>${s}<
 const andList=a=>a.length<2?a.join(''):a.slice(0,-1).join(', ')+' and '+a[a.length-1];
 const list3=a=>a.length<=3?a.join(', '):a.slice(0,3).join(', ')+' +'+(a.length-3);
 // "Explanation" layer: grounded template text built only from score parts and profile facts.
+// Plain-English reasons, strongest point first, built only from profile facts.
+// Kept word-for-word identical to reason_for_client / reason_for_freelancer in backend/app/matching.py.
+const names=a=>a.length>3?a.slice(0,3).join(', ')+` and ${a.length-3} more`:a.length<=1?a.join(''):a.slice(0,-1).join(', ')+' and '+a[a.length-1];
+const plural=(n,w)=>`${n} ${w}${n===1?'':'s'}`;
+function budgetLine(m,you){
+ const f=m.f,p=m.p,rate=+f.rate,r=`$${rate}`;
+ if(p.type==='hourly'){const lo=`$${p.rateMin}`,hi=`$${p.rateMax}`;
+  if(rate>p.rateMax){const pct=Math.round((rate/p.rateMax-1)*100);return you?`Your ${r}/hr is about ${pct}% above their ${hi}/hr maximum, so be ready to explain the value or adjust your rate.`:`charge ${r}/hr, about ${pct}% above your ${hi}/hr maximum`}
+  if(rate<p.rateMin)return you?`Your ${r}/hr is below their ${lo}–${hi}/hr range, which makes you a budget-friendly pick.`:`charge ${r}/hr, below your ${lo}–${hi}/hr range`;
+  return you?`Your ${r}/hr sits within their ${lo}–${hi}/hr range.`:`charge ${r}/hr, within your ${lo}–${hi}/hr range`}
+ const t=`$${Math.round(m.target)}`;
+ if(rate>m.target){const pct=Math.round((rate/m.target-1)*100);return you?`Your ${r}/hr is about ${pct}% above their budget of roughly ${t}/hr, so be ready to explain the value or adjust your bid.`:`charge ${r}/hr, about ${pct}% above your budget of roughly ${t}/hr`}
+ if(rate<=m.target*0.8)return you?`Your ${r}/hr comes in well under their budget of roughly ${t}/hr.`:`charge ${r}/hr, well under your budget of roughly ${t}/hr`;
+ return you?`Your ${r}/hr fits their budget of roughly ${t}/hr.`:`charge ${r}/hr, which fits your budget of roughly ${t}/hr`;
+}
 function reasonClient(m){
- const {f,p,matched}=m;
- let s=`Covers ${matched.length} of ${p.skills.length} required skills${matched.length?' ('+list3(matched)+')':''}. `;
- s+=budPhrase(m,false);
- s+=`, ${f.years} yr${f.years===1?'':'s'} experience`+(f.rating?`, ${f.rating.toFixed(1)}★ over ${f.jobs} jobs.`:', no ratings yet.');
- if(m.port)s+=` Built “${m.port.t}”.`;
+ const f=m.f,n=m.p.skills.length,k=m.matched.length,miss=m.missing;let lead;
+ if(k===0)lead="Doesn't have any of the skills you listed.";
+ else if(k===n)lead=n===1?'Has the skill you asked for.':`Has all ${n} skills you asked for.`;
+ else if(k*2>=n)lead=`Covers ${k} of your ${n} skills: ${names(m.matched)}.`+(miss.length===1?` The only gap is ${miss[0]}.`:` Gaps: ${names(miss)}.`);
+ else lead=`Has only ${k} of the ${n} skills you need (${names(m.matched)}).`;
+ const years=+f.years||0;
+ let exp=years===0?'are just starting out':`bring ${plural(years,'year')} of experience`;
+ exp+=f.rating?` and a ${(+f.rating).toFixed(1)}★ rating over ${plural(+f.jobs||0,'job')}`:", though they're new here with no reviews yet";
+ let s=`${lead} They ${budgetLine(m,false)}, and ${exp}.`;
+ if(m.port)s+=` Their “${m.port.t}” project looks closely related.`;
  return s;
 }
 function reasonFree(m){
- const {p,matched,missing}=m;
- let s=`You have ${matched.length} of ${p.skills.length} skills they need`+(missing.length?` (missing ${list3(missing)})`:'')+'. ';
- s+=budPhrase(m,true)+'.';
- if(m.port)s+=` Mention your “${m.port.t}” project.`;
+ const n=m.p.skills.length,k=m.matched.length,miss=m.missing;
+ let s=k===n?'You have every skill they asked for.':`You match ${k} of the ${n} skills they need (${names(m.matched)})`+(miss.length?`; ${names(miss)} would be new for you.`:'.');
+ s+=' '+budgetLine(m,true);
+ if(m.port)s+=` Lead with your “${m.port.t}” project, since it's the closest match.`;
  return s;
 }
 function breakdown(m){
  const d={skills:`${m.matched.length} of ${m.p.skills.length} required skills`,text:m.shared.length?`Shared terms: ${m.shared.slice(0,6).join(', ')}`:'Little overlap with profile text',budget:m.p.type==='hourly'?`$${m.f.rate}/hr vs their $${m.p.rateMin}–$${m.p.rateMax}/hr range`:`$${m.f.rate}/hr vs ~$${Math.round(m.target)}/hr (budget ÷ hours)`,exp:`${m.f.years} yrs (capped at 10)`,rating:m.f.rating?`${m.f.rating.toFixed(1)}★ average`:'No ratings yet, scored neutral'};
  return `<div class="bd">${Object.keys(W).map(k=>`<div class="bd-row"><div><b>${WL[k]}</b> <span class="mute xs">weight ${Math.round(W[k]*100)}%</span><div class="mute xs">${esc(d[k])}</div></div><div class="bar"><i style="width:${Math.round(m.parts[k]*100)}%"></i></div><div class="bd-pts">${(m.parts[k]*Math.round(W[k]*100)).toFixed(1)}<span class="mute xs"> / ${Math.round(W[k]*100)}</span></div></div>`).join('')}<div class="bd-tot">Match score <b>${m.total}</b> / 100</div></div>`;
-}
-function budPhrase(m,you){
- const f=m.f,p=m.p,yr=you?'their':'your',Y=you?'Your ':'';
- if(p.type==='hourly'){if(f.rate>p.rateMax)return `${Y}$${f.rate}/hr is ${Math.round((f.rate/p.rateMax-1)*100)}% above ${yr} $${p.rateMax}/hr max`;return `${Y}$${f.rate}/hr is ${f.rate<p.rateMin?'below':'within'} ${yr} $${p.rateMin}–$${p.rateMax}/hr range`}
- const t=Math.round(m.target);return f.rate<=m.target?`${Y}$${f.rate}/hr fits ${yr} ~$${t}/hr budget`:`${Y}$${f.rate}/hr is ${Math.round((f.rate/m.target-1)*100)}% above ${yr} ~$${t}/hr budget`;
 }
 /* categories, levels, badges, Connects */
 /* skill catalog (taxonomy.js, shared with the backend) */

@@ -153,7 +153,7 @@ class Hiring(unittest.TestCase):
         self.assertEqual((f["connects"], f["rating"], f["jobs"]), (40, None, 0))
         self.assertIn("Rising Talent", f["badges"])
         matches = self.api.get(f"/freelancers/{f['id']}/matches").json()
-        self.assertTrue(matches and matches[0]["reason"].startswith("You have"))
+        self.assertTrue(matches and matches[0]["reason"].startswith(("You match", "You have every skill")))
         upd = self.api.put(f"/freelancers/{f['id']}", json={**body, "rate": 50, "available": False}).json()
         self.assertEqual((upd["rate"], upd["available"], upd["connects"]), (50, False, 40))
         self.assertEqual(self.api.post("/freelancers", json={**body, "skills": []}).status_code, 422)
