@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import os
-from functools import lru_cache
+import threading
 from pathlib import Path
 from typing import Optional
 
@@ -28,14 +28,29 @@ def settings_problem() -> Optional[str]:
     return None
 
 
-@lru_cache(maxsize=1)
-def get_client():
-    problem = settings_problem()
-    if problem:
-        raise NotConfigured(problem)
-    from supabase import create_client
+_local = threading.local()
 
-    return create_client(os.environ["SUPABASE_URL"].strip(), os.environ["SUPABASE_SERVICE_ROLE_KEY"].strip())
+
+def get_client():
+    """One Supabase client per thread. The client's HTTP/2 connection isn't safe to share between
+    threads, and FastAPI runs requests on several threads at once."""
+    client = getattr(_local, "client", None)
+    if client is None:
+        problem = settings_problem()
+        if problem:
+            raise NotConfigured(problem)
+        from supabase import create_client
+
+        client = create_client(os.environ["SUPABASE_URL"].strip(), os.environ["SUPABASE_SERVICE_ROLE_KEY"].strip())
+        _local.client = client
+    return client
+
+
+def _clear_clients():
+    _local.__dict__.clear()
+
+
+get_client.cache_clear = _clear_clients  # used by tests
 
 
 def allowed_origins() -> list:

@@ -908,3 +908,63 @@ def update_freelancer(freelancer_id: str, body: FreelancerIn):
     """Replace a freelancer's editable profile fields. Rating, jobs, Job Success and Connects are not editable."""
     one("freelancers", freelancer_id, "Freelancer")
     return with_badges(rows(db().table("freelancers").update(_profile_row(body)).eq("id", freelancer_id))[0])
+
+
+# ================================================================ demo support for the frontend
+# The frontend loads everything in one call, then sends each action to the endpoints above.
+# Fine for demo-sized data; real login will scope this to the signed-in user.
+
+_STATE_TABLES = {
+    "clients": "id", "freelancers": "id", "projects": "created_at", "proposals": "created_at",
+    "offers": "created_at", "contracts": "started_at", "milestones": "position", "reviews": "created_at",
+    "threads": "created_at", "messages": "created_at", "notifications": "created_at",
+    "saved_jobs": "created_at", "saved_freelancers": "created_at",
+}
+
+
+@app.get("/demo/state", tags=["demo"])
+def demo_state():
+    """Everything the frontend needs to draw every screen, loaded in parallel."""
+    from concurrent.futures import ThreadPoolExecutor
+
+    db()  # fail fast with a clear message if not configured
+
+    def load(item):
+        table, order = item
+        # db() inside the worker: each thread gets its own connection (see app/db.py)
+        return table, db().table(table).select("*").order(order).execute().data or []
+
+    with ThreadPoolExecutor(max_workers=8) as pool:
+        data = dict(pool.map(load, _STATE_TABLES.items()))
+    data["me"] = next((c for c in data["clients"] if c.get("is_demo_user")), None)
+    if not data["me"]:
+        raise HTTPException(500, "No demo client found. Run the seed script: python -m seed.seed")
+    return data
+
+
+@app.post("/demo/reset", tags=["demo"])
+def demo_reset():
+    """Delete everything and reload the demo data. Turn off with DEMO_RESET_ENABLED=false in .env."""
+    import os
+
+    if os.getenv("DEMO_RESET_ENABLED", "true").lower() == "false":
+        raise HTTPException(403, "Demo reset is turned off on this server")
+    from seed.seed import reset_demo
+
+    return {"ok": True, "rows": reset_demo(db(), log=lambda *_: None)}
+
+
+# Serve the frontend from this server too, so one command runs everything:
+# open http://localhost:8000 and the app talks to the API on the same address.
+from pathlib import Path as _Path
+
+from fastapi.responses import RedirectResponse
+from fastapi.staticfiles import StaticFiles
+
+_FRONTEND = _Path(__file__).resolve().parents[2] / "frontend"
+if _FRONTEND.is_dir():
+    app.mount("/app", StaticFiles(directory=str(_FRONTEND), html=True), name="frontend")
+
+    @app.get("/", include_in_schema=False)
+    def _root():
+        return RedirectResponse("/app/")

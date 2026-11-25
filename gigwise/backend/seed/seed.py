@@ -20,14 +20,9 @@ NUMERIC_ID = {"match_events", "notifications", "reviews", "milestones", "message
 COMPOSITE_KEY = {"saved_jobs": "freelancer_id", "saved_freelancers": "client_id"}
 
 
-def main() -> int:
-    try:
-        sb = get_client()
-    except NotConfigured as e:
-        print(f"Can't connect: {e}")
-        return 1
-
-    print("Clearing existing Gigwise data...")
+def reset_demo(sb, log=print) -> dict:
+    """Delete all Gigwise data and load the demo data. Returns row counts per table."""
+    log("Clearing existing Gigwise data...")
     for table in DELETE_ORDER:
         q = sb.table(table).delete()
         if table in NUMERIC_ID:
@@ -37,13 +32,23 @@ def main() -> int:
         else:
             q = q.neq("id", "")
         q.execute()
-
-    data = build_rows()
-    for table, rows in data.items():
+    counts = {}
+    for table, rows in build_rows().items():
         if rows:
             # default_to_null=False: fields a row leaves out get the column's default, not NULL
             sb.table(table).insert(rows, default_to_null=False).execute()
-        print(f"  {table:<14} {len(rows)} rows")
+        counts[table] = len(rows)
+        log(f"  {table:<14} {len(rows)} rows")
+    return counts
+
+
+def main() -> int:
+    try:
+        sb = get_client()
+    except NotConfigured as e:
+        print(f"Can't connect: {e}")
+        return 1
+    reset_demo(sb)
     print("Done. Demo data loaded.")
     return 0
 

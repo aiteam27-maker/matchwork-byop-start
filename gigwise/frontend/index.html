@@ -270,6 +270,7 @@ footer{border-top:1px solid var(--line);padding:22px 0;color:var(--mute);font-si
  .mrow{grid-template-columns:1fr 1fr}.mrow>:first-child{grid-column:1/-1}
  .lrow{grid-template-columns:1fr!important}
  .npanel{right:-110px}
+ .ms{grid-template-columns:30px 1fr}.ms>div:last-child{grid-column:2}.ms>div:last-child .row{flex-wrap:wrap!important}
  .hero h1{font-size:30px}
  .hero-q{flex-direction:column;border-radius:16px}
  .mcard{grid-template-columns:auto 1fr}
@@ -386,8 +387,8 @@ function seed(){
 }
 const KEY='gigwise-demo-v2';let D;
 function load(){try{const s=localStorage.getItem(KEY);if(s){D=JSON.parse(s);if(D&&D.v===2)return}}catch(e){}seed();save()}
-function save(){try{localStorage.setItem(KEY,JSON.stringify(D))}catch(e){}}
-function resetDemo(ok){if(!ok){openSheet(sheetH('Reset demo data?','Projects, proposals, profiles and messages you created will be removed.')+`<div class="row end"><button class="btn plain" onclick="closeSheet()">Cancel</button><button class="btn danger" onclick="closeSheet();resetDemo(true)">Reset</button></div>`);return}seed();save();S.open={};location.hash='#/';render();toast('Demo data reset')}
+function save(){try{if(API.on)localStorage.setItem(UI_KEY,JSON.stringify(D.ui));else localStorage.setItem(KEY,JSON.stringify(D))}catch(e){}}
+function resetDemo(ok){if(!ok){openSheet(sheetH('Reset demo data?','Projects, proposals, profiles and messages you created will be removed.')+`<div class="row end"><button class="btn plain" onclick="closeSheet()">Cancel</button><button class="btn danger" onclick="closeSheet();resetDemo(true)">Reset</button></div>`);return}if(API.on){API.auto={};API.took={};return act(()=>api('POST','/demo/reset'),()=>{S.open={};location.hash='#/';render();toast('Demo data reset in the database')})}seed();save();S.open={};location.hash='#/';render();toast('Demo data reset')}
 
 /* ============ accessors ============ */
 const fl=id=>D.fl.find(f=>f.id===+id);
@@ -538,7 +539,7 @@ function hdr(){
  ${r==='freelancer'&&me?`<button class="who" onclick="pickFreelancer()" title="Switch freelancer">${av(me,26)}<span>${esc(me.name)}</span></button>`:''}`
  :`<button class="btn plain sm" onclick="roleSheet()">Log in</button><button class="btn sm" onclick="roleSheet()">Sign up</button>`}</div></div>`;
 }
-function ftr(){$('#ftr').innerHTML=`<div class="wrap row between"><span>Gigwise · hackathon demo · data is saved in this browser only</span><span class="row"><button class="link" onclick="howScroll()">How scoring works</button><button class="link" onclick="resetDemo()">Reset demo data</button></span></div>`}
+function ftr(){$('#ftr').innerHTML=`<div class="wrap row between"><span>${API.on?`<b style="color:var(--brand)">● Live data</b> · saved in Supabase · <button class="link" onclick="useOffline()">Use offline demo</button>`:`Offline demo · data is saved in this browser only${API.reachable?' · <button class="link" onclick="useLive()">Switch to live data</button>':''}`}</span><span class="row"><button class="link" onclick="howScroll()">How scoring works</button><button class="link" onclick="resetDemo()">Reset demo data</button></span></div>`}
 function howScroll(){if(route().r!==''){go('#/');setTimeout(()=>$('#how')?.scrollIntoView(),60)}else $('#how')?.scrollIntoView()}
 
 /* ============ notifications, saved items, filters ============ */
@@ -547,12 +548,12 @@ function myNotes(){const r=D.ui.role;return D.notes.filter(n=>r==='client'?n.to=
 function notify(to,t,link){D.notes.push({id:'n'+(++D.seq),to,t,link,ts:NOW(),read:false})}
 function notesPanel(){const ns=myNotes().slice(0,20);return `<div class="npanel" role="dialog" aria-label="Notifications"><h3>Notifications</h3>${ns.length?ns.map(n=>`<button class="nitem ${n.read?'':'new'}" onclick="openNote('${n.id}')">${esc(n.t)}<div class="xs mute">${ago(n.ts)}</div></button>`).join(''):'<p class="mute sm" style="padding:14px;margin:0">No notifications yet.</p>'}</div>`}
 function toggleNotes(e){e.stopPropagation();if(S.notesOpen)closeNotes();else{S.notesOpen=true;hdr()}}
-function closeNotes(){if(!S.notesOpen)return;S.notesOpen=false;myNotes().forEach(n=>n.read=true);save();hdr()}
+function closeNotes(){if(!S.notesOpen)return;S.notesOpen=false;const unreadN=myNotes().some(n=>!n.read);myNotes().forEach(n=>n.read=true);save();hdr();if(API.on&&unreadN){const c=D.ui.role==='client';api('POST','/notifications/read',{recipient_type:c?'client':'freelancer',recipient_id:c?API.me.id:fid(D.ui.fid)}).catch(()=>{})}}
 function openNote(id){const n=D.notes.find(x=>x.id===id);closeNotes();if(n&&n.link)go(n.link)}
 document.addEventListener('click',e=>{if(S.notesOpen&&!e.target.closest('.bellwrap'))closeNotes()});
 const savedJobs=()=>D.saved.jobs[D.ui.fid]||(D.saved.jobs[D.ui.fid]=[]);
 function heart(kind,id){const on=kind==='job'?savedJobs().includes(id):D.saved.talent.includes(+id);return `<button class="heart ${on?'on':''}" onclick="event.stopPropagation();toggleSave('${kind}','${id}')" aria-pressed="${on}" aria-label="${on?'Remove from saved':'Save for later'}" title="${on?'Saved':'Save for later'}">${on?'♥':'♡'}</button>`}
-function toggleSave(kind,id){const a=kind==='job'?savedJobs():D.saved.talent,v=kind==='job'?id:+id,i=a.indexOf(v);if(i>=0)a.splice(i,1);else a.push(v);save();toast(i>=0?'Removed from saved':'Saved for later');soft()}
+function toggleSave(kind,id){const a=kind==='job'?savedJobs():D.saved.talent,v=kind==='job'?id:+id,i=a.indexOf(v);if(API.on){const path=kind==='job'?`/freelancers/${fid(D.ui.fid)}/saved-jobs/${id}`:`/saved-freelancers/${fid(+id)}`;return act(()=>api(i>=0?'DELETE':'PUT',path),()=>{toast(i>=0?'Removed from saved':'Saved for later');soft()})}if(i>=0)a.splice(i,1);else a.push(v);save();toast(i>=0?'Removed from saved':'Saved for later');soft()}
 function fsel(obj,key,label,opts){const v=S[obj][key];return `<select class="${v?'set':''}" aria-label="${label}" onchange="S.${obj}.${key}=this.value;render()"><option value="">${label}</option>${opts.map(o=>{const [val,l]=Array.isArray(o)?o:[o,o];return `<option value="${esc(val)}" ${String(v)===String(val)?'selected':''}>${esc(l)}</option>`}).join('')}</select>`}
 const clearBtn=(obj,keep)=>Object.entries(S[obj]).some(([k,v])=>k!=='tab'&&v)?`<button class="link sm" onclick="${Object.keys(S[obj]).filter(k=>k!=='tab').map(k=>`S.${obj}.${k}=''`).join(';')};render()">Clear filters</button>`:'';
 
@@ -678,6 +679,7 @@ function postProject(){
  if(!skills.length){skills=detect(title+' '+desc);auto=true}
  if(!skills.length)return toast('We couldn\'t detect skills. Add at least one.'),g('f_skill').focus();
  const questions=(S.draft.questions||[]).map(q=>q.trim()).filter(Boolean).slice(0,3);
+ if(API.on){const took=Math.max(1,Math.round((NOW()-S.postStart)/1000));return act(()=>api('POST','/projects',{title,description:desc,skills:S.postSkills.slice(),type,budget:type==='fixed'?budget:null,rate_min:type==='hourly'?rateMin:null,rate_max:type==='hourly'?rateMax:null,hours,level:g('f_level').value,duration:g('f_len').value,deadline:deadline||null,questions}),r=>{API.took[r.project.id]=took;const lp=pj(r.project.id);if(lp)lp.took=took;S.draft=null;S.postSkills=[];go('#/matches/'+r.project.id);simulateProposals(r.project.id)})}
  const p={id:'p'+(++D.seq),title,desc,skills,auto,type,budget:type==='hourly'?rateMax*hours:budget,rateMin,rateMax,hours,deadline,level:g('f_level').value,duration:g('f_len').value,questions,cat:catOf(skills),owner:'me',client:'Pulse Fit (you)',status:'open',ts:NOW(),took:Math.max(1,Math.round((NOW()-S.postStart)/1000))};
  D.pr.push(p);save();S.draft=null;S.postSkills=[];
  go('#/matches/'+p.id);simulateProposals(p.id);
@@ -690,6 +692,7 @@ function simulateProposals(pid){
   const f=m.f,bid=p.type==='hourly'?Math.min(f.rate,p.rateMax):Math.round(Math.min(p.budget*1.1,f.rate*p.hours)/50)*50,days=Math.max(5,Math.ceil(p.hours/Math.max(10,f.hpw)*7));
   const ans=(p.questions||[]).map(()=>m.port?`My “${m.port.t}” project is the closest example: ${m.port.d}`:`I've done similar work with ${andList(m.matched)}.`);
   const q={id:'q'+(++D.seq),pid,fid:f.id,cover:`Hi! I'm a ${f.title} with ${f.years} years of experience. I've worked with ${andList(m.matched)}${m.port?`, most recently on “${m.port.t}”`:''}. I can start this week and share progress every few days.`,bid,days,status:'submitted',ts:NOW(),answers:ans,links:[]};
+  if(API.on){api('POST',`/projects/${pid}/proposals`,{freelancer_id:f._id,cover_letter:q.cover,bid,days,answers:ans}).then(()=>API.sync()).then(()=>{toast(`New proposal from ${f.name} on “${p.title}”`);soft()}).catch(()=>{});return}
   D.props.push(q);
   sysMsg(pid,f.id,`${f.name} submitted a proposal: ${bidTxt(q,p)} · ${days} days`);
   notify('c',`New proposal from ${f.name} on “${p.title}”`,'#/proposals/'+pid);
@@ -745,6 +748,7 @@ function openInvite(pid,fid){
 }
 function sendInvite(pid,fid){
  const t=$('#inv_msg').value.trim();if(!t)return toast('Write a short message');
+ if(API.on){const f=fl(fid);return act(()=>api('POST',`/projects/${pid}/invites`,{freelancer_id:f._id,message:t}),()=>{closeSheet();toast('Invite sent to '+f.name);go('#/chat/'+tkey(pid,fid));autoReply(tkey(pid,fid),'c')})}
  const th=ensureThread(pid,fid),f=fl(fid);th.invited=true;
  th.msgs.push({f:'s',t:`Pulse Fit invited ${f.name} to this project`,ts:NOW()});
  th.msgs.push({f:'c',t,ts:NOW()+1});th.read.c=NOW()+1;logEv('invite',pid,fid);notify(+fid,`Pulse Fit invited you to “${pj(pid).title}”`,'#/project/'+pid);save();closeSheet();toast('Invite sent to '+f.name);
@@ -801,6 +805,7 @@ function viewProposal(qid){
 }
 function setStatus(qid,st){
  const q=D.props.find(x=>x.id===qid),p=pj(q.pid),f=fl(q.fid);
+ if(API.on)return act(()=>api('POST',`/proposals/${qid}/${st==='shortlisted'?'shortlist':'decline'}`),()=>{toast(st==='shortlisted'?`${f.name} shortlisted`:'Proposal declined');soft()});
  q.status=st;logEv(st==='shortlisted'?'shortlist':'decline',q.pid,q.fid);
  sysMsg(q.pid,q.fid,st==='shortlisted'?`Pulse Fit shortlisted ${f.name}'s proposal`:`Pulse Fit declined ${f.name}'s proposal`);
  notify(f.id,st==='shortlisted'?`Your proposal for “${p.title}” was shortlisted`:`Your proposal for “${p.title}” was declined`,'#/project/'+p.id);
@@ -926,6 +931,7 @@ function submitProposal(pid){
  const miss=answers.findIndex(a=>!a);if(miss>=0)return toast("Answer the client's questions"),$('#pp_a'+miss).focus();
  if(!(bid>0))return toast('Enter a bid'),$('#pp_bid').focus();if(!(days>0))return toast('Enter delivery time'),$('#pp_days').focus();
  if(ex&&!edit)return toast('You already applied to this project');
+ if(API.on){const body={cover_letter:cover,bid,days,answers,links};return act(()=>edit?api('PATCH',`/proposals/${ex.id}`,{freelancer_id:f._id,...body}):api('POST',`/projects/${pid}/proposals`,{freelancer_id:f._id,...body}),r=>{closeSheet();toast(edit?'Proposal updated':`Proposal sent to ${cname(p)}${r.connects_spent?` · ${r.connects_spent} Connects used`:''}`);soft()})}
  if(edit){
   Object.assign(ex,{cover,bid,days,answers,links,edited:NOW()});
   sysMsg(pid,f.id,`${f.name} updated their proposal: ${bidTxt(ex,p)} · ${days} days`);
@@ -945,6 +951,7 @@ function withdrawProposal(qid,ok){
  const q=D.props.find(x=>x.id===qid),p=pj(q.pid),f=fl(q.fid);
  if(offerFor(qid))return toast('You have an offer on this proposal. Decline the offer instead.');
  if(!ok){openSheet(sheetH('Withdraw your proposal?',esc(p.title))+`<p class="mute sm">The client will see it as withdrawn and you can't re-apply. Connects you spent are not refunded.</p><div class="row end"><button class="btn plain" onclick="closeSheet()">Cancel</button><button class="btn danger" onclick="closeSheet();withdrawProposal('${qid}',true)">Withdraw</button></div>`);return}
+ if(API.on)return act(()=>api('POST',`/proposals/${qid}/withdraw?freelancer_id=${encodeURIComponent(f._id)}`),()=>{toast('Proposal withdrawn');soft()});
  q.status='withdrawn';sysMsg(q.pid,q.fid,`${f.name} withdrew their proposal`);
  notifyClient(p,`${f.name} withdrew their proposal on “${p.title}”`,'#/proposals/'+p.id);
  save();toast('Proposal withdrawn');soft();
@@ -999,6 +1006,7 @@ function sendOffer(){
  if(hourly){if(!(O.rate>0))return toast('Enter an hourly rate');if(!(O.limit>0))return toast('Enter a weekly limit')}
  else{const bad=O.ms.findIndex(x=>!x.t.trim()||!(x.amt>0)||!x.due);if(bad>=0)return toast(`Milestone ${bad+1} needs a name, amount and due date`)}
  if(pendingOffer(p.id))return toast('You already have an offer out on this project');
+ if(API.on)return act(()=>api('POST',`/proposals/${q.id}/offers`,{milestones:hourly?[]:O.ms.map(x=>({title:x.t.trim(),amount:+x.amt,due_date:x.due})),rate:hourly?O.rate:null,weekly_limit:hourly?O.limit:null,message:(O.msg||'').trim()}),()=>{closeSheet();toast('Offer sent to '+f.name);soft()});
  const o={id:'o'+(++D.seq),pid:p.id,fid:f.id,qid:q.id,type:p.type,ms:hourly?[]:O.ms.map(x=>({t:x.t.trim(),amt:+x.amt,due:x.due})),rate:hourly?O.rate:null,limit:hourly?O.limit:null,msg:(O.msg||'').trim(),status:'pending',ts:NOW()};
  D.offers.push(o);
  const th=ensureThread(p.id,f.id);th.msgs.push({f:'s',t:`Pulse Fit sent an offer: ${hourly?`$${o.rate}/hr, up to ${o.limit} hrs/week`:`${money(msTotal(o))} in ${o.ms.length} milestone${o.ms.length>1?'s':''}`}`,ts:NOW()});
@@ -1006,10 +1014,11 @@ function sendOffer(){
  notify(f.id,`Pulse Fit sent you an offer for “${p.title}”`,'#/offer/'+o.id);logEv('offer',p.id,f.id);
  save();closeSheet();toast('Offer sent to '+f.name);soft();
 }
-function withdrawOffer(oid){const o=D.offers.find(x=>x.id===oid),p=pj(o.pid),f=fl(o.fid);o.status='withdrawn';sysMsg(o.pid,o.fid,'Pulse Fit withdrew the offer');notify(f.id,`Pulse Fit withdrew their offer for “${p.title}”`,'#/project/'+p.id);save();toast('Offer withdrawn');soft()}
+function withdrawOffer(oid){const o=D.offers.find(x=>x.id===oid),p=pj(o.pid),f=fl(o.fid);if(API.on)return act(()=>api('POST',`/offers/${oid}/withdraw`),()=>{toast('Offer withdrawn');soft()});o.status='withdrawn';sysMsg(o.pid,o.fid,'Pulse Fit withdrew the offer');notify(f.id,`Pulse Fit withdrew their offer for “${p.title}”`,'#/project/'+p.id);save();toast('Offer withdrawn');soft()}
 function acceptOffer(oid){
  const o=D.offers.find(x=>x.id===oid),p=pj(o.pid),f=fl(o.fid),q=D.props.find(x=>x.id===o.qid);
  if(o.status!=='pending'||p.status!=='open')return toast('This offer is no longer available');
+ if(API.on)return act(()=>api('POST',`/offers/${oid}/accept`,{freelancer_id:f._id}),c=>{toast('Offer accepted. Contract started.');go('#/contract/'+c.id)});
  o.status='accepted';if(q)q.status='accepted';p.status='hired';p.hired=f.id;
  const c={id:'c'+(++D.seq),pid:p.id,fid:f.id,oid,type:o.type,ms:o.ms.map((x,i)=>({...x,st:i===0?'active':'pending'})),rate:o.rate,limit:o.limit,status:'active',ts:NOW()};
  D.contracts.push(c);
@@ -1017,7 +1026,7 @@ function acceptOffer(oid){
  notifyClient(p,`${f.name} accepted your offer for “${p.title}”`,'#/contract/'+c.id);logEv('hire',p.id,f.id);
  save();toast('Offer accepted. Contract started.');go('#/contract/'+c.id);
 }
-function declineOffer(oid){const o=D.offers.find(x=>x.id===oid),p=pj(o.pid),f=fl(o.fid);o.status='declined';sysMsg(o.pid,o.fid,`${f.name} declined the offer`);notifyClient(p,`${f.name} declined your offer for “${p.title}”`,'#/proposals/'+p.id);logEv('offer_declined',p.id,f.id);save();toast('Offer declined');soft()}
+function declineOffer(oid){const o=D.offers.find(x=>x.id===oid),p=pj(o.pid),f=fl(o.fid);if(API.on)return act(()=>api('POST',`/offers/${oid}/decline`,{freelancer_id:f._id}),()=>{toast('Offer declined');soft()});o.status='declined';sysMsg(o.pid,o.fid,`${f.name} declined the offer`);notifyClient(p,`${f.name} declined your offer for “${p.title}”`,'#/proposals/'+p.id);logEv('offer_declined',p.id,f.id);save();toast('Offer declined');soft()}
 function offerCard(o){const p=pj(o.pid),f=fl(o.fid),isC=D.ui.role==='client';return `<div class="card offerbox"><span class="pill st-offer">Offer · ${ago(o.ts)}</span><h3 style="font-size:17px;margin:6px 0 2px">${esc(p.title)}</h3><div class="sm">${isC?'To <b>'+esc(f.name)+'</b>':'From <b>'+esc(cname(p))+'</b>'} · ${termsTxt(o)}</div><div class="row" style="margin-top:10px"><button class="btn sm" onclick="go('#/offer/${o.id}')">${isC?'View offer':'Review offer'}</button></div></div>`}
 function vOffer(id){
  const o=D.offers.find(x=>x.id===id);if(!o)return notFound('Offer not found');
@@ -1075,13 +1084,14 @@ function vContract(id){
  </aside></div></div>`;
 }
 function submitSheet(cid,i){const c=D.contracts.find(x=>x.id===cid),x=c.ms[i];openSheet(sheetH('Submit work for review',`${esc(x.t)} · ${money(x.amt)}`)+`<label>What did you deliver?<textarea id="sw_note" rows="4" autofocus placeholder="Summarise the work and anything the client should check."></textarea></label><label>Link <span class="mute sm" style="font-weight:400">(optional) to the files or demo</span><input id="sw_link" placeholder="e.g. drive.example.com/folder"></label><div class="row end"><button class="btn plain" onclick="closeSheet()">Cancel</button><button class="btn" onclick="submitWork('${cid}',${i})">Submit for review</button></div>`)}
-function submitWork(cid,i){const note=$('#sw_note').value.trim(),link=$('#sw_link').value.trim();if(note.length<5)return toast('Describe what you delivered'),$('#sw_note').focus();const c=D.contracts.find(x=>x.id===cid),x=c.ms[i],p=pj(c.pid),f=fl(c.fid);Object.assign(x,{st:'submitted',note,link,changes:''});sysMsg(c.pid,c.fid,`${f.name} submitted “${x.t}” for review`);notifyClient(p,`${f.name} submitted “${x.t}” for your review`,'#/contract/'+cid);save();closeSheet();toast('Submitted for review');soft()}
-function approveMs(cid,i){const c=D.contracts.find(x=>x.id===cid),x=c.ms[i],f=fl(c.fid);x.st='approved';const nx=c.ms.find(y=>y.st==='pending');if(nx)nx.st='active';sysMsg(c.pid,c.fid,`Pulse Fit approved “${x.t}”`);notify(c.fid,`Pulse Fit approved “${x.t}”${nx?`. Next up: “${nx.t}”`:''}`,'#/contract/'+cid);save();toast(nx?'Approved. Next milestone started.':'All milestones approved');soft()}
+function submitWork(cid,i){const note=$('#sw_note').value.trim(),link=$('#sw_link').value.trim();if(note.length<5)return toast('Describe what you delivered'),$('#sw_note').focus();const c=D.contracts.find(x=>x.id===cid),x=c.ms[i],p=pj(c.pid),f=fl(c.fid);if(API.on)return act(()=>api('POST',`/contracts/${cid}/milestones/${x.pos||i+1}/submit`,{freelancer_id:f._id,note,link}),()=>{closeSheet();toast('Submitted for review');soft()});Object.assign(x,{st:'submitted',note,link,changes:''});sysMsg(c.pid,c.fid,`${f.name} submitted “${x.t}” for review`);notifyClient(p,`${f.name} submitted “${x.t}” for your review`,'#/contract/'+cid);save();closeSheet();toast('Submitted for review');soft()}
+function approveMs(cid,i){const c=D.contracts.find(x=>x.id===cid),x=c.ms[i],f=fl(c.fid);if(API.on){const last=!c.ms.some(y=>y.st==='pending');return act(()=>api('POST',`/contracts/${cid}/milestones/${x.pos||i+1}/approve`),()=>{toast(last?'All milestones approved':'Approved. Next milestone started.');soft()})}x.st='approved';const nx=c.ms.find(y=>y.st==='pending');if(nx)nx.st='active';sysMsg(c.pid,c.fid,`Pulse Fit approved “${x.t}”`);notify(c.fid,`Pulse Fit approved “${x.t}”${nx?`. Next up: “${nx.t}”`:''}`,'#/contract/'+cid);save();toast(nx?'Approved. Next milestone started.':'All milestones approved');soft()}
 function changesSheet(cid,i){const c=D.contracts.find(x=>x.id===cid),x=c.ms[i];openSheet(sheetH('Request changes',esc(x.t))+`<label>What needs to change?<textarea id="ch_note" rows="4" autofocus></textarea></label><div class="row end"><button class="btn plain" onclick="closeSheet()">Cancel</button><button class="btn" onclick="requestChanges('${cid}',${i})">Send request</button></div>`)}
-function requestChanges(cid,i){const note=$('#ch_note').value.trim();if(note.length<5)return toast('Say what needs changing'),$('#ch_note').focus();const c=D.contracts.find(x=>x.id===cid),x=c.ms[i];x.st='active';x.changes=note;sysMsg(c.pid,c.fid,`Pulse Fit requested changes on “${x.t}”`);notify(c.fid,`Pulse Fit requested changes on “${x.t}”`,'#/contract/'+cid);save();closeSheet();toast('Changes requested');soft()}
+function requestChanges(cid,i){const note=$('#ch_note').value.trim();if(note.length<5)return toast('Say what needs changing'),$('#ch_note').focus();const c=D.contracts.find(x=>x.id===cid),x=c.ms[i];if(API.on)return act(()=>api('POST',`/contracts/${cid}/milestones/${x.pos||i+1}/request-changes`,{note}),()=>{closeSheet();toast('Changes requested');soft()});x.st='active';x.changes=note;sysMsg(c.pid,c.fid,`Pulse Fit requested changes on “${x.t}”`);notify(c.fid,`Pulse Fit requested changes on “${x.t}”`,'#/contract/'+cid);save();closeSheet();toast('Changes requested');soft()}
 function endContract(cid,ok){
  const c=D.contracts.find(x=>x.id===cid),p=pj(c.pid),f=fl(c.fid),isC=D.ui.role==='client';
  if(!ok){const open=c.type==='fixed'?c.ms.filter(x=>x.st!=='approved').length:0;openSheet(sheetH('End this contract?',esc(p.title))+`<p class="mute sm">${open?`${open} milestone${open>1?'s are':' is'} not approved yet. `:''}Ending closes the contract for both sides, and you'll be asked to leave feedback.</p><div class="row end"><button class="btn plain" onclick="closeSheet()">Cancel</button><button class="btn danger" onclick="closeSheet();endContract('${cid}',true)">End contract</button></div>`);return}
+ if(API.on)return act(()=>api('POST',`/contracts/${cid}/end`,{role:isC?'client':'freelancer',freelancer_id:isC?null:f._id}),()=>{soft();reviewSheet(cid)});
  c.status='ended';c.endTs=NOW();p.status='ended';
  sysMsg(c.pid,c.fid,`${isC?'Pulse Fit':f.name} ended the contract`);
  if(isC)notify(c.fid,`Pulse Fit ended the contract for “${p.title}”. Leave feedback.`,'#/contract/'+cid);else notifyClient(p,`${f.name} ended the contract for “${p.title}”. Leave feedback.`,'#/contract/'+cid);
@@ -1098,6 +1108,7 @@ function submitReview(cid){
  const t=$('#rv_t').value.trim(),r=S.rv||5;if(t.length<5)return toast('Write a short review'),$('#rv_t').focus();
  const c=D.contracts.find(x=>x.id===cid),p=pj(c.pid),f=fl(c.fid),isC=D.ui.role==='client',dir=isC?'c2f':'f2c';
  if(revOf(cid,dir))return toast('You already left feedback');
+ if(API.on)return act(()=>api('POST',`/contracts/${cid}/reviews`,{role:isC?'client':'freelancer',freelancer_id:isC?null:f._id,rating:r,body:t}),()=>{closeSheet();toast('Thanks for your feedback');soft()});
  D.reviews.push({cid,pid:c.pid,fid:c.fid,dir,r,t,ts:NOW()});
  if(isC){const n=f.jobs,o=f.rating;f.rating=o?Math.round((o*n+r)/(n+1)*10)/10:r;f.jobs=n+1;f.jss=Math.round(((f.jss??100)*n+(r>=4?100:r*20))/(n+1));notify(c.fid,`Pulse Fit left you ${r}★ feedback`,'#/contract/'+cid);logEv('review',c.pid,c.fid)}
  else notifyClient(p,`${f.name} left you ${r}★ feedback`,'#/contract/'+cid);
@@ -1179,6 +1190,7 @@ function saveMe(){
  readMe();const d=S.me;if($('#me_skill').value.trim()){meSkill($('#me_skill').value);readMe()}
  if(!d.name||!d.title)return toast('Add your name and title');if(!d.skills.length)return toast('Add at least one skill');if(!(d.rate>0))return toast('Add your hourly rate');
  const clean={name:d.name,title:d.title,skills:d.skills,rate:d.rate,years:Math.max(0,d.years||0),hpw:d.hpw||0,loc:d.loc,bio:d.bio||d.title,available:d.available,port:d.port,emp:d.emp||[],edu:d.edu||[],cert:d.cert||[],lang:d.lang||[]};
+ if(API.on){const isNew=d.isNew,me0=fl(D.ui.fid);return act(()=>isNew?api('POST','/freelancers',bodyFor(clean)):api('PUT',`/freelancers/${me0._id}`,bodyFor(clean)),r=>{if(isNew){D.ui.fid=fnum(r.id);D.ui.role='freelancer'}save();S.me=null;toast(isNew?'Profile created. Here are your matches.':'Profile saved. Match scores updated.');go('#/dashboard')})}
  if(d.isNew){const f={id:++D.seq,rating:null,jobs:0,jss:null,connects:40,...clean};D.fl.push(f);D.ui.fid=f.id;D.ui.role='freelancer';toast('Profile created. Here are your matches.')}
  else{Object.assign(fl(D.ui.fid),clean);toast('Profile saved. Match scores updated.')}
  save();S.me=null;go('#/dashboard');
@@ -1188,7 +1200,7 @@ function saveMe(){
 function vChat(key){
  const ts=myThreads(),t=key?D.th[key]:null,s=side();
  if(t&&!ts.includes(t))return notFound('Conversation not found for this view. Switch roles to see it.');
- if(t){t.read[s]=NOW();save();setTimeout(hdr,0)}
+ if(t){const had=unread(t)>0;t.read[s]=NOW();save();setTimeout(hdr,0);if(API.on&&had&&t._id)api('POST',`/threads/${t._id}/read`,{role:s==='c'?'client':'freelancer'}).catch(()=>{})}
  const other=t=>s==='c'?fl(t.fid).name:pj(t.pid).client.replace(' (you)','');
  const lastText=t=>{const m=[...t.msgs].reverse().find(x=>x.f!=='s')||t.msgs[t.msgs.length-1];return m?(m.f===s?'You: ':'')+m.t:''};
  return `<div class="wrap page"><h1 style="margin-bottom:14px">Messages</h1>
@@ -1205,6 +1217,7 @@ function convo(t,s){
 function sendMsg(k){
  const el=$('#cmp'),v=el.value.trim();if(!v)return;
  const t=D.th[k],s=side();t.msgs.push({f:s,t:v,ts:NOW()});t.read[s]=NOW();save();el.value='';
+ if(API.on){render();$('#cmp')?.focus();api('POST',`/threads/${t._id}/messages`,{sender:s==='c'?'client':'freelancer',body:v}).then(()=>API.sync()).then(()=>soft()).catch(e=>toast(e.message));autoReply(k,s);return}
  render();$('#cmp')?.focus();autoReply(k,s);
 }
 // Demo-only: the other side replies once per thread so a conversation can be shown solo
@@ -1216,6 +1229,7 @@ function autoReply(k,from){
   delete S.typing[k];
   const txt=to==='f'?`Thanks for reaching out! “${p.title}” looks like a great fit. I've worked with ${andList(m.matched)}${m.port?` and built “${m.port.t}”`:''}. I'll send a proposal with a timeline today. Any must-have features for the first version?`
    :`Thanks ${f.name.split(' ')[0]}! Appreciate the quick reply. Could you share a rough plan for the first two weeks and how you'd handle ${m.missing.length?andList(m.missing):'testing and launch'}?`;
+  if(API.on){api('POST',`/threads/${t._id}/messages`,{sender:to==='f'?'freelancer':'client',body:txt}).then(()=>API.sync()).then(()=>{const viewing=route().r==='chat'&&route().id===k&&side()===from;soft();if(!viewing)toast('New message from '+(to==='f'?f.name:p.client.replace(' (you)','')))}).catch(()=>{});return}
   t.msgs.push({f:to,t:txt,ts:NOW()});save();
   const viewing=route().r==='chat'&&route().id===k&&side()===from;
   soft();if(!viewing)toast('New message from '+(to==='f'?f.name:p.client.replace(' (you)','')));
@@ -1223,10 +1237,76 @@ function autoReply(k,from){
 }
 function notFound(msg){return `<div class="wrap page"><div class="card empty"><h3>${esc(msg)}</h3><button class="btn" onclick="go('#/')">Go home</button></div></div>`}
 
+/* ============ live mode: Gigwise backend + Supabase ============
+   If the backend is running, every screen shows data from Supabase and every action is sent to the API.
+   If it isn't, the app falls back to the offline demo (data saved in this browser only). */
+const API={on:false,me:null,busy:0,took:{},auto:{},reachable:false,
+ base:(location.protocol.startsWith('http')&&location.pathname.startsWith('/app'))?location.origin:'http://localhost:8000'};
+const MODE_KEY='gigwise-mode',UI_KEY='gigwise-ui',FNUM_KEY='gigwise-fnums';
+let FNUM={};try{FNUM=JSON.parse(localStorage.getItem(FNUM_KEY)||'{}')}catch(e){}
+// The backend uses text ids ("f01", "f_3a9c..."); the screens use numbers. Map between them, stably.
+function fnum(id){const m=/^f(\d+)$/.exec(id);if(m)return +m[1];if(!FNUM[id]){FNUM[id]=1000+Object.keys(FNUM).length+1;try{localStorage.setItem(FNUM_KEY,JSON.stringify(FNUM))}catch(e){}}return FNUM[id]}
+function fid(n){const f=fl(n);return f&&f._id}
+async function api(method,path,body){
+ let r;
+ try{r=await fetch(API.base+path,{method,headers:body?{'Content-Type':'application/json'}:{},body:body?JSON.stringify(body):undefined})}
+ catch(e){throw new Error("Can't reach the Gigwise server. Is the backend running?")}
+ let data=null;try{data=await r.json()}catch(e){}
+ if(!r.ok){const d=data&&data.detail;throw new Error(typeof d==='string'?d:Array.isArray(d)&&d[0]?.msg?d[0].msg.replace(/^Value error, /,''):`Request failed (${r.status})`)}
+ return data;
+}
+const tms=x=>x?Date.parse(x):null,num=x=>x==null?null:+x;
+API.sync=async function(){
+ const s=await api('GET','/demo/state'),me=s.me.id,cl=Object.fromEntries(s.clients.map(c=>[c.id,c]));
+ const F=s.freelancers.map(f=>({id:fnum(f.id),_id:f.id,name:f.name,title:f.title,skills:f.skills||[],rate:+f.rate,years:f.years,rating:num(f.rating),jobs:f.jobs,available:f.available,hpw:f.hours_per_week,loc:f.location||'',bio:f.bio||'',jss:f.jss,connects:f.connects,
+  port:(f.portfolio||[]).map(p=>({t:p.title,d:p.description||''})),emp:(f.employment||[]).map(e=>({role:e.role,co:e.company,from:e.from,to:e.to})),edu:(f.education||[]).map(e=>({school:e.school,deg:e.degree,yr:e.year})),cert:(f.certifications||[]).map(e=>({name:e.name,by:e.issuer,yr:e.year})),lang:(f.languages||[]).map(e=>({l:e.language,lv:e.level}))}));
+ const P=s.projects.map(p=>{const c=cl[p.client_id]||{},mine=p.client_id===me;return{id:p.id,title:p.title,desc:p.description,skills:p.skills||[],auto:p.skills_auto,type:p.type,budget:+p.budget,rateMin:p.rate_min==null?undefined:+p.rate_min,rateMax:p.rate_max==null?undefined:+p.rate_max,hours:p.hours,level:p.level,duration:p.duration,deadline:p.deadline,questions:p.questions||[],cat:p.category,owner:mine?'me':'x',client:mine?c.name+' (you)':c.name,cr:num(c.rating),cn:c.hires,status:p.status,hired:p.hired_freelancer_id?fnum(p.hired_freelancer_id):undefined,ts:tms(p.created_at),extra:p.extra_proposals||0,took:API.took[p.id]}});
+ const Q=s.proposals.map(q=>({id:q.id,pid:q.project_id,fid:fnum(q.freelancer_id),cover:q.cover_letter,bid:+q.bid,days:q.days,status:q.status,ts:tms(q.created_at),answers:q.answers||[],links:q.links||[],connects:q.connects_spent,edited:tms(q.edited_at)}));
+ const O=s.offers.map(o=>({id:o.id,pid:o.project_id,fid:fnum(o.freelancer_id),qid:o.proposal_id,type:o.type,ms:(o.milestones||[]).map(m=>({t:m.title,amt:+m.amount,due:m.due_date})),rate:num(o.rate),limit:o.weekly_limit,msg:o.message||'',status:o.status,ts:tms(o.created_at)}));
+ const C=s.contracts.map(c=>({id:c.id,pid:c.project_id,fid:fnum(c.freelancer_id),oid:c.offer_id,type:c.type,rate:num(c.rate),limit:c.weekly_limit,status:c.status,ts:tms(c.started_at),endTs:tms(c.ended_at),
+  ms:s.milestones.filter(m=>m.contract_id===c.id).sort((a,b)=>a.position-b.position).map(m=>({t:m.title,amt:+m.amount,due:m.due_date,st:m.status,note:m.note||'',link:m.link||'',changes:m.changes_requested||'',pos:m.position}))}));
+ const R=s.reviews.map(r=>{const c=C.find(x=>x.id===r.contract_id)||{};return{cid:r.contract_id,pid:c.pid,fid:c.fid,dir:r.direction==='client_to_freelancer'?'c2f':'f2c',r:r.rating,t:r.body,ts:tms(r.created_at)}});
+ const TH={};s.threads.forEach(t=>{const n=fnum(t.freelancer_id),k=tkey(t.project_id,n);TH[k]={pid:t.project_id,fid:n,_id:t.id,invited:t.invited,
+  msgs:s.messages.filter(m=>m.thread_id===t.id).map(m=>({f:{client:'c',freelancer:'f',system:'s'}[m.sender],t:m.body,ts:tms(m.created_at)})),
+  read:{c:tms(t.client_read_at)||0,f:tms(t.freelancer_read_at)||0},auto:API.auto[k]||(API.auto[k]={c:false,f:false})}});
+ const N=s.notifications.map(n=>({id:'n'+n.id,_id:n.id,to:n.recipient_type==='client'?(n.recipient_id===me?'c':'x'):fnum(n.recipient_id),t:n.body,link:n.link,ts:tms(n.created_at),read:n.read}));
+ const SV={talent:s.saved_freelancers.filter(x=>x.client_id===me).map(x=>fnum(x.freelancer_id)),jobs:{}};
+ s.saved_jobs.forEach(x=>{(SV.jobs[fnum(x.freelancer_id)]=SV.jobs[fnum(x.freelancer_id)]||[]).push(x.project_id)});
+ API.me=s.me;
+ D={v:2,live:true,seq:(D&&D.seq)||100,fl:F,pr:P,props:Q,offers:O,contracts:C,reviews:R,th:TH,notes:N,saved:SV,log:[],ui:(D&&D.ui)||loadUi()};
+};
+function loadUi(){try{const u=JSON.parse(localStorage.getItem(UI_KEY)||'null');if(u)return u}catch(e){}return{role:null,fid:null}}
+// Run one action against the API, then reload from the database so the screen shows what was saved.
+async function act(call,done){
+ if(API.busy)return;API.busy++;document.body.style.cursor='progress';
+ try{const r=await call();await API.sync();if(done)done(r);else soft()}
+ catch(e){toast(e.message||'Something went wrong');try{await API.sync()}catch(_){};soft()}
+ finally{API.busy--;document.body.style.cursor=''}
+}
+const bodyFor=d=>({name:d.name,title:d.title,skills:d.skills,rate:d.rate,years:Math.max(0,d.years||0),hours_per_week:d.hpw||0,available:d.available,location:d.loc||'',bio:d.bio||'',
+ portfolio:(d.port||[]).map(x=>({title:x.t,description:x.d||''})),employment:(d.emp||[]).map(x=>({role:String(x.role||''),company:String(x.co||''),from:String(x.from||''),to:String(x.to||'')})),
+ education:(d.edu||[]).map(x=>({school:String(x.school||''),degree:String(x.deg||''),year:String(x.yr||'')})),certifications:(d.cert||[]).map(x=>({name:String(x.name||''),issuer:String(x.by||''),year:String(x.yr||'')})),
+ languages:(d.lang||[]).map(x=>({language:String(x.l||''),level:String(x.lv||'')}))});
+function useOffline(){try{localStorage.setItem(MODE_KEY,'offline')}catch(e){}location.reload()}
+function useLive(){try{localStorage.removeItem(MODE_KEY)}catch(e){}location.reload()}
+// Pick up changes made elsewhere (another browser, a teammate) every 20 seconds while the tab is open.
+setInterval(()=>{if(!API.on||API.busy||document.hidden||$('#sheet').classList.contains('open'))return;const a=document.activeElement;if(a&&['INPUT','TEXTAREA','SELECT'].includes(a.tagName))return;API.sync().then(()=>soft()).catch(()=>{})},20000);
+async function boot(){
+ window.addEventListener('hashchange',render);
+ let forcedOffline=false;try{forcedOffline=localStorage.getItem(MODE_KEY)==='offline'}catch(e){}
+ $('#app').innerHTML='<div class="wrap page"><div class="card empty"><h3>Loading Gigwise…</h3></div></div>';
+ try{
+  const ctl=new AbortController(),tm=setTimeout(()=>ctl.abort(),2500);
+  const h=await fetch(API.base+'/health',{signal:ctl.signal}).then(r=>r.json());clearTimeout(tm);
+  API.reachable=!!(h&&h.ok);
+  if(API.reachable&&!forcedOffline){D=null;await API.sync();API.on=true}
+ }catch(e){}
+ if(!API.on)load();
+ render();
+}
+
 /* ============ boot ============ */
-load();
-window.addEventListener('hashchange',render);
-render();
+boot();
 </script>
 </body>
 </html>
