@@ -1,9 +1,12 @@
 # Render deployment for Gigwise: one web service that serves the app and the API.
 # Every change merged into main deploys automatically (about 2-5 minutes).
 # Secrets are NOT stored here: paste SUPABASE_SERVICE_ROLE_KEY in Render's dashboard when asked.
+# Region: Singapore, the closest Render region to the Supabase database (Seoul).
+# Render can't move a service between regions, so this is a new service ("gigwise-sg").
 services:
   - type: web
-    name: gigwise
+    name: gigwise-sg
+    region: singapore
     runtime: python
     plan: free
     branch: main
