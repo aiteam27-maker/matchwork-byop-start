@@ -4,7 +4,7 @@ Run from gigwise/backend:   .venv/bin/uvicorn app.main:app --reload --port 8000
 Interactive docs:           http://localhost:8000/docs
 
 Until real login exists, "you" as a client are the demo client (Pulse Fit), and freelancer
-actions take a freelancer_id. Offers, contracts, milestones and reviews come in the next step.
+actions take a freelancer_id.
 """
 from __future__ import annotations
 
@@ -494,3 +494,417 @@ def mark_notifications_read(body: NotificationsReadIn):
     db().table("notifications").update({"read": True}).eq("recipient_type", body.recipient_type) \
         .eq("recipient_id", body.recipient_id).eq("read", False).execute()
     return {"ok": True}
+
+
+# ================================================================ offers, contracts, reviews
+# Amounts track the work only. No payments happen in Gigwise.
+
+class MilestoneIn(BaseModel):
+    title: str = Field(min_length=1, max_length=120)
+    amount: float = Field(gt=0)
+    due_date: date
+
+
+class OfferIn(BaseModel):
+    milestones: List[MilestoneIn] = Field(default_factory=list, max_length=5, description="Fixed-price projects")
+    rate: Optional[float] = Field(None, gt=0, description="Hourly projects: USD per hour")
+    weekly_limit: Optional[int] = Field(None, gt=0, le=80, description="Hourly projects: max hours a week")
+    message: str = Field("", max_length=2000)
+
+
+class FreelancerAction(BaseModel):
+    freelancer_id: str
+
+
+class SubmitWorkIn(BaseModel):
+    freelancer_id: str
+    note: str = Field(min_length=5, max_length=3000)
+    link: str = Field("", max_length=500)
+
+
+class ChangesIn(BaseModel):
+    note: str = Field(min_length=5, max_length=3000)
+
+
+class EndIn(BaseModel):
+    role: Literal["client", "freelancer"]
+    freelancer_id: Optional[str] = None
+
+
+class ReviewIn(BaseModel):
+    role: Literal["client", "freelancer"]
+    freelancer_id: Optional[str] = None
+    rating: int = Field(ge=1, le=5)
+    body: str = Field(min_length=5, max_length=3000)
+
+
+def offer_terms(o: Dict[str, Any]) -> str:
+    if o["type"] == "hourly":
+        return f"${o['rate']:g}/hr, up to {o['weekly_limit']} hrs/week"
+    total = sum(float(m["amount"]) for m in o["milestones"])
+    n = len(o["milestones"])
+    return f"{money(total)} in {n} milestone{'' if n == 1 else 's'}"
+
+
+def check_role(role: str, project: Dict[str, Any], contract_or_offer: Dict[str, Any], freelancer_id: Optional[str]):
+    """Until real login exists: the client side must own the project; the freelancer side must pass their id."""
+    if role == "client":
+        if project["client_id"] != demo_client()["id"]:
+            raise HTTPException(403, "This belongs to another client")
+    elif freelancer_id != contract_or_offer["freelancer_id"]:
+        raise HTTPException(403, "This belongs to another freelancer")
+
+
+@app.post("/proposals/{proposal_id}/offers", status_code=201, tags=["offers"])
+def send_offer(proposal_id: str, body: OfferIn):
+    """Client sends an offer on a proposal. One pending offer per project at a time."""
+    q, p, f = _proposal_for(proposal_id)
+    own_project(p["id"])
+    if p["status"] != "open":
+        raise HTTPException(409, "This project is no longer open")
+    if q["status"] not in ("submitted", "shortlisted"):
+        raise HTTPException(409, f"Can't send an offer on a {q['status']} proposal")
+    if rows(db().table("offers").select("id").eq("project_id", p["id"]).eq("status", "pending")):
+        raise HTTPException(409, "You already have an offer out on this project")
+    if p["type"] == "hourly":
+        if not body.rate or not body.weekly_limit:
+            raise HTTPException(422, "Hourly offers need a rate and a weekly limit")
+        terms = {"milestones": [], "rate": body.rate, "weekly_limit": body.weekly_limit}
+    else:
+        if not body.milestones:
+            raise HTTPException(422, "Fixed-price offers need at least one milestone")
+        terms = {"milestones": [{"title": m.title.strip(), "amount": m.amount, "due_date": m.due_date.isoformat()}
+                                for m in body.milestones], "rate": None, "weekly_limit": None}
+    o = rows(db().table("offers").insert({
+        "project_id": p["id"], "freelancer_id": f["id"], "proposal_id": q["id"], "type": p["type"],
+        "message": body.message.strip(), **terms,
+    }))[0]
+    client = demo_client()
+    t = ensure_thread(p["id"], f["id"])
+    post_message(t["id"], "system", f"{client['name']} sent an offer: {offer_terms(o)}")
+    if o["message"]:
+        post_message(t["id"], "client", o["message"])
+    notify("freelancer", f["id"], f"{client['name']} sent you an offer for “{p['title']}”", f"#/offer/{o['id']}")
+    log_event("offer", p, f)
+    return o
+
+
+@app.get("/offers", tags=["offers"])
+def list_offers(role: Literal["client", "freelancer"], freelancer_id: Optional[str] = None, status: str = "pending"):
+    query = db().table("offers").select("*, projects(title, client_id, clients(name)), freelancers(name)") \
+        .order("created_at", desc=True)
+    if status != "any":
+        query = query.eq("status", status)
+    if role == "freelancer":
+        if not freelancer_id:
+            raise HTTPException(422, "freelancer_id is required for role=freelancer")
+        return rows(query.eq("freelancer_id", freelancer_id))
+    mine = demo_client()["id"]
+    return [o for o in rows(query) if (o.get("projects") or {}).get("client_id") == mine]
+
+
+@app.get("/offers/{offer_id}", tags=["offers"])
+def get_offer(offer_id: str):
+    r = rows(db().table("offers").select("*, projects(title, type, client_id, clients(name)), freelancers(name)")
+             .eq("id", offer_id))
+    if not r:
+        raise HTTPException(404, "Offer not found")
+    return r[0]
+
+
+def _pending_offer(offer_id: str):
+    o = one("offers", offer_id, "Offer")
+    if o["status"] != "pending":
+        raise HTTPException(409, f"This offer was already {o['status']}")
+    return o, one("projects", o["project_id"], "Project"), one("freelancers", o["freelancer_id"], "Freelancer")
+
+
+@app.post("/offers/{offer_id}/accept", status_code=201, tags=["offers"])
+def accept_offer(offer_id: str, body: FreelancerAction):
+    """Freelancer accepts: the project is filled and a contract starts with the first milestone active."""
+    o, p, f = _pending_offer(offer_id)
+    check_role("freelancer", p, o, body.freelancer_id)
+    if p["status"] != "open":
+        raise HTTPException(409, "This project is no longer open")
+    db().table("offers").update({"status": "accepted"}).eq("id", o["id"]).execute()
+    if o.get("proposal_id"):
+        db().table("proposals").update({"status": "accepted"}).eq("id", o["proposal_id"]).execute()
+    db().table("projects").update({"status": "hired", "hired_freelancer_id": f["id"]}).eq("id", p["id"]).execute()
+    client = one("clients", p["client_id"], "Client")
+    db().table("clients").update({"hires": int(client["hires"] or 0) + 1}).eq("id", client["id"]).execute()
+    c = rows(db().table("contracts").insert({
+        "project_id": p["id"], "freelancer_id": f["id"], "offer_id": o["id"], "type": o["type"],
+        "rate": o.get("rate"), "weekly_limit": o.get("weekly_limit"),
+    }))[0]
+    if o["milestones"]:
+        db().table("milestones").insert([
+            {"contract_id": c["id"], "position": i + 1, "title": m["title"], "amount": m["amount"],
+             "due_date": m["due_date"], "status": "active" if i == 0 else "pending"}
+            for i, m in enumerate(o["milestones"])
+        ]).execute()
+    t = ensure_thread(p["id"], f["id"])
+    post_message(t["id"], "system", f"🎉 {f['name']} accepted the offer. Contract started.")
+    notify("client", p["client_id"], f"{f['name']} accepted your offer for “{p['title']}”", f"#/contract/{c['id']}")
+    log_event("hire", p, f)
+    return get_contract(c["id"])
+
+
+@app.post("/offers/{offer_id}/decline", tags=["offers"])
+def decline_offer(offer_id: str, body: FreelancerAction):
+    o, p, f = _pending_offer(offer_id)
+    check_role("freelancer", p, o, body.freelancer_id)
+    updated = rows(db().table("offers").update({"status": "declined"}).eq("id", o["id"]))[0]
+    post_message(ensure_thread(p["id"], f["id"])["id"], "system", f"{f['name']} declined the offer")
+    notify("client", p["client_id"], f"{f['name']} declined your offer for “{p['title']}”", f"#/proposals/{p['id']}")
+    log_event("offer_declined", p, f)
+    return updated
+
+
+@app.post("/offers/{offer_id}/withdraw", tags=["offers"])
+def withdraw_offer(offer_id: str):
+    o, p, f = _pending_offer(offer_id)
+    check_role("client", p, o, None)
+    updated = rows(db().table("offers").update({"status": "withdrawn"}).eq("id", o["id"]))[0]
+    client = demo_client()
+    post_message(ensure_thread(p["id"], f["id"])["id"], "system", f"{client['name']} withdrew the offer")
+    notify("freelancer", f["id"], f"{client['name']} withdrew their offer for “{p['title']}”", f"#/project/{p['id']}")
+    return updated
+
+
+# ---------------------------------------------------------------- contracts and milestones
+@app.get("/contracts", tags=["contracts"])
+def list_contracts(role: Literal["client", "freelancer"], freelancer_id: Optional[str] = None, status: str = "any"):
+    query = db().table("contracts").select("*, projects(title, client_id, clients(name)), freelancers(name)") \
+        .order("started_at", desc=True)
+    if status != "any":
+        query = query.eq("status", status)
+    if role == "freelancer":
+        if not freelancer_id:
+            raise HTTPException(422, "freelancer_id is required for role=freelancer")
+        contracts = rows(query.eq("freelancer_id", freelancer_id))
+    else:
+        mine = demo_client()["id"]
+        contracts = [c for c in rows(query) if (c.get("projects") or {}).get("client_id") == mine]
+    if not contracts:
+        return []
+    ms = rows(db().table("milestones").select("*").in_("contract_id", [c["id"] for c in contracts]))
+    for c in contracts:
+        mine_ms = [m for m in ms if m["contract_id"] == c["id"]]
+        c["milestones_total"] = len(mine_ms)
+        c["milestones_approved"] = sum(1 for m in mine_ms if m["status"] == "approved")
+        c["amount_total"] = sum(float(m["amount"]) for m in mine_ms)
+        c["needs_client_review"] = any(m["status"] == "submitted" for m in mine_ms)
+    return contracts
+
+
+@app.get("/contracts/{contract_id}", tags=["contracts"])
+def get_contract(contract_id: str):
+    r = rows(db().table("contracts").select("*, projects(title, client_id, clients(name)), freelancers(name)")
+             .eq("id", contract_id))
+    if not r:
+        raise HTTPException(404, "Contract not found")
+    c = r[0]
+    c["milestones"] = rows(db().table("milestones").select("*").eq("contract_id", contract_id).order("position"))
+    c["reviews"] = rows(db().table("reviews").select("*").eq("contract_id", contract_id))
+    return c
+
+
+def _milestone(contract_id: str, position: int):
+    c = one("contracts", contract_id, "Contract")
+    if c["status"] != "active":
+        raise HTTPException(409, "This contract has ended")
+    r = rows(db().table("milestones").select("*").eq("contract_id", contract_id).eq("position", position))
+    if not r:
+        raise HTTPException(404, "Milestone not found")
+    return c, r[0], one("projects", c["project_id"], "Project"), one("freelancers", c["freelancer_id"], "Freelancer")
+
+
+@app.post("/contracts/{contract_id}/milestones/{position}/submit", tags=["contracts"])
+def submit_milestone(contract_id: str, position: int, body: SubmitWorkIn):
+    c, m, p, f = _milestone(contract_id, position)
+    check_role("freelancer", p, c, body.freelancer_id)
+    if m["status"] != "active":
+        raise HTTPException(409, f"Only the active milestone can be submitted (this one is {m['status']})")
+    updated = rows(db().table("milestones").update({
+        "status": "submitted", "note": body.note.strip(), "link": body.link.strip() or None, "changes_requested": None,
+    }).eq("id", m["id"]))[0]
+    post_message(ensure_thread(p["id"], f["id"])["id"], "system", f"{f['name']} submitted “{m['title']}” for review")
+    notify("client", p["client_id"], f"{f['name']} submitted “{m['title']}” for your review", f"#/contract/{c['id']}")
+    return updated
+
+
+@app.post("/contracts/{contract_id}/milestones/{position}/approve", tags=["contracts"])
+def approve_milestone(contract_id: str, position: int):
+    c, m, p, f = _milestone(contract_id, position)
+    check_role("client", p, c, None)
+    if m["status"] != "submitted":
+        raise HTTPException(409, "Only submitted work can be approved")
+    db().table("milestones").update({"status": "approved"}).eq("id", m["id"]).execute()
+    nxt = rows(db().table("milestones").select("*").eq("contract_id", contract_id).eq("status", "pending")
+               .order("position").limit(1))
+    if nxt:
+        db().table("milestones").update({"status": "active"}).eq("id", nxt[0]["id"]).execute()
+    client = demo_client()
+    post_message(ensure_thread(p["id"], f["id"])["id"], "system", f"{client['name']} approved “{m['title']}”")
+    notify("freelancer", f["id"],
+           f"{client['name']} approved “{m['title']}”" + (f". Next up: “{nxt[0]['title']}”" if nxt else ""),
+           f"#/contract/{c['id']}")
+    return get_contract(contract_id)
+
+
+@app.post("/contracts/{contract_id}/milestones/{position}/request-changes", tags=["contracts"])
+def request_changes(contract_id: str, position: int, body: ChangesIn):
+    c, m, p, f = _milestone(contract_id, position)
+    check_role("client", p, c, None)
+    if m["status"] != "submitted":
+        raise HTTPException(409, "You can only request changes on submitted work")
+    updated = rows(db().table("milestones").update({"status": "active", "changes_requested": body.note.strip()})
+                   .eq("id", m["id"]))[0]
+    client = demo_client()
+    post_message(ensure_thread(p["id"], f["id"])["id"], "system", f"{client['name']} requested changes on “{m['title']}”")
+    notify("freelancer", f["id"], f"{client['name']} requested changes on “{m['title']}”", f"#/contract/{c['id']}")
+    return updated
+
+
+@app.post("/contracts/{contract_id}/end", tags=["contracts"])
+def end_contract(contract_id: str, body: EndIn):
+    """Either side can end an active contract. Both are then asked for feedback."""
+    c = one("contracts", contract_id, "Contract")
+    p, f = one("projects", c["project_id"], "Project"), one("freelancers", c["freelancer_id"], "Freelancer")
+    check_role(body.role, p, c, body.freelancer_id)
+    if c["status"] != "active":
+        raise HTTPException(409, "This contract has already ended")
+    db().table("contracts").update({"status": "ended", "ended_at": now_iso()}).eq("id", c["id"]).execute()
+    db().table("projects").update({"status": "ended"}).eq("id", p["id"]).execute()
+    client = one("clients", p["client_id"], "Client")
+    who = client["name"] if body.role == "client" else f["name"]
+    post_message(ensure_thread(p["id"], f["id"])["id"], "system", f"{who} ended the contract")
+    if body.role == "client":
+        notify("freelancer", f["id"], f"{who} ended the contract for “{p['title']}”. Leave feedback.", f"#/contract/{c['id']}")
+    else:
+        notify("client", p["client_id"], f"{who} ended the contract for “{p['title']}”. Leave feedback.", f"#/contract/{c['id']}")
+    return get_contract(contract_id)
+
+
+@app.post("/contracts/{contract_id}/reviews", status_code=201, tags=["contracts"])
+def leave_review(contract_id: str, body: ReviewIn):
+    """Two-way feedback after a contract ends. A client's rating updates the freelancer's rating
+    and Job Success, which feeds the Ratings signal (7%) of future match scores."""
+    c = one("contracts", contract_id, "Contract")
+    p, f = one("projects", c["project_id"], "Project"), one("freelancers", c["freelancer_id"], "Freelancer")
+    check_role(body.role, p, c, body.freelancer_id)
+    if c["status"] != "ended":
+        raise HTTPException(409, "Feedback opens once the contract has ended")
+    direction = "client_to_freelancer" if body.role == "client" else "freelancer_to_client"
+    if rows(db().table("reviews").select("id").eq("contract_id", c["id"]).eq("direction", direction)):
+        raise HTTPException(409, "You already left feedback on this contract")
+    review = rows(db().table("reviews").insert({
+        "contract_id": c["id"], "direction": direction, "rating": body.rating, "body": body.body.strip(),
+    }))[0]
+    client = one("clients", p["client_id"], "Client")
+    r = body.rating
+    if body.role == "client":
+        n, old = int(f["jobs"] or 0), f.get("rating")
+        new_rating = js_round1((float(old) * n + r) / (n + 1)) if old else float(r)
+        new_jss = matching.js_round(((f.get("jss") or 100) * n + (100 if r >= 4 else r * 20)) / (n + 1))
+        db().table("freelancers").update({"rating": new_rating, "jobs": n + 1, "jss": new_jss}).eq("id", f["id"]).execute()
+        notify("freelancer", f["id"], f"{client['name']} left you {r}★ feedback", f"#/contract/{c['id']}")
+        log_event("review", p, f)
+    else:
+        n, old = int(client["hires"] or 1), client.get("rating")
+        new_rating = js_round1((float(old) * n + r) / (n + 1)) if old else float(r)
+        db().table("clients").update({"rating": new_rating}).eq("id", client["id"]).execute()
+        notify("client", p["client_id"], f"{f['name']} left you {r}★ feedback", f"#/contract/{c['id']}")
+    return review
+
+
+def js_round1(x: float) -> float:
+    """Round to 1 decimal place the way the frontend does (Math.round(x*10)/10)."""
+    return matching.js_round(x * 10) / 10
+
+
+# ---------------------------------------------------------------- saved items
+@app.get("/freelancers/{freelancer_id}/saved-jobs", tags=["saved"])
+def list_saved_jobs(freelancer_id: str):
+    one("freelancers", freelancer_id, "Freelancer")
+    return rows(db().table("saved_jobs").select("project_id, created_at, projects(*)")
+                .eq("freelancer_id", freelancer_id).order("created_at", desc=True))
+
+
+@app.put("/freelancers/{freelancer_id}/saved-jobs/{project_id}", tags=["saved"])
+def save_job(freelancer_id: str, project_id: str):
+    one("freelancers", freelancer_id, "Freelancer")
+    one("projects", project_id, "Project")
+    if not rows(db().table("saved_jobs").select("project_id").eq("freelancer_id", freelancer_id).eq("project_id", project_id)):
+        db().table("saved_jobs").insert({"freelancer_id": freelancer_id, "project_id": project_id}).execute()
+    return {"saved": True}
+
+
+@app.delete("/freelancers/{freelancer_id}/saved-jobs/{project_id}", tags=["saved"])
+def unsave_job(freelancer_id: str, project_id: str):
+    db().table("saved_jobs").delete().eq("freelancer_id", freelancer_id).eq("project_id", project_id).execute()
+    return {"saved": False}
+
+
+@app.get("/saved-freelancers", tags=["saved"])
+def list_saved_freelancers():
+    return rows(db().table("saved_freelancers").select("freelancer_id, created_at, freelancers(*)")
+                .eq("client_id", demo_client()["id"]).order("created_at", desc=True))
+
+
+@app.put("/saved-freelancers/{freelancer_id}", tags=["saved"])
+def save_freelancer(freelancer_id: str):
+    one("freelancers", freelancer_id, "Freelancer")
+    cid = demo_client()["id"]
+    if not rows(db().table("saved_freelancers").select("freelancer_id").eq("client_id", cid).eq("freelancer_id", freelancer_id)):
+        db().table("saved_freelancers").insert({"client_id": cid, "freelancer_id": freelancer_id}).execute()
+    return {"saved": True}
+
+
+@app.delete("/saved-freelancers/{freelancer_id}", tags=["saved"])
+def unsave_freelancer(freelancer_id: str):
+    db().table("saved_freelancers").delete().eq("client_id", demo_client()["id"]).eq("freelancer_id", freelancer_id).execute()
+    return {"saved": False}
+
+
+# ---------------------------------------------------------------- freelancer profiles
+class PortfolioItem(BaseModel):
+    title: str = Field(min_length=1, max_length=120)
+    description: str = Field("", max_length=500)
+
+
+class FreelancerIn(BaseModel):
+    name: str = Field(min_length=1, max_length=80)
+    title: str = Field(min_length=1, max_length=120)
+    skills: List[str] = Field(min_length=1, max_length=20)
+    rate: float = Field(gt=0, le=1000)
+    years: int = Field(0, ge=0, le=60)
+    hours_per_week: int = Field(30, ge=0, le=80)
+    available: bool = True
+    location: str = Field("", max_length=120)
+    bio: str = Field("", max_length=3000)
+    portfolio: List[PortfolioItem] = Field(default_factory=list, max_length=20)
+    employment: List[Dict[str, str]] = Field(default_factory=list, max_length=20)
+    education: List[Dict[str, str]] = Field(default_factory=list, max_length=20)
+    certifications: List[Dict[str, str]] = Field(default_factory=list, max_length=20)
+    languages: List[Dict[str, str]] = Field(default_factory=list, max_length=20)
+
+
+def _profile_row(body: FreelancerIn) -> Dict[str, Any]:
+    row = body.model_dump()
+    row["skills"] = [s.strip() for s in row["skills"] if s.strip()]
+    row["bio"] = row["bio"].strip() or row["title"]
+    return row
+
+
+@app.post("/freelancers", status_code=201, tags=["freelancers"])
+def create_freelancer(body: FreelancerIn):
+    """Create a freelancer profile. New profiles start with 40 Connects and no ratings."""
+    return with_badges(rows(db().table("freelancers").insert(_profile_row(body)))[0])
+
+
+@app.put("/freelancers/{freelancer_id}", tags=["freelancers"])
+def update_freelancer(freelancer_id: str, body: FreelancerIn):
+    """Replace a freelancer's editable profile fields. Rating, jobs, Job Success and Connects are not editable."""
+    one("freelancers", freelancer_id, "Freelancer")
+    return with_badges(rows(db().table("freelancers").update(_profile_row(body)).eq("id", freelancer_id))[0])
