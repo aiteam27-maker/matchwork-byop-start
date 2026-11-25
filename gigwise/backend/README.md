@@ -6,7 +6,7 @@ A Python API (FastAPI) that stores Gigwise data in Supabase (PostgreSQL) and run
 Browser (gigwise/frontend)  ->  this API (FastAPI)  ->  Supabase (database)
 ```
 
-The frontend still runs on its own with browser-only demo data. Connecting it to this API is the next step.
+The frontend (`gigwise/frontend/index.html`) uses this API when it's running (**live mode**: data saved in Supabase). If the API isn't running, the frontend falls back to its built-in offline demo, with data saved in the browser only.
 
 ## What's here
 
@@ -42,13 +42,20 @@ python3 -m venv .venv
 ```
 Re-run it any time to reset the demo.
 
-## Run the API
+## Run Gigwise (app + API)
 
 ```bash
 .venv/bin/uvicorn app.main:app --reload --port 8000
 ```
 
-Then open http://localhost:8000/docs to see and try every endpoint in the browser. http://localhost:8000/health tells you whether the database is connected.
+Then open:
+- **http://localhost:8000**: the Gigwise app in live mode. The footer shows **● Live data**, and every action is saved in Supabase.
+- **http://localhost:8000/docs**: see and try every API endpoint.
+- **http://localhost:8000/health**: whether the database is connected.
+
+Press **Ctrl+C** to stop. **Reset demo data** in the app's footer reloads the demo data in the database (turn it off with `DEMO_RESET_ENABLED=false` in `.env`).
+
+Opening `index.html` by double-clicking it still works, in offline mode. The browser blocks a page opened from a file from calling the API.
 
 ## Run the tests
 
@@ -79,6 +86,7 @@ Full details and a "Try it out" button for each one: http://localhost:8000/docs
 
 ## Notes
 
+- **Live mode details.** The app loads everything with one call (`GET /demo/state`), sends each action to its endpoint, then reloads, so the screen always shows what's saved. It also refreshes every 20 seconds to pick up changes from other browsers. Match scores are calculated in the browser with the same formula as `app/matching.py`; the tests check both give identical results.
 - **No login yet.** As a client you act as the demo client (Pulse Fit). Freelancer actions take a `freelancer_id`. Anyone who can reach the API can act as anyone, so run it locally only for now.
 - **Security.** Every table has Row Level Security on with no rules, so the public anon key can't read anything. Only this backend, using the secret key, can.
 - **Fairness.** The score never uses name, location or other personal attributes. A test checks this.
