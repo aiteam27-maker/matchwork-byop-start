@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>MatchWork</title>
+<title>Gigwise</title>
 <style>
 :root{--bg:#f6f7f5;--card:#fff;--ink:#16211c;--mute:#5f6b66;--line:#e2e7e3;--soft:#f0f3f1;--brand:#0e7c66;--brand-d:#0a5e4e;--brand-l:#e2f3ee;--blue:#2f6fd1;--blue-l:#e6efff;--amber:#a86512;--amber-l:#fdf1dc;--red:#b42318;--red-l:#fde8e6;--gray:#8a918d;--r:14px;--sh:0 1px 2px rgba(16,24,20,.05),0 6px 20px rgba(16,24,20,.06)}
 *{box-sizing:border-box}
@@ -384,7 +384,7 @@ function seed(){
  sysMsg('p1',10,'Hannah W. submitted a proposal: $1,800 · 14 days',t-1*DAY);
  Object.values(D.th).forEach(th=>{th.read.c=t;th.read.f=t});
 }
-const KEY='matchwork-demo-v2';let D;
+const KEY='gigwise-demo-v2';let D;
 function load(){try{const s=localStorage.getItem(KEY);if(s){D=JSON.parse(s);if(D&&D.v===2)return}}catch(e){}seed();save()}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(D))}catch(e){}}
 function resetDemo(ok){if(!ok){openSheet(sheetH('Reset demo data?','Projects, proposals, profiles and messages you created will be removed.')+`<div class="row end"><button class="btn plain" onclick="closeSheet()">Cancel</button><button class="btn danger" onclick="closeSheet();resetDemo(true)">Reset</button></div>`);return}seed();save();S.open={};location.hash='#/';render();toast('Demo data reset')}
@@ -531,14 +531,14 @@ function hdr(){
  const links=r==='client'?[['post','Post a project'],['client','My projects'],['contracts','Contracts'],['talent','Find talent'],['projects','Project board']]:r==='freelancer'?[['dashboard','Best matches'],['projects','Find work'],['contracts','Contracts'],['talent','Freelancers'],['me','My profile']]:null;
  const nn=r?myNotes().filter(x=>!x.read).length:0;
  const n=r?myThreads().reduce((a,t)=>a+unread(t),0):0;
- $('#hdr').innerHTML=`<div class="wrap hdr-in"><a class="logo" href="#/">${LOGO}<span>MatchWork</span></a>
+ $('#hdr').innerHTML=`<div class="wrap hdr-in"><a class="logo" href="#/">${LOGO}<span>Gigwise</span></a>
  <nav class="nav" aria-label="Main">${links?links.map(([k,l])=>`<a href="#/${k}" class="${cur===k?'on':''}">${l}</a>`).join(''):`<button onclick="setRole('client','#/talent')">Find talent</button><button onclick="setRole('freelancer','#/projects')">Find work</button><button onclick="howScroll()">How matching works</button>`}</nav>
  <div class="hdr-r">${r?`<div class="bellwrap"><button class="icon-btn" onclick="toggleNotes(event)" aria-label="Notifications${nn?', '+nn+' new':''}" aria-expanded="${S.notesOpen}">${IBELL}${nn?`<b class="badge">${nn}</b>`:''}</button>${S.notesOpen?notesPanel():''}</div><a class="icon-btn" href="#/chat" title="Messages" aria-label="Messages${n?', '+n+' unread':''}">${ICHAT}${n?`<b class="badge">${n}</b>`:''}</a>
  <div class="seg sm" role="group" aria-label="View as"><button class="${r==='client'?'on':''}" onclick="setRole('client','#/client')">Client</button><button class="${r==='freelancer'?'on':''}" onclick="setRole('freelancer','#/dashboard')">Freelancer</button></div>
  ${r==='freelancer'&&me?`<button class="who" onclick="pickFreelancer()" title="Switch freelancer">${av(me,26)}<span>${esc(me.name)}</span></button>`:''}`
  :`<button class="btn plain sm" onclick="roleSheet()">Log in</button><button class="btn sm" onclick="roleSheet()">Sign up</button>`}</div></div>`;
 }
-function ftr(){$('#ftr').innerHTML=`<div class="wrap row between"><span>MatchWork · hackathon demo · data is saved in this browser only</span><span class="row"><button class="link" onclick="howScroll()">How scoring works</button><button class="link" onclick="resetDemo()">Reset demo data</button></span></div>`}
+function ftr(){$('#ftr').innerHTML=`<div class="wrap row between"><span>Gigwise · hackathon demo · data is saved in this browser only</span><span class="row"><button class="link" onclick="howScroll()">How scoring works</button><button class="link" onclick="resetDemo()">Reset demo data</button></span></div>`}
 function howScroll(){if(route().r!==''){go('#/');setTimeout(()=>$('#how')?.scrollIntoView(),60)}else $('#how')?.scrollIntoView()}
 
 /* ============ notifications, saved items, filters ============ */
@@ -562,7 +562,7 @@ function closeSheet(){$('#sheet').classList.remove('open')}
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeSheet()});
 let tt;function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('show'),2800)}
 const sheetH=(t,sub)=>`<div class="sheet-h"><div><h2>${t}</h2>${sub?`<p class="mute" style="margin:0">${sub}</p>`:''}</div><button class="x" onclick="closeSheet()" aria-label="Close">×</button></div>`;
-function roleSheet(){openSheet(sheetH('Join MatchWork','How do you want to use it?')+`<div class="rolecards">
+function roleSheet(){openSheet(sheetH('Join Gigwise','How do you want to use it?')+`<div class="rolecards">
  <button class="rolecard" onclick="setRole('client','#/post')"><span style="font-size:26px">🧭</span><b>I'm hiring</b><span class="mute sm">Post a project and get a ranked, explained shortlist.</span></button>
  <button class="rolecard" onclick="closeSheet();pickFreelancer('#/dashboard')"><span style="font-size:26px">🛠️</span><b>I'm a freelancer</b><span class="mute sm">See projects ranked by fit and send proposals.</span></button></div>
  <p class="mute xs" style="margin:14px 0 0">Demo: no password needed. Clients sign in as “Pulse Fit”; freelancers pick a demo profile or create one.</p>`)}
@@ -594,7 +594,7 @@ function vLanding(){
  return `<section class="hero"><div class="wrap hero-in"><div>
  <div class="seg" role="tablist"><button class="${hire?'on':''}" onclick="S.hero='hire';render()">Hire</button><button class="${!hire?'on':''}" onclick="S.hero='work';render()">Work</button></div>
  ${hire?`<h1>Post a project.<br>Get a ranked shortlist in under 60 seconds.</h1>
- <p class="lead">MatchWork scores every freelancer on skills, experience and budget fit, and tells you exactly why each person was suggested.</p>
+ <p class="lead">Gigwise scores every freelancer on skills, experience and budget fit, and tells you exactly why each person was suggested.</p>
  <form class="hero-q" onsubmit="event.preventDefault();startPost(this.q.value)"><input name="q" aria-label="Describe your project" placeholder="What do you need built? e.g. an AI fitness coaching app"><button class="btn">Find my matches</button></form>
  <div class="try">Try: ${Object.keys(EX).map(x=>`<button class="link" onclick="startPost('${x}')">${x}</button>`).join(' · ')}</div>`
  :`<h1>Find projects<br>you're likely to win.</h1>
@@ -603,7 +603,7 @@ function vLanding(){
  </div>${sampleCard()}</div></section>
  <div class="wrap">
  <div class="strip"><div><b>&lt; 60 sec</b><span class="mute sm">from posting to a shortlist</span></div><div><b>5 signals</b><span class="mute sm">skills, text, budget, experience, ratings</span></div><div><b>Every match</b><span class="mute sm">comes with a plain-English reason</span></div><div><b>${D.fl.filter(f=>f.available).length} freelancers</b><span class="mute sm">available now in this demo</span></div></div>
- <section class="sec" id="how"><div class="sec-h"><h2>How MatchWork works</h2><p>One place for posting, matching, proposals and chat, on both sides of the job.</p></div>
+ <section class="sec" id="how"><div class="sec-h"><h2>How Gigwise works</h2><p>One place for posting, matching, proposals and chat, on both sides of the job.</p></div>
  <div class="how"><div class="card"><h3>🧭 For clients</h3><ol class="steps"><li><div><b>Post a project</b><br><span class="mute sm">Title, description, budget and hours. Skip skills and we'll detect them.</span></div></li><li><div><b>See ranked matches</b><br><span class="mute sm">Each freelancer gets a 0–100 score with matched and missing skills.</span></div></li><li><div><b>Invite and chat</b><br><span class="mute sm">Invite your top picks; a thread opens for each one.</span></div></li><li><div><b>Compare proposals and hire</b><br><span class="mute sm">Bids, delivery times and match scores side by side.</span></div></li></ol></div>
  <div class="card"><h3>🛠️ For freelancers</h3><ol class="steps"><li><div><b>Build your profile</b><br><span class="mute sm">Skills, rate, experience and portfolio.</span></div></li><li><div><b>See projects that fit you</b><br><span class="mute sm">Ranked by the same score clients see, with a “why you fit” note.</span></div></li><li><div><b>Send one strong proposal</b><br><span class="mute sm">Cover letter drafted from your profile, bid and timeline.</span></div></li><li><div><b>Chat and deliver</b><br><span class="mute sm">Talk with the client in one thread per project.</span></div></li></ol></div></div></section>
  <section class="sec"><div class="sec-h"><h2>How the match score works</h2><p>The same transparent formula ranks freelancers for clients and projects for freelancers.</p></div>
