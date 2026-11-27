@@ -9,6 +9,35 @@ A **small fix** bumps the last number (`v2.1` → `v2.1.1`).
 
 ---
 
+## v2.1 · 2026-11-27 · New home page, simpler posting, one-click hire
+
+**By:** a teammate, pushed by aiteam27-maker with Claude Code
+**Why:** Make the first impression stronger and the client's path from idea to hire
+shorter for demos.
+
+**Changed** (`gigwise/frontend/index.html`)
+- Home page: a full-screen opening ("Hire people who get it right") with a search bar
+  that types example projects, shows suggestions on focus and filters projects,
+  categories and skills as you type. Then a scrolling category strip, a three-step
+  "how it works" and a closing call to post. The score breakdown, fairness note,
+  featured freelancers and Hire/Work switch were removed from the home page.
+- Posting a project: two questions (what you need, your budget) with the detected
+  skills and budget hints. Skills, timeline and screening questions moved under
+  "More options".
+- Proposals: clearer cards tagged Best match / Lowest price / Fastest, and an
+  "Our pick" banner.
+- One-click Hire: sends an offer with suggested milestones. **Demo behaviour:** the
+  freelancer accepts automatically about 4 seconds later, which creates a contract in
+  the shared live data. The normal "Send offer" flow still waits for the freelancer.
+- Pages fade in, sections reveal on scroll, and menu links are slightly bigger.
+
+**Known gaps**
+- The background video files (`hero.mp4`, `hero-portrait.mp4`) aren't in the
+  repository yet, so the home page shows a plain dark background instead.
+- Unused code remains for an activity wall and a YouTube background; neither is shown.
+
+---
+
 ## v2.0 · 2026-11-27 · Editorial design, and a changelog
 
 **By:** the team (design by a teammate, pushed by aiteam27-maker with Claude Code)
