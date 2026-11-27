@@ -1165,8 +1165,10 @@ function hdr(){
  ${r==='freelancer'&&me&&!REAL()?`<button class="who" onclick="pickFreelancer()" title="Switch freelancer">${av(me,26)}<span>${esc(me.name)}</span></button>`:''}${acctBtns()}`
  :REAL()?acctBtns():loginBtns()}</div></div>${demoBar()}`;
 }
-function ftr(){if(REAL()){$('#ftr').innerHTML=`<div class="wrap row between"><span><b style="color:var(--brand)">●</b> Signed in as ${esc(AUTH.session.user.email||'')} · <button class="link" onclick="logout()">Log out</button></span><span class="row"><button class="link" onclick="howScroll()">How scoring works</button><a class="link" href="privacy.html">Privacy</a><a class="link" href="terms.html">Terms</a></span></div>`;return}
-$('#ftr').innerHTML=`<div class="wrap row between"><span>${API.on?`<b style="color:var(--brand)">● Live data</b> · saved in Supabase${API.ai?' · AI explanations on':''} · <button class="link" onclick="useOffline()">Use offline demo</button>`:`Offline demo · data is saved in this browser only${API.reachable?' · <button class="link" onclick="useLive()">Switch to live data</button>':''}`}</span><span class="row"><button class="link" onclick="howScroll()">How scoring works</button><a class="link" href="privacy.html">Privacy</a><a class="link" href="terms.html">Terms</a>${API.on&&!API.resetOk?'':'<button class="link" onclick="resetDemo()">Reset demo data</button>'}</span></div>`}
+function ftr(){
+ const left=REAL()?`Signed in as ${esc(AUTH.session.user.email||'')} · <button class="link" onclick="logout()">Log out</button>`:'© 2026 Gigwise';
+ const reset=!REAL()&&!(API.on&&!API.resetOk)?'<button class="link" onclick="resetDemo()">Reset demo data</button>':'';
+ $('#ftr').innerHTML=`<div class="wrap row between"><span>${left}</span><span class="row"><a class="link" href="privacy.html">Privacy</a><a class="link" href="terms.html">Terms</a>${reset}</span></div>`}
 function howScroll(){if(route().r!==''){go('#/');setTimeout(()=>$('#how')?.scrollIntoView(),60)}else $('#how')?.scrollIntoView()}
 
 /* ============ Claude-written reasons (live mode with an API key) ============ */
@@ -2215,13 +2217,13 @@ const bodyFor=d=>({name:d.name,title:d.title,skills:d.skills,rate:d.rate,years:M
  portfolio:(d.port||[]).map(x=>({title:x.t,description:x.d||''})),employment:(d.emp||[]).map(x=>({role:String(x.role||''),company:String(x.co||''),from:String(x.from||''),to:String(x.to||'')})),
  education:(d.edu||[]).map(x=>({school:String(x.school||''),degree:String(x.deg||''),year:String(x.yr||'')})),certifications:(d.cert||[]).map(x=>({name:String(x.name||''),issuer:String(x.by||''),year:String(x.yr||'')})),
  languages:(d.lang||[]).map(x=>({language:String(x.l||''),level:String(x.lv||'')}))});
-function useOffline(){try{localStorage.setItem(MODE_KEY,'offline')}catch(e){}location.reload()}
-function useLive(){try{localStorage.removeItem(MODE_KEY)}catch(e){}location.reload()}
 // Pick up changes made elsewhere (another browser, a teammate) every 20 seconds while the tab is open.
 setInterval(()=>{if(!API.on||API.busy||document.hidden||$('#sheet').classList.contains('open'))return;const a=document.activeElement;if(a&&['INPUT','TEXTAREA','SELECT'].includes(a.tagName))return;API.sync().then(()=>soft()).catch(()=>{})},20000);
 async function boot(){
  window.addEventListener('hashchange',render);
- let forcedOffline=false;try{forcedOffline=localStorage.getItem(MODE_KEY)==='offline'}catch(e){}
+ // The footer no longer offers "Use offline demo", so drop that old choice: everyone gets live data
+ // when the server is reachable, and the offline demo only when it isn't.
+ try{localStorage.removeItem(MODE_KEY)}catch(e){}const forcedOffline=false;
  $('#app').innerHTML='<div class="wrap page"><div class="card empty"><h3>Loading Gigwise…</h3></div></div>';
  try{
   const ctl=new AbortController(),tm=setTimeout(()=>ctl.abort(),2500);
