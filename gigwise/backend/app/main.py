@@ -3,11 +3,15 @@
 Run from gigwise/backend:   .venv/bin/uvicorn app.main:app --reload --port 8000
 Interactive docs:           http://localhost:8000/docs
 
-Until real login exists, "you" as a client are the demo client (Pulse Fit), and freelancer
-actions take a freelancer_id.
+Two separate worlds share the database:
+- Demo: requests without a login token. Anyone can try the investor demo: "you" as a client are the
+  demo client (Pulse Fit), and freelancer actions name any demo freelancer.
+- Real: requests from a signed-in user (Supabase login, see app/auth.py). They only see real data,
+  act only as their own client and freelancer profiles, and only see their own private data.
 """
 from __future__ import annotations
 
+import contextvars
 import time
 from concurrent.futures import ThreadPoolExecutor
 from datetime import date, datetime, timezone
@@ -18,6 +22,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 from . import ai, matching
+from .auth import AuthMiddleware, current_user, request_cache
 from .db import NotConfigured, allowed_origins, get_client, settings_problem
 
 app = FastAPI(title="Gigwise API", version="0.1.0",
@@ -28,6 +33,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(AuthMiddleware)
 
 LEVELS = ("Entry", "Intermediate", "Expert")
 DURATIONS = ("Less than 1 month", "1 to 3 months", "3 to 6 months", "More than 6 months")
@@ -53,9 +59,14 @@ def rows(query) -> List[Dict[str, Any]]:
     return query.execute().data or []
 
 
+WORLD_TABLES = ("clients", "freelancers", "projects")
+
+
 def one(table: str, id_: str, what: str) -> Dict[str, Any]:
+    """One row by id. Clients, freelancers and projects from the other world (demo vs real) count as
+    not found, so the two worlds never see each other."""
     r = rows(db().table(table).select("*").eq("id", id_).limit(1))
-    if not r:
+    if not r or (table in WORLD_TABLES and r[0].get("world", "demo") != world()):
         raise HTTPException(404, f"{what} not found")
     return r[0]
 
@@ -68,8 +79,9 @@ _POOL = ThreadPoolExecutor(max_workers=24, thread_name_prefix="gw-db")
 def parallel(*calls):
     """Run independent database calls at the same time and return their results in order.
     If one fails, its error is raised (the first failing call in the list wins).
+    Each call runs with a copy of this request's context, so it knows who is signed in.
     Don't call parallel() from inside a call passed to parallel()."""
-    futures = [_POOL.submit(c) for c in calls]
+    futures = [_POOL.submit(contextvars.copy_context().run, c) for c in calls]
     return [f.result() for f in futures]
 
 
@@ -92,8 +104,80 @@ def forget_demo_client() -> None:
     _DEMO["client"] = None
 
 
+# ---------------------------------------------------------------- who is asking
+class Actor:
+    """The person behind this request. world is 'demo' (no login) or 'real' (signed in)."""
+
+    def __init__(self, world: str, user: Optional[Dict[str, Any]] = None,
+                 client: Optional[Dict[str, Any]] = None, freelancer: Optional[Dict[str, Any]] = None):
+        self.world, self.user, self.client, self.freelancer = world, user, client, freelancer
+
+
+def actor() -> Actor:
+    """Worked out once per request. Signed-in users get their own client and freelancer profiles
+    (either may not exist yet). Uses plain sequential queries, so it is safe inside parallel()."""
+    cache = request_cache()
+    if "actor" not in cache:
+        user = current_user()
+        if user is None:
+            cache["actor"] = Actor("demo")
+        else:
+            c = rows(db().table("clients").select("*").eq("user_id", user["id"]).limit(1))
+            f = rows(db().table("freelancers").select("*").eq("user_id", user["id"]).limit(1))
+            cache["actor"] = Actor("real", user, c[0] if c else None, f[0] if f else None)
+    return cache["actor"]
+
+
+def world() -> str:
+    return actor().world
+
+
+def me_client() -> Dict[str, Any]:
+    """The client "you" are: the demo client in the demo, your own client profile when signed in."""
+    a = actor()
+    if a.world == "demo":
+        return demo_client()
+    if not a.client:
+        raise HTTPException(403, "Set up your client profile first")
+    return a.client
+
+
+def as_freelancer(freelancer_id: str) -> Dict[str, Any]:
+    """Act as this freelancer. In the demo, any demo freelancer; when signed in, only your own profile."""
+    f = one("freelancers", freelancer_id, "Freelancer")
+    a = actor()
+    if a.world == "real" and (not a.freelancer or a.freelancer["id"] != freelancer_id):
+        raise HTTPException(403, "You can only act as your own freelancer profile")
+    return f
+
+
+def is_party(project: Dict[str, Any], freelancer_id: str) -> bool:
+    """True if you may see something between this project's client and this freelancer
+    (a thread, offer or contract). Everything in the demo is open to demo visitors."""
+    a = actor()
+    if a.world == "demo":
+        return True
+    return bool((a.client and project["client_id"] == a.client["id"])
+                or (a.freelancer and freelancer_id == a.freelancer["id"]))
+
+
+def check_party(project: Dict[str, Any], freelancer_id: str) -> None:
+    if not is_party(project, freelancer_id):
+        raise HTTPException(403, "You're not part of this")
+
+
+def check_side(side: str, project: Dict[str, Any], freelancer_id: str) -> None:
+    """You must be this side ('client' or 'freelancer') of the project + freelancer pair."""
+    if side == "client":
+        if project["client_id"] != me_client()["id"]:
+            raise HTTPException(403, "This belongs to another client")
+    else:
+        as_freelancer(freelancer_id)
+
+
 def all_freelancers() -> List[Dict[str, Any]]:
-    return rows(db().table("freelancers").select("*").order("id"))
+    """Every freelancer in your world (demo or real)."""
+    return rows(db().table("freelancers").select("*").eq("world", world()).order("id"))
 
 
 def with_badges(f: Dict[str, Any]) -> Dict[str, Any]:
@@ -101,7 +185,7 @@ def with_badges(f: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def own_project(project_id: str) -> Dict[str, Any]:
-    p, client = parallel(lambda: one("projects", project_id, "Project"), demo_client)
+    p, client = parallel(lambda: one("projects", project_id, "Project"), me_client)
     if p["client_id"] != client["id"]:
         raise HTTPException(403, "This project belongs to another client")
     return p
@@ -210,9 +294,14 @@ def health():
     try:
         rows(db().table("clients").select("id").limit(1))
         import os
+        try:
+            rows(db().table("clients").select("world, user_id").limit(1))
+        except Exception:
+            return {"ok": False, "database": "needs update",
+                    "detail": "Run gigwise/backend/sql/002_login.sql in the Supabase SQL Editor."}
         return {"ok": True, "database": "connected",
                 "demo_reset": os.getenv("DEMO_RESET_ENABLED", "true").lower() != "false",
-                "ai": ai.enabled()}
+                "ai": ai.enabled(), "login": bool(auth_config()["key"])}
     except HTTPException:
         raise
     except Exception as e:  # show the real reason, e.g. tables not created yet
@@ -246,8 +335,55 @@ def taxonomy():
 
 @app.get("/me", tags=["system"])
 def me():
-    """The demo client you act as until real login exists."""
-    return demo_client()
+    """Who you are: the demo (no login) or a signed-in user with their client/freelancer profiles."""
+    a = actor()
+    if a.world == "demo":
+        return {"world": "demo", "user": None, "client": demo_client(), "freelancer": None}
+    return {"world": "real", "user": a.user, "client": a.client, "freelancer": a.freelancer}
+
+
+def auth_config() -> Dict[str, str]:
+    import os
+
+    from .db import supabase_url
+    key = (os.getenv("SUPABASE_ANON_KEY") or "").strip()
+    try:
+        url = supabase_url()
+    except Exception:
+        url = ""
+    return {"url": url if key else "", "key": key}
+
+
+@app.get("/auth/config", tags=["system"])
+def get_auth_config():
+    """Public settings the browser needs to show login: the Supabase address and its PUBLIC
+    (publishable) key. Empty when login isn't set up, and the app then offers only the demo."""
+    return auth_config()
+
+
+class ClientIn(BaseModel):
+    name: str = Field(min_length=1, max_length=80, description="Your name or your company's name")
+
+
+@app.post("/clients", status_code=201, tags=["profiles"])
+def create_client_profile(body: ClientIn):
+    """Signed-in users: create your client profile (one per login)."""
+    a = actor()
+    if a.world != "real":
+        raise HTTPException(401, "Log in to create a client profile")
+    if a.client:
+        raise HTTPException(409, "You already have a client profile")
+    c = rows(db().table("clients").insert({"name": body.name.strip(), "world": "real", "user_id": a.user["id"]}))[0]
+    request_cache().pop("actor", None)
+    return c
+
+
+@app.put("/clients/me", tags=["profiles"])
+def update_client_profile(body: ClientIn):
+    a = actor()
+    if a.world != "real" or not a.client:
+        raise HTTPException(403, "Set up your client profile first")
+    return rows(db().table("clients").update({"name": body.name.strip()}).eq("id", a.client["id"]))[0]
 
 
 # ---------------------------------------------------------------- freelancers
@@ -292,7 +428,7 @@ def get_freelancer(freelancer_id: str):
 def matches_for_freelancer(freelancer_id: str):
     """Reverse matching: open projects ranked for this freelancer, with a 'why you fit' note."""
     f = one("freelancers", freelancer_id, "Freelancer")
-    projects = rows(db().table("projects").select("*").eq("status", "open"))
+    projects = rows(db().table("projects").select("*").eq("status", "open").eq("world", world()))
     return matching.rank_projects(f, projects)
 
 
@@ -301,11 +437,12 @@ def matches_for_freelancer(freelancer_id: str):
 def list_projects(status: str = "open", mine: bool = False, q: str = "", category: str = "",
                   type: Optional[Literal["fixed", "hourly"]] = None, level: str = "", duration: str = "",
                   min_budget: Optional[float] = None):
-    query = db().table("projects").select("*, clients(name, rating, hires)").order("created_at", desc=True)
+    query = db().table("projects").select("*, clients(name, rating, hires)").eq("world", world()) \
+        .order("created_at", desc=True)
     if status != "any":
         query = query.eq("status", status)
     if mine:
-        query = query.eq("client_id", demo_client()["id"])
+        query = query.eq("client_id", me_client()["id"])
     out = []
     for p in rows(query):
         if q and q.lower() not in f"{p['title']} {p['description']} {' '.join(p['skills'])}".lower():
@@ -322,7 +459,7 @@ def list_projects(status: str = "open", mine: bool = False, q: str = "", categor
 @app.get("/projects/{project_id}", tags=["projects"])
 def get_project(project_id: str):
     r = rows(db().table("projects").select("*, clients(name, rating, hires)").eq("id", project_id))
-    if not r:
+    if not r or r[0].get("world", "demo") != world():
         raise HTTPException(404, "Project not found")
     p = r[0]
     count = len(rows(db().table("proposals").select("id").eq("project_id", project_id)))
@@ -331,8 +468,8 @@ def get_project(project_id: str):
 
 @app.post("/projects", status_code=201, tags=["projects"])
 def create_project(body: ProjectIn):
-    """Post a project as the demo client. Returns the project and its ranked matches."""
-    client, freelancers = parallel(demo_client, all_freelancers)
+    """Post a project as yourself (the demo client in the demo). Returns the project and its ranked matches."""
+    client, freelancers = parallel(me_client, all_freelancers)
     if body.type == "fixed":
         if not body.budget:
             raise HTTPException(422, "Fixed-price projects need a budget")
@@ -352,7 +489,7 @@ def create_project(body: ProjectIn):
         if not skills:
             raise HTTPException(422, "Couldn't detect skills from the description. Add at least one skill.")
     row = {
-        "client_id": client["id"], "title": body.title.strip(), "description": body.description.strip(),
+        "client_id": client["id"], "world": world(), "title": body.title.strip(), "description": body.description.strip(),
         "skills": skills, "skills_auto": auto, "type": body.type, "budget": budget,
         "rate_min": body.rate_min if body.type == "hourly" else None,
         "rate_max": body.rate_max if body.type == "hourly" else None,
@@ -374,7 +511,7 @@ def matches_for_project(project_id: str):
 
 @app.post("/projects/{project_id}/invites", status_code=201, tags=["projects"])
 def invite(project_id: str, body: InviteIn):
-    p, client, f = parallel(lambda: one("projects", project_id, "Project"), demo_client,
+    p, client, f = parallel(lambda: one("projects", project_id, "Project"), me_client,
                             lambda: one("freelancers", body.freelancer_id, "Freelancer"))
     if p["client_id"] != client["id"]:
         raise HTTPException(403, "This project belongs to another client")
@@ -411,7 +548,7 @@ def list_proposals(project_id: str):
 def submit_proposal(project_id: str, body: ProposalIn):
     p, f, already, thread = parallel(
         lambda: one("projects", project_id, "Project"),
-        lambda: one("freelancers", body.freelancer_id, "Freelancer"),
+        lambda: as_freelancer(body.freelancer_id),
         lambda: rows(db().table("proposals").select("id").eq("project_id", project_id).eq("freelancer_id", body.freelancer_id)),
         lambda: rows(db().table("threads").select("*").eq("project_id", project_id).eq("freelancer_id", body.freelancer_id)),
     )
@@ -442,8 +579,10 @@ def submit_proposal(project_id: str, body: ProposalIn):
 
 def _proposal_for(proposal_id: str, freelancer_id: Optional[str] = None):
     q = one("proposals", proposal_id, "Proposal")
-    if freelancer_id is not None and q["freelancer_id"] != freelancer_id:
-        raise HTTPException(403, "This proposal belongs to another freelancer")
+    if freelancer_id is not None:
+        if q["freelancer_id"] != freelancer_id:
+            raise HTTPException(403, "This proposal belongs to another freelancer")
+        as_freelancer(freelancer_id)
     p, f = parallel(lambda: one("projects", q["project_id"], "Project"),
                     lambda: one("freelancers", q["freelancer_id"], "Freelancer"))
     return q, p, f
@@ -468,8 +607,9 @@ def edit_proposal(proposal_id: str, body: ProposalEdit):
 
 def _set_status(proposal_id: str, status: str, by_client: bool, freelancer_id: Optional[str] = None):
     q, p, f = _proposal_for(proposal_id, freelancer_id)
-    client, me, has_offer = parallel(lambda: one("clients", p["client_id"], "Client"), demo_client,
-                                     lambda: pending_offer_for(q["id"]))
+    client, has_offer = parallel(lambda: one("clients", p["client_id"], "Client"),
+                                 lambda: pending_offer_for(q["id"]))
+    me = me_client() if by_client else None
     if by_client and p["client_id"] != me["id"]:
         raise HTTPException(403, "This project belongs to another client")
     allowed_from = {"shortlisted": ("submitted",), "declined": ("submitted", "shortlisted"),
@@ -517,9 +657,10 @@ def list_threads(role: Literal["client", "freelancer"], freelancer_id: Optional[
     if role == "freelancer":
         if not freelancer_id:
             raise HTTPException(422, "freelancer_id is required for role=freelancer")
+        as_freelancer(freelancer_id)
         threads = rows(query.eq("freelancer_id", freelancer_id))
     else:
-        mine = demo_client()["id"]
+        mine = me_client()["id"]
         threads = [t for t in rows(query) if (t.get("projects") or {}).get("client_id") == mine]
     if not threads:
         return []
@@ -536,15 +677,26 @@ def list_threads(role: Literal["client", "freelancer"], freelancer_id: Optional[
     return out
 
 
+def _thread(thread_id: str, side: Optional[str] = None) -> Dict[str, Any]:
+    """A chat thread you're part of (as `side`, if given)."""
+    t = one("threads", thread_id, "Thread")
+    p = one("projects", t["project_id"], "Project")
+    if side:
+        check_side(side, p, t["freelancer_id"])
+    else:
+        check_party(p, t["freelancer_id"])
+    return t
+
+
 @app.get("/threads/{thread_id}/messages", tags=["chat"])
 def get_messages(thread_id: str):
-    one("threads", thread_id, "Thread")
+    _thread(thread_id)
     return rows(db().table("messages").select("*").eq("thread_id", thread_id).order("created_at"))
 
 
 @app.post("/threads/{thread_id}/messages", status_code=201, tags=["chat"])
 def send_message(thread_id: str, body: MessageIn):
-    t = one("threads", thread_id, "Thread")
+    t = _thread(thread_id, body.sender)
     msg = post_message(t["id"], body.sender, body.body.strip())
     db().table("threads").update({f"{body.sender}_read_at": msg["created_at"]}).eq("id", t["id"]).execute()
     return msg
@@ -552,7 +704,7 @@ def send_message(thread_id: str, body: MessageIn):
 
 @app.post("/threads/{thread_id}/read", tags=["chat"])
 def mark_thread_read(thread_id: str, body: ReadIn):
-    one("threads", thread_id, "Thread")
+    _thread(thread_id, body.role)
     latest = rows(db().table("messages").select("created_at").eq("thread_id", thread_id)
                   .order("created_at", desc=True).limit(1))
     if latest:
@@ -561,14 +713,24 @@ def mark_thread_read(thread_id: str, body: ReadIn):
 
 
 # ---------------------------------------------------------------- notifications
+def _check_recipient(recipient_type: str, recipient_id: str) -> None:
+    if recipient_type == "client":
+        if recipient_id != me_client()["id"]:
+            raise HTTPException(403, "These notifications belong to someone else")
+    else:
+        as_freelancer(recipient_id)
+
+
 @app.get("/notifications", tags=["notifications"])
 def list_notifications(recipient_type: Literal["client", "freelancer"], recipient_id: str, limit: int = 20):
+    _check_recipient(recipient_type, recipient_id)
     return rows(db().table("notifications").select("*").eq("recipient_type", recipient_type)
                 .eq("recipient_id", recipient_id).order("created_at", desc=True).limit(limit))
 
 
 @app.post("/notifications/read", tags=["notifications"])
 def mark_notifications_read(body: NotificationsReadIn):
+    _check_recipient(body.recipient_type, body.recipient_id)
     db().table("notifications").update({"read": True}).eq("recipient_type", body.recipient_type) \
         .eq("recipient_id", body.recipient_id).eq("read", False).execute()
     return {"ok": True}
@@ -625,19 +787,22 @@ def offer_terms(o: Dict[str, Any]) -> str:
 
 
 def check_role(role: str, project: Dict[str, Any], contract_or_offer: Dict[str, Any], freelancer_id: Optional[str]):
-    """Until real login exists: the client side must own the project; the freelancer side must pass their id."""
+    """The client side must own the project. The freelancer side must name the offer's or contract's
+    freelancer, and when signed in that must be your own profile."""
     if role == "client":
-        if project["client_id"] != demo_client()["id"]:
+        if project["client_id"] != me_client()["id"]:
             raise HTTPException(403, "This belongs to another client")
-    elif freelancer_id != contract_or_offer["freelancer_id"]:
-        raise HTTPException(403, "This belongs to another freelancer")
+    else:
+        if freelancer_id != contract_or_offer["freelancer_id"]:
+            raise HTTPException(403, "This belongs to another freelancer")
+        as_freelancer(freelancer_id)
 
 
 @app.post("/proposals/{proposal_id}/offers", status_code=201, tags=["offers"])
 def send_offer(proposal_id: str, body: OfferIn):
     """Client sends an offer on a proposal. One pending offer per project at a time."""
     q, p, f = _proposal_for(proposal_id)
-    client, pending = parallel(demo_client,
+    client, pending = parallel(me_client,
                                lambda: rows(db().table("offers").select("id").eq("project_id", p["id"]).eq("status", "pending")))
     if p["client_id"] != client["id"]:
         raise HTTPException(403, "This project belongs to another client")
@@ -676,8 +841,9 @@ def list_offers(role: Literal["client", "freelancer"], freelancer_id: Optional[s
     if role == "freelancer":
         if not freelancer_id:
             raise HTTPException(422, "freelancer_id is required for role=freelancer")
+        as_freelancer(freelancer_id)
         return rows(query.eq("freelancer_id", freelancer_id))
-    mine = demo_client()["id"]
+    mine = me_client()["id"]
     return [o for o in rows(query) if (o.get("projects") or {}).get("client_id") == mine]
 
 
@@ -687,6 +853,7 @@ def get_offer(offer_id: str):
              .eq("id", offer_id))
     if not r:
         raise HTTPException(404, "Offer not found")
+    check_party(one("projects", r[0]["project_id"], "Offer"), r[0]["freelancer_id"])
     return r[0]
 
 
@@ -754,7 +921,7 @@ def decline_offer(offer_id: str, body: FreelancerAction):
 def withdraw_offer(offer_id: str):
     o, p, f = _pending_offer(offer_id)
     check_role("client", p, o, None)
-    client = demo_client()
+    client = me_client()
     updated = parallel(
         lambda: rows(db().table("offers").update({"status": "withdrawn"}).eq("id", o["id"]))[0],
         lambda: thread_note(p["id"], f["id"], ("system", f"{client['name']} withdrew the offer")),
@@ -772,9 +939,10 @@ def list_contracts(role: Literal["client", "freelancer"], freelancer_id: Optiona
     if role == "freelancer":
         if not freelancer_id:
             raise HTTPException(422, "freelancer_id is required for role=freelancer")
+        as_freelancer(freelancer_id)
         contracts = rows(query.eq("freelancer_id", freelancer_id))
     else:
-        mine = demo_client()["id"]
+        mine = me_client()["id"]
         contracts = [c for c in rows(query) if (c.get("projects") or {}).get("client_id") == mine]
     if not contracts:
         return []
@@ -797,6 +965,7 @@ def get_contract(contract_id: str):
         lambda: rows(db().table("reviews").select("*").eq("contract_id", contract_id)))
     if not r:
         raise HTTPException(404, "Contract not found")
+    check_party(one("projects", r[0]["project_id"], "Contract"), r[0]["freelancer_id"])
     return {**r[0], "milestones": ms, "reviews": rv}
 
 
@@ -833,7 +1002,7 @@ def approve_milestone(contract_id: str, position: int):
     check_role("client", p, c, None)
     if m["status"] != "submitted":
         raise HTTPException(409, "Only submitted work can be approved")
-    client = demo_client()
+    client = me_client()
     _, nxt = parallel(
         lambda: db().table("milestones").update({"status": "approved"}).eq("id", m["id"]).execute(),
         lambda: rows(db().table("milestones").select("*").eq("contract_id", contract_id).eq("status", "pending")
@@ -856,7 +1025,7 @@ def request_changes(contract_id: str, position: int, body: ChangesIn):
     check_role("client", p, c, None)
     if m["status"] != "submitted":
         raise HTTPException(409, "You can only request changes on submitted work")
-    client = demo_client()
+    client = me_client()
     updated = parallel(
         lambda: rows(db().table("milestones").update({"status": "active", "changes_requested": body.note.strip()})
                      .eq("id", m["id"]))[0],
@@ -929,14 +1098,14 @@ def js_round1(x: float) -> float:
 # ---------------------------------------------------------------- saved items
 @app.get("/freelancers/{freelancer_id}/saved-jobs", tags=["saved"])
 def list_saved_jobs(freelancer_id: str):
-    one("freelancers", freelancer_id, "Freelancer")
+    as_freelancer(freelancer_id)
     return rows(db().table("saved_jobs").select("project_id, created_at, projects(*)")
                 .eq("freelancer_id", freelancer_id).order("created_at", desc=True))
 
 
 @app.put("/freelancers/{freelancer_id}/saved-jobs/{project_id}", tags=["saved"])
 def save_job(freelancer_id: str, project_id: str):
-    one("freelancers", freelancer_id, "Freelancer")
+    as_freelancer(freelancer_id)
     one("projects", project_id, "Project")
     if not rows(db().table("saved_jobs").select("project_id").eq("freelancer_id", freelancer_id).eq("project_id", project_id)):
         db().table("saved_jobs").insert({"freelancer_id": freelancer_id, "project_id": project_id}).execute()
@@ -945,6 +1114,7 @@ def save_job(freelancer_id: str, project_id: str):
 
 @app.delete("/freelancers/{freelancer_id}/saved-jobs/{project_id}", tags=["saved"])
 def unsave_job(freelancer_id: str, project_id: str):
+    as_freelancer(freelancer_id)
     db().table("saved_jobs").delete().eq("freelancer_id", freelancer_id).eq("project_id", project_id).execute()
     return {"saved": False}
 
@@ -952,13 +1122,13 @@ def unsave_job(freelancer_id: str, project_id: str):
 @app.get("/saved-freelancers", tags=["saved"])
 def list_saved_freelancers():
     return rows(db().table("saved_freelancers").select("freelancer_id, created_at, freelancers(*)")
-                .eq("client_id", demo_client()["id"]).order("created_at", desc=True))
+                .eq("client_id", me_client()["id"]).order("created_at", desc=True))
 
 
 @app.put("/saved-freelancers/{freelancer_id}", tags=["saved"])
 def save_freelancer(freelancer_id: str):
     one("freelancers", freelancer_id, "Freelancer")
-    cid = demo_client()["id"]
+    cid = me_client()["id"]
     if not rows(db().table("saved_freelancers").select("freelancer_id").eq("client_id", cid).eq("freelancer_id", freelancer_id)):
         db().table("saved_freelancers").insert({"client_id": cid, "freelancer_id": freelancer_id}).execute()
     return {"saved": True}
@@ -966,7 +1136,7 @@ def save_freelancer(freelancer_id: str):
 
 @app.delete("/saved-freelancers/{freelancer_id}", tags=["saved"])
 def unsave_freelancer(freelancer_id: str):
-    db().table("saved_freelancers").delete().eq("client_id", demo_client()["id"]).eq("freelancer_id", freelancer_id).execute()
+    db().table("saved_freelancers").delete().eq("client_id", me_client()["id"]).eq("freelancer_id", freelancer_id).execute()
     return {"saved": False}
 
 
@@ -1002,20 +1172,30 @@ def _profile_row(body: FreelancerIn) -> Dict[str, Any]:
 
 @app.post("/freelancers", status_code=201, tags=["freelancers"])
 def create_freelancer(body: FreelancerIn):
-    """Create a freelancer profile. New profiles start with 40 Connects and no ratings."""
-    return with_badges(rows(db().table("freelancers").insert(_profile_row(body)))[0])
+    """Create a freelancer profile. New profiles start with 40 Connects and no ratings.
+    Signed in: it becomes your own profile (one per login). In the demo: a new demo profile."""
+    a = actor()
+    row = _profile_row(body)
+    if a.world == "real":
+        if a.freelancer:
+            raise HTTPException(409, "You already have a freelancer profile")
+        row.update(world="real", user_id=a.user["id"])
+    f = rows(db().table("freelancers").insert(row))[0]
+    request_cache().pop("actor", None)
+    return with_badges(f)
 
 
 @app.put("/freelancers/{freelancer_id}", tags=["freelancers"])
 def update_freelancer(freelancer_id: str, body: FreelancerIn):
     """Replace a freelancer's editable profile fields. Rating, jobs, Job Success and Connects are not editable."""
-    one("freelancers", freelancer_id, "Freelancer")
+    as_freelancer(freelancer_id)
     return with_badges(rows(db().table("freelancers").update(_profile_row(body)).eq("id", freelancer_id))[0])
 
 
-# ================================================================ demo support for the frontend
-# The frontend loads everything in one call, then sends each action to the endpoints above.
-# Fine for demo-sized data; real login will scope this to the signed-in user.
+# ================================================================ data for the frontend
+# The frontend loads everything it may see in one call, then sends each action to the endpoints above.
+# Demo visitors get the whole demo world. Signed-in users get the real world's public data (people,
+# projects, reviews) plus only their own private data (proposals, offers, contracts, chats, alerts).
 
 _STATE_TABLES = {
     "clients": "id", "freelancers": "id", "projects": "created_at", "proposals": "created_at",
@@ -1025,35 +1205,97 @@ _STATE_TABLES = {
 }
 
 
-# A permanent pool: its threads (and each thread's open Supabase connection, see app/db.py)
-# are reused across requests, so loads don't pay for new secure connections every time.
-# Sized to load every table at once.
-
-
 def _load_table(item):
     table, order = item
     # db() inside the worker: each thread has its own connection (see app/db.py)
     return table, db().table(table).select("*").order(order).execute().data or []
 
 
-@app.get("/demo/state", tags=["demo"])
-def demo_state():
-    """Everything the frontend needs to draw every screen, loaded in parallel."""
+def scope_state(data: Dict[str, List[Dict[str, Any]]], a: Actor) -> Dict[str, Any]:
+    """Keep only what this person may see. Pure function, so it is easy to test."""
+    w = a.world
+    in_world = lambda r: r.get("world", "demo") == w
+    clients = [c for c in data["clients"] if in_world(c)]
+    freelancers = [f for f in data["freelancers"] if in_world(f)]
+    projects = [p for p in data["projects"] if in_world(p)]
+    pids, fids, cids = {p["id"] for p in projects}, {f["id"] for f in freelancers}, {c["id"] for c in clients}
+    pair_ok = lambda r: r["project_id"] in pids and r["freelancer_id"] in fids
+    out = {
+        "proposals": [r for r in data["proposals"] if pair_ok(r)],
+        "offers": [r for r in data["offers"] if pair_ok(r)],
+        "contracts": [r for r in data["contracts"] if pair_ok(r)],
+        "threads": [r for r in data["threads"] if pair_ok(r)],
+        "saved_jobs": [r for r in data["saved_jobs"] if r["project_id"] in pids and r["freelancer_id"] in fids],
+        "saved_freelancers": [r for r in data["saved_freelancers"] if r["client_id"] in cids and r["freelancer_id"] in fids],
+        "notifications": [n for n in data["notifications"]
+                          if n["recipient_id"] in (cids if n["recipient_type"] == "client" else fids)],
+    }
+    if w == "real":
+        my_c = a.client["id"] if a.client else None
+        my_f = a.freelancer["id"] if a.freelancer else None
+        my_pids = {p["id"] for p in projects if my_c and p["client_id"] == my_c}
+        mine = lambda r: r["project_id"] in my_pids or (my_f is not None and r["freelancer_id"] == my_f)
+        for t in ("proposals", "offers", "threads"):
+            out[t] = [r for r in out[t] if mine(r)]
+        # Reviews are public (they show on profiles), so keep the contracts they belong to as well.
+        reviewed = {r["contract_id"] for r in data["reviews"]}
+        out["contracts"] = [c for c in out["contracts"] if mine(c) or c["id"] in reviewed]
+        out["saved_jobs"] = [r for r in out["saved_jobs"] if r["freelancer_id"] == my_f]
+        out["saved_freelancers"] = [r for r in out["saved_freelancers"] if r["client_id"] == my_c]
+        out["notifications"] = [n for n in out["notifications"]
+                                if (n["recipient_type"] == "client" and n["recipient_id"] == my_c)
+                                or (n["recipient_type"] == "freelancer" and n["recipient_id"] == my_f)]
+        my_contracts = {c["id"] for c in out["contracts"] if mine(c)}
+    else:
+        my_contracts = {c["id"] for c in out["contracts"]}
+    cset, tset = {c["id"] for c in out["contracts"]}, {t["id"] for t in out["threads"]}
+    out["milestones"] = [m for m in data["milestones"] if m["contract_id"] in my_contracts]
+    out["reviews"] = [r for r in data["reviews"] if r["contract_id"] in cset]
+    out["messages"] = [m for m in data["messages"] if m["thread_id"] in tset]
+    hide = lambda r: {k: v for k, v in r.items() if k != "user_id"}  # never hand out login ids
+    out["clients"] = [hide(c) for c in clients]
+    out["freelancers"] = [hide(f) for f in freelancers]
+    out["projects"] = projects
+    out["world"] = w
+    if w == "demo":
+        out["me"] = next((c for c in clients if c.get("is_demo_user")), None)
+        out["me_freelancer"] = None
+        out["user"] = None
+    else:
+        out["me"] = hide(a.client) if a.client else None
+        out["me_freelancer"] = hide(a.freelancer) if a.freelancer else None
+        out["user"] = {"email": a.user["email"]}
+    return out
+
+
+@app.get("/state", tags=["frontend"])
+def state():
+    """Everything the frontend needs to draw every screen for you, loaded in parallel."""
     db()  # fail fast with a clear message if not configured
-    data = dict(_POOL.map(_load_table, _STATE_TABLES.items()))
-    data["me"] = next((c for c in data["clients"] if c.get("is_demo_user")), None)
-    if not data["me"]:
+    a = actor()
+    data = dict(_POOL.map(lambda item: contextvars.copy_context().run(_load_table, item), _STATE_TABLES.items()))
+    out = scope_state(data, a)
+    if a.world == "demo" and not out["me"]:
         raise HTTPException(500, "No demo client found. Run the seed script: python -m seed.seed")
-    return data
+    return out
+
+
+@app.get("/demo/state", tags=["demo"], include_in_schema=False)
+def demo_state():
+    """Older name for GET /state."""
+    return state()
 
 
 @app.post("/demo/reset", tags=["demo"])
 def demo_reset():
-    """Delete everything and reload the demo data. Turn off with DEMO_RESET_ENABLED=false in .env."""
+    """Delete the demo data and load it fresh. Real accounts and their data are never touched.
+    Turn off with DEMO_RESET_ENABLED=false in .env."""
     import os
 
     if os.getenv("DEMO_RESET_ENABLED", "true").lower() == "false":
         raise HTTPException(403, "Demo reset is turned off on this server")
+    if world() != "demo":
+        raise HTTPException(403, "Only the demo can be reset")
     from seed.seed import reset_demo
 
     counts = reset_demo(db(), log=lambda *_: None)
@@ -1101,7 +1343,8 @@ def ai_explain(body: ExplainIn):
     if not ai.enabled():
         return {"enabled": False, "explanations": {}}
     p, fl = parallel(lambda: one("projects", body.project_id, "Project"),
-                     lambda: rows(db().table("freelancers").select("*").in_("id", body.freelancer_ids)))
+                     lambda: rows(db().table("freelancers").select("*").in_("id", body.freelancer_ids)
+                                  .eq("world", world())))
     order = {fid: i for i, fid in enumerate(body.freelancer_ids)}
     fl.sort(key=lambda f: order.get(f["id"], 99))
     return {"enabled": True, "explanations": ai.explain(p, fl)}
@@ -1114,5 +1357,5 @@ def ai_draft_proposal(body: DraftIn):
     if not ai.enabled():
         return {"enabled": False, "cover_letter": None}
     p, f = parallel(lambda: one("projects", body.project_id, "Project"),
-                    lambda: one("freelancers", body.freelancer_id, "Freelancer"))
+                    lambda: as_freelancer(body.freelancer_id))
     return {"enabled": True, "cover_letter": ai.draft_proposal(p, f, body.bid, body.days)}

@@ -2,6 +2,7 @@
 --
 -- How to run: Supabase dashboard -> SQL Editor -> New query -> paste this whole file -> Run.
 -- Safe to re-run: it drops and recreates the Gigwise tables (this deletes their data).
+-- Then run 002_login.sql, which adds real login (the demo/real split and links to user accounts).
 --
 -- Security: Row Level Security is ON for every table with no policies, so the public
 -- "anon" key can read or write nothing. Only the backend, using the secret service_role
@@ -19,7 +20,7 @@ create table clients (
   name          text not null,
   rating        numeric(2,1) check (rating between 1 and 5),
   hires         int not null default 0,
-  is_demo_user  boolean not null default false,  -- the client you act as until real login exists
+  is_demo_user  boolean not null default false,  -- the client everyone acts as in the investor demo
   created_at    timestamptz not null default now()
 );
 

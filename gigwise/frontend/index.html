@@ -856,6 +856,22 @@ body.on-landing:not(.scrolled) #hdr{background:rgba(14,12,10,.72);backdrop-filte
 .pc-act{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-left:60px}
 .pc-no{color:var(--mute)!important}
 @media (max-width:640px){.pp-step{grid-template-columns:36px 1fr}.pp-n{font-size:30px}.pp-more-in{padding-left:0}.pc-terms,.pc-cover,.pc-act{margin-left:0}.pc-terms{grid-template-columns:1fr 1fr}.hire-sum b{font-size:20px}}
+
+/* ---- login (v2.2): sign-in sheet, demo bar ---- */
+.auth-g{width:100%;justify-content:center;gap:10px;display:flex;align-items:center}
+.auth-or{display:flex;align-items:center;gap:12px;margin:16px 0;color:var(--mute);font-size:13px}
+.auth-or::before,.auth-or::after{content:"";flex:1;border-top:1px solid var(--line)}
+.auth-msg:empty{display:none}
+.auth-msg{margin:0 0 12px;padding:10px 12px;border:1px solid var(--line2);background:var(--soft);font-size:14px}
+.auth-msg.ok{border-color:var(--line)}
+.auth-demo{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:18px;padding-top:16px;border-top:1px solid var(--line);font-size:14px;color:var(--mute)}
+.auth-wide{width:100%}
+.demo-bar{border-top:1px solid var(--line);font-size:13px;color:var(--mute);text-align:center;padding:7px 16px}
+.demo-bar b{color:var(--ink);font-weight:600}
+.hx-demo{margin:16px 0 0;font-size:14.5px;color:rgba(255,255,255,.82);text-align:center}
+.hx-demo button{color:#fff;font:inherit;background:none;border:0;border-bottom:1px solid rgba(255,255,255,.6);padding:0 0 1px;cursor:pointer}
+.hx-demo button:hover{border-bottom-color:#fff}
+.acct-email{max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 </style>
 </head>
 <body>
@@ -963,7 +979,7 @@ function seed(){
 }
 const KEY='gigwise-demo-v2';let D;
 function load(){try{const s=localStorage.getItem(KEY);if(s){D=JSON.parse(s);if(D&&D.v===2){D.pr.forEach(p=>{if(!CATS.some(c=>c[0]===p.cat))p.cat=catOf(p.skills)});return}}}catch(e){}seed();save()}
-function save(){try{if(API.on)localStorage.setItem(UI_KEY,JSON.stringify(D.ui));else localStorage.setItem(KEY,JSON.stringify(D))}catch(e){}}
+function save(){try{if(API.on)localStorage.setItem(uiKey(),JSON.stringify(D.ui));else localStorage.setItem(KEY,JSON.stringify(D))}catch(e){}}
 function resetDemo(ok){if(!ok){openSheet(sheetH('Reset demo data?','Projects, proposals, profiles and messages you created will be removed.')+`<div class="row end"><button class="btn plain" onclick="closeSheet()">Cancel</button><button class="btn danger" onclick="closeSheet();resetDemo(true)">Reset</button></div>`);return}if(API.on){API.auto={};API.took={};return act(()=>api('POST','/demo/reset'),()=>{S.open={};location.hash='#/';render();toast('Demo data reset in the database')})}seed();save();S.open={};location.hash='#/';render();toast('Demo data reset')}
 
 /* ============ accessors ============ */
@@ -1099,6 +1115,8 @@ function route(){const p=(location.hash.slice(1)||'/').split('/');return{r:p[1]|
 const go=h=>{if(location.hash===h)render();else location.hash=h};
 function render(){
  const {r,id}=route(),rk=r+'/'+id;
+ if(isVisitor()&&r!==''){location.hash='#/';setTimeout(()=>authSheet('login'),0);return}
+ if(REAL()&&['post','client','matches','proposals'].includes(r)&&!API.me){location.hash='#/';setTimeout(()=>clientSetup('#/'+r),0);return}
  if(['post','client','matches','proposals'].includes(r)&&D.ui.role!=='client'){D.ui.role='client';save()}
  if(['dashboard','me'].includes(r)){
   if(!(r==='me'&&S.me&&S.me.isNew)){
@@ -1130,7 +1148,10 @@ function soft(){
  if(a&&['INPUT','TEXTAREA','SELECT'].includes(a.tagName)){hdr();return}
  const y=window.scrollY;render();window.scrollTo(0,y);
 }
-function setRole(r,dest){D.ui.role=r;save();if(r==='freelancer'&&!fl(D.ui.fid)){pickFreelancer(dest);return}closeSheet();go(dest)}
+function setRole(r,dest){
+ if(isVisitor()){authSheet('signup');return}
+ if(REAL()&&r==='client'&&!API.me){clientSetup(dest);return}
+ D.ui.role=r;save();if(r==='freelancer'&&!fl(D.ui.fid)){pickFreelancer(dest);return}closeSheet();go(dest)}
 
 function hdr(){
  const r=D.ui.role,me=fl(D.ui.fid),cur=route().r;
@@ -1141,10 +1162,11 @@ function hdr(){
  <nav class="nav" aria-label="Main">${links?links.map(([k,l])=>`<a href="#/${k}" class="${cur===k?'on':''}">${l}</a>`).join(''):`<button onclick="setRole('client','#/talent')">Find talent</button><button onclick="setRole('freelancer','#/projects')">Find work</button><button onclick="howScroll()">How matching works</button>`}</nav>
  <div class="hdr-r">${themeBtn()}${r?`<div class="bellwrap"><button class="icon-btn" onclick="toggleNotes(event)" aria-label="Notifications${nn?', '+nn+' new':''}" aria-expanded="${S.notesOpen}">${IBELL}${nn?`<b class="badge">${nn}</b>`:''}</button>${S.notesOpen?notesPanel():''}</div><a class="icon-btn" href="#/chat" title="Messages" aria-label="Messages${n?', '+n+' unread':''}">${ICHAT}${n?`<b class="badge">${n}</b>`:''}</a>
  <div class="seg sm" role="group" aria-label="View as"><button class="${r==='client'?'on':''}" onclick="setRole('client','#/client')">Client</button><button class="${r==='freelancer'?'on':''}" onclick="setRole('freelancer','#/dashboard')">Freelancer</button></div>
- ${r==='freelancer'&&me?`<button class="who" onclick="pickFreelancer()" title="Switch freelancer">${av(me,26)}<span>${esc(me.name)}</span></button>`:''}`
- :`<button class="btn plain sm" onclick="roleSheet()">Log in</button><button class="btn sm" onclick="roleSheet()">Sign up</button>`}</div></div>`;
+ ${r==='freelancer'&&me&&!REAL()?`<button class="who" onclick="pickFreelancer()" title="Switch freelancer">${av(me,26)}<span>${esc(me.name)}</span></button>`:''}${acctBtns()}`
+ :REAL()?acctBtns():loginBtns()}</div></div>${demoBar()}`;
 }
-function ftr(){$('#ftr').innerHTML=`<div class="wrap row between"><span>${API.on?`<b style="color:var(--brand)">● Live data</b> · saved in Supabase${API.ai?' · AI explanations on':''} · <button class="link" onclick="useOffline()">Use offline demo</button>`:`Offline demo · data is saved in this browser only${API.reachable?' · <button class="link" onclick="useLive()">Switch to live data</button>':''}`}</span><span class="row"><button class="link" onclick="howScroll()">How scoring works</button>${API.on&&!API.resetOk?'':'<button class="link" onclick="resetDemo()">Reset demo data</button>'}</span></div>`}
+function ftr(){if(REAL()){$('#ftr').innerHTML=`<div class="wrap row between"><span><b style="color:var(--brand)">●</b> Signed in as ${esc(AUTH.session.user.email||'')} · <button class="link" onclick="logout()">Log out</button></span><span class="row"><button class="link" onclick="howScroll()">How scoring works</button></span></div>`;return}
+$('#ftr').innerHTML=`<div class="wrap row between"><span>${API.on?`<b style="color:var(--brand)">● Live data</b> · saved in Supabase${API.ai?' · AI explanations on':''} · <button class="link" onclick="useOffline()">Use offline demo</button>`:`Offline demo · data is saved in this browser only${API.reachable?' · <button class="link" onclick="useLive()">Switch to live data</button>':''}`}</span><span class="row"><button class="link" onclick="howScroll()">How scoring works</button>${API.on&&!API.resetOk?'':'<button class="link" onclick="resetDemo()">Reset demo data</button>'}</span></div>`}
 function howScroll(){if(route().r!==''){go('#/');setTimeout(()=>$('#how')?.scrollIntoView(),60)}else $('#how')?.scrollIntoView()}
 
 /* ============ Claude-written reasons (live mode with an API key) ============ */
@@ -1179,7 +1201,7 @@ function myNotes(){const r=D.ui.role;return D.notes.filter(n=>r==='client'?n.to=
 function notify(to,t,link){D.notes.push({id:'n'+(++D.seq),to,t,link,ts:NOW(),read:false})}
 function notesPanel(){const ns=myNotes().slice(0,20);return `<div class="npanel" role="dialog" aria-label="Notifications"><h3>Notifications</h3>${ns.length?ns.map(n=>`<button class="nitem ${n.read?'':'new'}" onclick="openNote('${n.id}')">${esc(n.t)}<div class="xs mute">${ago(n.ts)}</div></button>`).join(''):'<p class="mute sm" style="padding:14px;margin:0">No notifications yet.</p>'}</div>`}
 function toggleNotes(e){e.stopPropagation();if(S.notesOpen)closeNotes();else{S.notesOpen=true;hdr()}}
-function closeNotes(){if(!S.notesOpen)return;S.notesOpen=false;const unreadN=myNotes().some(n=>!n.read);myNotes().forEach(n=>n.read=true);save();hdr();if(API.on&&unreadN){const c=D.ui.role==='client';api('POST','/notifications/read',{recipient_type:c?'client':'freelancer',recipient_id:c?API.me.id:fid(D.ui.fid)}).catch(()=>{})}}
+function closeNotes(){if(!S.notesOpen)return;S.notesOpen=false;const unreadN=myNotes().some(n=>!n.read);myNotes().forEach(n=>n.read=true);save();hdr();if(API.on&&unreadN){const c=D.ui.role==='client';api('POST','/notifications/read',{recipient_type:c?'client':'freelancer',recipient_id:c?(API.me&&API.me.id):fid(D.ui.fid)}).catch(()=>{})}}
 function openNote(id){const n=D.notes.find(x=>x.id===id);closeNotes();if(n&&n.link)go(n.link)}
 document.addEventListener('click',e=>{if(S.notesOpen&&!e.target.closest('.bellwrap'))closeNotes()});
 const savedJobs=()=>D.saved.jobs[D.ui.fid]||(D.saved.jobs[D.ui.fid]=[]);
@@ -1201,6 +1223,7 @@ function roleSheet(){openSheet(sheetH('Join Gigwise','How do you want to use it?
  <p class="mute xs" style="margin:14px 0 0">Demo: no password needed. Clients sign in as “Pulse Fit”; freelancers pick a demo profile or create one.</p>`)}
 function pickFreelancer(dest){
  dest=dest||'#/dashboard';
+ if(REAL()){if(API.meF)useFreelancer(fnum(API.meF.id),dest);else newProfile();return}
  const inv=f=>Object.values(D.th).filter(t=>t.fid===f.id&&t.invited).length;
  const list=[...D.fl].sort((a,b)=>inv(b)-inv(a)||a.id-b.id);
  openSheet(sheetH('Continue as a freelancer','Pick a demo profile, or create your own.')+`<div class="plist">${list.map(f=>`<button class="pitem" onclick="useFreelancer(${f.id},'${dest}')">${av(f,36)}<span class="grow"><b>${esc(f.name)}</b> <span class="mute sm">· ${esc(f.title)}</span><br><span class="mute xs">$${f.rate}/hr · ${f.skills.slice(0,3).map(esc).join(', ')}</span></span>${inv(f)?`<span class="chip tag">Invited · ${inv(f)}</span>`:''}${f.id===D.ui.fid?'<span class="chip ok">Current</span>':''}</button>`).join('')}
@@ -1298,6 +1321,7 @@ function vLanding(){
   <div class="hx-list hx-match" id="hxm" data-t="match"></div>
  </div></div>
  </div>
+ ${AUTH.enabled&&!REAL()?`<p class="hx-demo">Just looking? <button onclick="tryDemo()">Try the demo</button></p>`:''}
  </div>
  </section>
  <section class="hx-cats" aria-label="Browse by category"><div class="hx-track">${CATS.map(cat).join('')}<span aria-hidden="true" class="hx-dup">${CATS.map(cat).join('').replace(/<button /g,'<button tabindex="-1" ')}</span></div></section>
@@ -1416,6 +1440,7 @@ function postProject(){
 }
 // Demo-only: a couple of other matched freelancers send proposals shortly after posting
 function simulateProposals(pid){
+ if(!inDemo())return;
  const p=pj(pid);const {list}=rankFor(p);const picks=[list[1],list[3]].filter(Boolean);
  picks.forEach((m,i)=>setTimeout(()=>{
   const p2=pj(pid);if(!p2||p2.status!=='open'||propOf(pid,m.f.id))return;
@@ -1744,6 +1769,7 @@ function quickHire(qid){
 }
 /* demo only: the freelancer answers the offer a few seconds later */
 function simAccept(pid){
+ if(!inDemo())return;
  setTimeout(()=>{
   const o=pendingOffer(pid);if(!o)return;const f=fl(o.fid),p=pj(pid);
   if(API.on){api('POST',`/offers/${o.id}/accept`,{freelancer_id:f._id}).then(()=>API.sync()).then(()=>{toast(`${f.name} accepted. Your contract has started.`);soft()}).catch(()=>{});return}
@@ -1992,6 +2018,7 @@ function sendMsg(k){
 }
 // Demo-only: the other side replies once per thread so a conversation can be shown solo
 function autoReply(k,from){
+ if(!inDemo())return;
  const t=D.th[k],to=from==='c'?'f':'c';if(t.auto[to])return;t.auto[to]=true;save();
  const f=fl(t.fid),p=pj(t.pid),m=score(f,p);
  setTimeout(()=>{S.typing[k]=to;if(route().id===k)soft()},700);
@@ -2007,6 +2034,132 @@ function autoReply(k,from){
 }
 function notFound(msg){return `<div class="wrap page"><div class="card empty"><h3>${esc(msg)}</h3><button class="btn" onclick="go('#/')">Go home</button></div></div>`}
 
+/* ============ login: Supabase accounts and the investor demo ============
+   Signed-in users live in the "real" world: their own profiles and only their own private data.
+   Visitors can "Try the demo", which is the sample marketplace (no login, nothing real mixed in).
+   Passwords go straight to Supabase; this app never sees or stores them. */
+const SB_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js';
+const WORLD_KEY='gigwise-world';
+const AUTH={enabled:false,google:false,sb:null,session:null,email:''};
+const REAL=()=>!!(AUTH.session&&API.on);
+const demoChosen=()=>{try{return localStorage.getItem(WORLD_KEY)==='demo'}catch(e){return false}};
+const inDemo=()=>!REAL()&&(!AUTH.enabled||demoChosen());
+const isVisitor=()=>AUTH.enabled&&!AUTH.session&&!demoChosen();
+const appUrl=()=>location.origin+location.pathname;
+function uiKey(){return AUTH.session?UI_KEY+'-'+AUTH.session.user.id:UI_KEY}
+function loadScript(src){return new Promise((ok,bad)=>{const t=document.createElement('script');t.src=src;t.onload=ok;t.onerror=bad;document.head.appendChild(t)})}
+async function initAuth(){
+ let cfg=null;try{cfg=await fetch(API.base+'/auth/config').then(r=>r.json())}catch(e){}
+ if(!cfg||!cfg.url||!cfg.key)return;  // login isn't set up on this server: everyone gets the demo
+ try{await loadScript(SB_JS)}catch(e){console.warn('Login is unavailable: the sign-in library did not load');return}
+ AUTH.sb=window.supabase.createClient(cfg.url,cfg.key,{auth:{flowType:'pkce',detectSessionInUrl:true,persistSession:true,autoRefreshToken:true}});
+ AUTH.enabled=true;
+ fetch(cfg.url+'/auth/v1/settings',{headers:{apikey:cfg.key}}).then(r=>r.json()).then(x=>{AUTH.google=!!(x&&x.external&&x.external.google);if($('#sheet').classList.contains('open')&&$('#authf'))authSheet(S.authMode)}).catch(()=>{});
+ const q=new URLSearchParams(location.search),err=q.get('error_description'),fromLink=q.has('code');
+ try{const {data}=await AUTH.sb.auth.getSession();AUTH.session=data.session}catch(e){}
+ if(fromLink||err){history.replaceState(null,'',location.pathname+location.hash);
+  setTimeout(()=>{if(err)toast(err);else if(!AUTH.session)authSheet('login',"Your email is confirmed. Log in to continue.")},400)}
+ AUTH.sb.auth.onAuthStateChange((ev,session)=>{setTimeout(()=>authChanged(ev,session),0)});
+}
+async function authToken(){
+ if(!AUTH.sb||!AUTH.session)return null;
+ try{const {data}=await AUTH.sb.auth.getSession();AUTH.session=data.session}catch(e){}
+ return AUTH.session?AUTH.session.access_token:null;
+}
+async function authChanged(ev,session){
+ if(ev==='PASSWORD_RECOVERY'){AUTH.session=session;newPasswordSheet();return}
+ const before=AUTH.session&&AUTH.session.user.id,now=session&&session.user.id;
+ AUTH.session=session;
+ if(before!==now&&API.reachable)await afterAuth();
+}
+// After logging in or out: reload what this person may see, then take them somewhere useful.
+async function afterAuth(){
+ closeSheet();S.me=null;S.draft=null;S.notesOpen=false;
+ if(AUTH.session){try{localStorage.removeItem(WORLD_KEY)}catch(e){}}
+ const wasOn=API.on;API.on=true;
+ try{await API.sync()}catch(e){API.on=wasOn;toast(e.message);return}
+ if(!REAL()){D.ui=loadUi();go('#/');render();return}
+ if(!API.me&&!API.meF){D.ui.role=null;save();go('#/');render();welcomeSheet();return}
+ const ok=x=>(x==='client'&&API.me)||(x==='freelancer'&&API.meF);
+ D.ui.role=ok(D.ui.role)?D.ui.role:(API.me?'client':'freelancer');save();
+ go(D.ui.role==='client'?'#/client':'#/dashboard');render();toast('Logged in as '+AUTH.session.user.email);
+}
+const IGOOGLE=`<svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>`;
+function loginBtns(){
+ if(!AUTH.enabled)return `<button class="btn plain sm" onclick="roleSheet()">Log in</button><button class="btn sm" onclick="roleSheet()">Sign up</button>`;
+ return inDemo()?`<button class="btn sm" onclick="authSheet('signup')">Sign up</button>`
+  :`<button class="btn plain sm" onclick="authSheet('login')">Log in</button><button class="btn sm" onclick="authSheet('signup')">Sign up</button>`;
+}
+function acctBtns(){return REAL()?`<button class="btn plain sm" onclick="logout()" title="Signed in as ${esc(AUTH.session.user.email||'')}">Log out</button>`:''}
+function demoBar(){return AUTH.enabled&&inDemo()?`<div class="demo-bar"><b>Demo</b> · You're exploring sample data. Nothing here is real. <button class="link" onclick="authSheet('signup')">Create an account</button> · <button class="link" onclick="exitDemo()">Exit demo</button></div>`:''}
+function authSheet(mode,note){
+ mode=mode==='signup'?'signup':'login';S.authMode=mode;const up=mode==='signup';
+ openSheet(sheetH(up?'Create your Gigwise account':'Log in to Gigwise',esc(note||(up?'Hire freelancers or find work.':'Welcome back.')))+`
+ ${AUTH.google?`<button class="btn plain auth-g" onclick="googleLogin()">${IGOOGLE}<span>Continue with Google</span></button><div class="auth-or">or with email</div>`:''}
+ <form id="authf" onsubmit="event.preventDefault();${up?'emailSignup':'emailLogin'}(this)">
+  <label>Email<input name="email" type="email" autocomplete="email" required value="${esc(AUTH.email)}" ${AUTH.email?'':'autofocus'}></label>
+  <label>Password<input name="pw" type="password" autocomplete="${up?'new-password':'current-password'}" ${up?'minlength="8"':''} required ${AUTH.email?'autofocus':''}></label>
+  ${up?'<p class="xs mute" style="margin:-8px 0 14px">At least 8 characters. We\'ll email you a link to confirm your address.</p>':''}
+  <div id="autherr" class="auth-msg" role="alert"></div>
+  <button class="btn auth-wide">${up?'Create account':'Log in'}</button>
+ </form>
+ <div class="row between sm" style="margin-top:14px">${up?`<span class="mute">Already have an account? <button class="link" onclick="authSheet('login')">Log in</button></span>`
+  :`<button class="link" onclick="forgotPw()">Forgot password?</button><span class="mute">New here? <button class="link" onclick="authSheet('signup')">Sign up</button></span>`}</div>
+ ${inDemo()?'':`<div class="auth-demo"><span>Just looking around?</span><button class="btn plain sm" onclick="tryDemo()">Try the demo</button></div>`}`)}
+function authMsg(m,ok){const el=$('#autherr');if(el){el.innerHTML=m;el.classList.toggle('ok',!!ok)}}
+function authBusy(f,on){const b=f&&f.querySelector('button.btn');if(b){b.disabled=on;b.style.opacity=on?.6:''}}
+function niceAuthError(e){const m=(e&&e.message)||'';
+ if(/invalid login credentials/i.test(m))return 'Wrong email or password.';
+ if(/email not confirmed/i.test(m))return `Please confirm your email first. <button class="link" onclick="resendConfirm()">Send the link again</button>`;
+ if(/already registered|already exists/i.test(m))return `An account with this email already exists. <button class="link" onclick="authSheet('login')">Log in</button>`;
+ if(/rate limit|too many/i.test(m))return 'Too many attempts. Please wait a few minutes and try again.';
+ if(/password/i.test(m))return esc(m);
+ return esc(m||'Something went wrong. Please try again.')}
+async function emailLogin(f){
+ const email=f.email.value.trim();AUTH.email=email;authMsg('');authBusy(f,true);
+ const {error}=await AUTH.sb.auth.signInWithPassword({email,password:f.pw.value});
+ authBusy(f,false);if(error)authMsg(niceAuthError(error));  // success: authChanged() takes over
+}
+async function emailSignup(f){
+ const email=f.email.value.trim();AUTH.email=email;authMsg('');authBusy(f,true);
+ const {data,error}=await AUTH.sb.auth.signUp({email,password:f.pw.value,options:{emailRedirectTo:appUrl()}});
+ authBusy(f,false);
+ if(error)return authMsg(niceAuthError(error));
+ if(data&&data.session)return;  // email confirmation is off: already signed in
+ // Supabase answers "already registered" this way so it doesn't reveal who has an account
+ if(data&&data.user&&Array.isArray(data.user.identities)&&!data.user.identities.length)return authMsg(niceAuthError({message:'already registered'}));
+ checkInbox();
+}
+function checkInbox(){openSheet(sheetH('Check your inbox','One more step')+`<p>We sent a confirmation link to <b>${esc(AUTH.email)}</b>. Open it on this device and you'll be signed in.</p>
+ <p class="mute sm">Nothing after a few minutes? Check your spam folder, or <button class="link" onclick="resendConfirm()">send the link again</button>.</p>
+ <div class="row end"><button class="btn plain" onclick="authSheet('login')">Back to log in</button></div>`)}
+async function resendConfirm(){if(!AUTH.email)return authSheet('login');
+ const {error}=await AUTH.sb.auth.resend({type:'signup',email:AUTH.email,options:{emailRedirectTo:appUrl()}});
+ toast(error?niceAuthError(error).replace(/<[^>]+>/g,''):'Sent. Check your inbox.')}
+async function googleLogin(){const {error}=await AUTH.sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:appUrl()}});if(error)authMsg(niceAuthError(error))}
+function forgotPw(){openSheet(sheetH('Reset your password',"We'll email you a link to set a new one.")+`<form onsubmit="event.preventDefault();sendReset(this)">
+ <label>Email<input name="email" type="email" autocomplete="email" required value="${esc(AUTH.email)}" autofocus></label><div id="autherr" class="auth-msg" role="alert"></div>
+ <div class="row end"><button type="button" class="btn plain" onclick="authSheet('login')">Back</button><button class="btn">Send reset link</button></div></form>`)}
+async function sendReset(f){const email=f.email.value.trim();AUTH.email=email;authBusy(f,true);
+ const {error}=await AUTH.sb.auth.resetPasswordForEmail(email,{redirectTo:appUrl()});authBusy(f,false);
+ authMsg(error?niceAuthError(error):`If there's an account for ${esc(email)}, a reset link is on its way. Open it on this device.`,!error)}
+function newPasswordSheet(){openSheet(sheetH('Set a new password','')+`<form onsubmit="event.preventDefault();setNewPw(this)">
+ <label>New password<input name="pw" type="password" autocomplete="new-password" minlength="8" required autofocus></label><div id="autherr" class="auth-msg" role="alert"></div>
+ <div class="row end"><button class="btn">Save password</button></div></form>`)}
+async function setNewPw(f){authBusy(f,true);const {error}=await AUTH.sb.auth.updateUser({password:f.pw.value});authBusy(f,false);
+ if(error)return authMsg(niceAuthError(error));closeSheet();toast('Password updated.');await afterAuth()}
+async function logout(){if(AUTH.sb)await AUTH.sb.auth.signOut();toast('Logged out')}
+function authExpired(){if(!AUTH.sb)return;AUTH.sb.auth.signOut({scope:'local'}).catch(()=>{});setTimeout(()=>authSheet('login','Your login expired. Please log in again.'),300)}
+function tryDemo(){try{localStorage.setItem(WORLD_KEY,'demo')}catch(e){}closeSheet();if(D&&D.world==='demo'){D.ui=loadUi();hdr();ftr()}roleSheet()}
+function exitDemo(){try{localStorage.removeItem(WORLD_KEY)}catch(e){}D.ui.role=null;save();go('#/');render()}
+function welcomeSheet(){openSheet(sheetH('Welcome to Gigwise','How will you use it? You can add the other later.')+`<div class="rolecards">
+ <button class="rolecard" onclick="clientSetup('#/post')"><b>I'm hiring</b><span class="mute sm">Post a project and get a ranked, explained shortlist.</span></button>
+ <button class="rolecard" onclick="newProfile()"><b>I'm a freelancer</b><span class="mute sm">Build your profile and see projects ranked by fit.</span></button></div>`)}
+function clientSetup(dest){openSheet(sheetH('Set up your client profile','This is the name freelancers see on your projects.')+`<form onsubmit="event.preventDefault();makeClient(this.n.value,'${esc(dest||'#/post')}')">
+ <label>Your name or company<input name="n" required maxlength="80" autofocus></label>
+ <div class="row end"><button class="btn">Continue</button></div></form>`)}
+async function makeClient(n,dest){n=String(n||'').trim();if(!n)return;await act(()=>api('POST','/clients',{name:n}),()=>{closeSheet();D.ui.role='client';save();toast('Client profile ready');go(dest)})}
+
 /* ============ live mode: Gigwise backend + Supabase ============
    If the backend is running, every screen shows data from Supabase and every action is sent to the API.
    If it isn't, the app falls back to the offline demo (data saved in this browser only). */
@@ -2018,16 +2171,18 @@ let FNUM={};try{FNUM=JSON.parse(localStorage.getItem(FNUM_KEY)||'{}')}catch(e){}
 function fnum(id){const m=/^f(\d+)$/.exec(id);if(m)return +m[1];if(!FNUM[id]){FNUM[id]=1000+Object.keys(FNUM).length+1;try{localStorage.setItem(FNUM_KEY,JSON.stringify(FNUM))}catch(e){}}return FNUM[id]}
 function fid(n){const f=fl(n);return f&&f._id}
 async function api(method,path,body){
- let r;
- try{r=await fetch(API.base+path,{method,headers:body?{'Content-Type':'application/json'}:{},body:body?JSON.stringify(body):undefined})}
+ let r;const headers=body?{'Content-Type':'application/json'}:{};
+ const tok=await authToken();if(tok)headers.Authorization='Bearer '+tok;
+ try{r=await fetch(API.base+path,{method,headers,body:body?JSON.stringify(body):undefined})}
  catch(e){throw new Error("Can't reach the Gigwise server. Is the backend running?")}
+ if(r.status===401&&tok){authExpired();throw new Error('Your login has expired. Please log in again.')}
  let data=null;try{data=await r.json()}catch(e){}
  if(!r.ok){const d=data&&data.detail;throw new Error(typeof d==='string'?d:Array.isArray(d)&&d[0]?.msg?d[0].msg.replace(/^Value error, /,''):`Request failed (${r.status})`)}
  return data;
 }
 const tms=x=>x?Date.parse(x):null,num=x=>x==null?null:+x;
 API.sync=async function(){
- const s=await api('GET','/demo/state'),me=s.me.id,cl=Object.fromEntries(s.clients.map(c=>[c.id,c]));
+ const s=await api('GET','/state'),me=s.me?s.me.id:null,cl=Object.fromEntries(s.clients.map(c=>[c.id,c]));
  const F=s.freelancers.map(f=>({id:fnum(f.id),_id:f.id,name:f.name,title:f.title,skills:f.skills||[],rate:+f.rate,years:f.years,rating:num(f.rating),jobs:f.jobs,available:f.available,hpw:f.hours_per_week,loc:f.location||'',bio:f.bio||'',jss:f.jss,connects:f.connects,
   port:(f.portfolio||[]).map(p=>({t:p.title,d:p.description||''})),emp:(f.employment||[]).map(e=>({role:e.role,co:e.company,from:e.from,to:e.to})),edu:(f.education||[]).map(e=>({school:e.school,deg:e.degree,yr:e.year})),cert:(f.certifications||[]).map(e=>({name:e.name,by:e.issuer,yr:e.year})),lang:(f.languages||[]).map(e=>({l:e.language,lv:e.level}))}));
  const P=s.projects.map(p=>{const c=cl[p.client_id]||{},mine=p.client_id===me;return{id:p.id,title:p.title,desc:p.description,skills:p.skills||[],auto:p.skills_auto,type:p.type,budget:+p.budget,rateMin:p.rate_min==null?undefined:+p.rate_min,rateMax:p.rate_max==null?undefined:+p.rate_max,hours:p.hours,level:p.level,duration:p.duration,deadline:p.deadline,questions:p.questions||[],cat:p.category,owner:mine?'me':'x',client:mine?c.name+' (you)':c.name,cr:num(c.rating),cn:c.hires,status:p.status,hired:p.hired_freelancer_id?fnum(p.hired_freelancer_id):undefined,ts:tms(p.created_at),extra:p.extra_proposals||0,took:API.took[p.id]}});
@@ -2042,10 +2197,12 @@ API.sync=async function(){
  const N=s.notifications.map(n=>({id:'n'+n.id,_id:n.id,to:n.recipient_type==='client'?(n.recipient_id===me?'c':'x'):fnum(n.recipient_id),t:n.body,link:n.link,ts:tms(n.created_at),read:n.read}));
  const SV={talent:s.saved_freelancers.filter(x=>x.client_id===me).map(x=>fnum(x.freelancer_id)),jobs:{}};
  s.saved_jobs.forEach(x=>{(SV.jobs[fnum(x.freelancer_id)]=SV.jobs[fnum(x.freelancer_id)]||[]).push(x.project_id)});
- API.me=s.me;
- D={v:2,live:true,seq:(D&&D.seq)||100,fl:F,pr:P,props:Q,offers:O,contracts:C,reviews:R,th:TH,notes:N,saved:SV,log:[],ui:(D&&D.ui)||loadUi()};
+ API.me=s.me;API.meF=s.me_freelancer||null;API.world=s.world;
+ const ui=(D&&D.ui&&D.world===s.world)?D.ui:loadUi();
+ if(s.world==='real')ui.fid=API.meF?fnum(API.meF.id):null;  // signed in: you are only ever your own freelancer
+ D={v:2,live:true,world:s.world,seq:(D&&D.seq)||100,fl:F,pr:P,props:Q,offers:O,contracts:C,reviews:R,th:TH,notes:N,saved:SV,log:[],ui};
 };
-function loadUi(){try{const u=JSON.parse(localStorage.getItem(UI_KEY)||'null');if(u)return u}catch(e){}return{role:null,fid:null}}
+function loadUi(){try{const u=JSON.parse(localStorage.getItem(uiKey())||'null');if(u)return u}catch(e){}return{role:null,fid:null}}
 // Run one action against the API, then reload from the database so the screen shows what was saved.
 async function act(call,done){
  if(API.busy)return;API.busy++;document.body.style.cursor='progress';
@@ -2069,7 +2226,7 @@ async function boot(){
   const ctl=new AbortController(),tm=setTimeout(()=>ctl.abort(),2500);
   const h=await fetch(API.base+'/health',{signal:ctl.signal}).then(r=>r.json());clearTimeout(tm);
   API.reachable=!!(h&&h.ok);API.resetOk=h&&h.demo_reset!==false;API.ai=!!(h&&h.ai);
-  if(API.reachable&&!forcedOffline){D=null;await API.sync();API.on=true}
+  if(API.reachable&&!forcedOffline){await initAuth();D=null;await API.sync();API.on=true}
  }catch(e){}
  if(!API.on)load();
  render();

@@ -9,6 +9,35 @@ A **small fix** bumps the last number (`v2.1` → `v2.1.1`).
 
 ---
 
+## v2.2 · 2026-11-27 · Real accounts: email, Google, and a separate investor demo
+
+**By:** aiteam27-maker with Claude Code
+**Why:** People need their own accounts, while the team keeps a full demo to show investors.
+
+**Added**
+- Sign up and log in with email and password (confirmed by an emailed link) or Google, using
+  Supabase Auth. Passwords go straight to Supabase; Gigwise never sees them. Forgot-password included.
+- Two separate worlds in the database: **demo** (the sample marketplace, open to anyone through
+  **Try the demo**) and **real** (signed-up users). They never see each other.
+- Signed-in users act only as their own client and freelancer profiles, and see only their own
+  proposals, offers, contracts, messages and notifications. The server checks this on every request.
+- First login asks "I'm hiring" or "I'm a freelancer" and sets up that profile.
+- A quiet "Demo" bar while exploring the demo, with "Create an account" and "Exit demo".
+- `gigwise/backend/sql/002_login.sql` (adds the demo/real split and links profiles to logins),
+  `gigwise/backend/app/auth.py`, `GET /state`, `GET /auth/config`, `POST /clients`, `PUT /clients/me`,
+  and 7 tests that try to read or change other people's data (`tests/test_login.py`).
+
+**Changed**
+- Simulated replies, proposals and the one-click Hire auto-accept now run only in the demo.
+- Resetting the demo deletes only demo data, never real accounts.
+- `render.yaml` and `.env.example`: new `SUPABASE_ANON_KEY` setting (the public key). Without it,
+  the app offers only the demo, as before.
+
+**Setup needed:** run `002_login.sql`, set the Supabase login settings, and add `SUPABASE_ANON_KEY`
+on Render. See `gigwise/backend/README.md` → "Login and the investor demo".
+
+---
+
 ## v2.1.1 · 2026-11-27 · Home page background video
 
 **By:** a teammate (videos), pushed by aiteam27-maker with Claude Code

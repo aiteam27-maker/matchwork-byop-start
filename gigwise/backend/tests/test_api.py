@@ -31,7 +31,8 @@ class ApiFlow(unittest.TestCase):
         self.patch.stop()
 
     def test_health_and_me(self):
-        self.assertEqual(self.api.get("/me").json()["name"], "Pulse Fit")
+        me = self.api.get("/me").json()
+        self.assertEqual((me["world"], me["client"]["name"]), ("demo", "Pulse Fit"))
 
     def test_freelancer_filters_and_badges(self):
         r = self.api.get("/freelancers", params={"category": "Mobile Development", "available": True}).json()
