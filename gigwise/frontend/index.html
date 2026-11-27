@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="color-scheme" content="light dark">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <script>/* night/day mode: saved choice, else the device setting; set before paint to avoid a flash */try{var t=localStorage.getItem("gigwise-theme");document.documentElement.dataset.theme=t||(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light")}catch(e){document.documentElement.dataset.theme="light"}</script>
 <title>Gigwise</title>
 <style>
@@ -48,7 +48,7 @@ p{margin:0 0 .8em}
 .st-submitted{background:var(--soft);color:var(--ink2)}.st-shortlisted{background:var(--blue-l);color:var(--blue)}.st-accepted{background:var(--brand-l);color:var(--brand-d)}.st-declined{background:var(--red-l);color:var(--red)}
 .t1{--c:var(--brand)}.t2{--c:var(--blue)}.t3{--c:var(--t3)}.t4{--c:var(--gray)}
 .tierlbl{font-size:12px;font-weight:700;color:var(--c)}
-.ring{--s:56px;width:var(--s);height:var(--s);border-radius:50%;background:conic-gradient(var(--c) calc(var(--v)*1%),var(--track) 0);display:grid;place-items:center;flex:none;position:relative}
+.ring{--s:56px;width:var(--s);height:var(--s);border-radius:50%;background:none;display:grid;place-items:center;flex:none;position:relative}
 .ring::before{content:"";position:absolute;inset:5px;border-radius:50%;background:var(--card)}
 .ring span{position:relative;font-weight:800;font-size:17px;color:var(--ink)}
 .ring.sm{--s:42px}.ring.sm span{font-size:14px}.ring.sm::before{inset:4px}
@@ -390,6 +390,290 @@ footer{background:var(--card)}
 .star{color:#a86a00}
 :root[data-theme="dark"] .star{color:#e3a94b}
 @media (max-width:640px){.hero h1{font-size:32px}.nav a,.nav button{padding:8px 10px}.hdr-in{height:auto}.jlist>.card,.mlist>.card{padding:18px 16px}}
+
+/* =====================================================================
+   Editorial edition: set like a printed magazine.
+   Warm paper, ink, one accent (brick red), hairline rules, no gradients,
+   no shadows, square corners. Everything below overrides the layers above.
+   ===================================================================== */
+:root{
+ --paper:#f4efe6;--card:#f8f4ec;--surface2:#efe9dd;--soft:#ebe4d6;--soft2:#e6dfd0;
+ --ink:#1d1b18;--ink2:#3d3832;--mute:#71695d;--line:#d5cbb8;--line2:#b9ae9a;--track:#e0d7c6;
+ --acc:#a8361c;--acc-ink:#8c2c16;
+ --serif:"Newsreader",Georgia,"Times New Roman",serif;--sans:"Instrument Sans",-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;
+ --bg:var(--paper);--brand:var(--acc);--brand-h:var(--acc);--brand-d:var(--ink);--brand-t:var(--ink);--brand-l:var(--soft);--brand-b:var(--line2);--btn:var(--ink);
+ --blue:var(--ink2);--blue-l:var(--soft);--blue-b:var(--line);--blue-t:var(--ink);--amber:var(--acc);--amber-l:var(--soft);--amber-b:var(--line);--amber-t:var(--ink);
+ --red:var(--acc);--red-l:var(--soft);--red-b:var(--line2);--purple:var(--ink);--purple-l:var(--soft);--purple-b:var(--line);--purple-t:var(--ink);--sky:var(--ink2);--sky-l:var(--soft);
+ --gray:var(--mute);--t3:var(--ink2);--best:var(--surface2);--hdr:var(--paper);--cta:var(--ink);--toast:var(--ink);--star-off:var(--line2);--r:0;--sh:none}
+:root[data-theme="dark"]{
+ --paper:#171512;--card:#1c1915;--surface2:#1f1c17;--soft:#26221c;--soft2:#2b2620;
+ --ink:#ede6d8;--ink2:#cbc2b2;--mute:#9b9283;--line:#3a342b;--line2:#544c40;--track:#332e26;
+ --acc:#e07656;--acc-ink:#f0957a;
+ --bg:var(--paper);--brand:var(--acc);--brand-h:var(--acc);--brand-d:var(--ink);--brand-t:var(--ink);--brand-l:var(--soft);--brand-b:var(--line2);--btn:var(--ink);
+ --blue:var(--ink2);--blue-l:var(--soft);--blue-b:var(--line);--blue-t:var(--ink);--amber:var(--acc);--amber-l:var(--soft);--amber-b:var(--line);--amber-t:var(--ink);
+ --red:var(--acc);--red-l:var(--soft);--red-b:var(--line2);--purple:var(--ink);--purple-l:var(--soft);--purple-b:var(--line);--purple-t:var(--ink);--sky:var(--ink2);--sky-l:var(--soft);
+ --gray:var(--mute);--t3:var(--ink2);--best:var(--surface2);--hdr:var(--paper);--cta:var(--ink);--toast:var(--ink);--star-off:var(--line2)}
+body{font-family:var(--sans);font-size:15.5px;line-height:1.6;background:var(--paper);color:var(--ink)}
+::selection{background:var(--acc);color:var(--paper)}
+h1,h2,h3{font-family:var(--serif);font-weight:500;letter-spacing:-.012em;line-height:1.08}
+h1{font-size:46px;font-weight:400;letter-spacing:-.02em}
+h2{font-size:28px;font-weight:400}
+h3{font-size:20px}
+b,strong{font-weight:600}
+a{color:var(--ink);text-decoration:underline;text-decoration-color:var(--line2);text-underline-offset:3px;text-decoration-thickness:1px}
+a:hover{text-decoration-color:var(--acc);color:var(--acc)}
+.nav a,.logo,.icon-btn,a.btn,a.titem,a.pitem,a.nitem{text-decoration:none}
+a.titem:hover{color:inherit}
+.mute{color:var(--mute)}
+.kick{font-family:var(--sans);font-size:11.5px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--acc)}
+.kick.ink{color:var(--ink)}
+.serif{font-family:var(--serif)}
+/* buttons: square, ink on paper */
+.btn{border-radius:0;background:var(--ink);border:1px solid var(--ink);color:var(--paper);font-weight:500;letter-spacing:.01em;padding:10px 20px}
+.btn:hover{background:var(--acc);border-color:var(--acc);color:var(--paper)}
+.btn.ghost,.btn.plain{background:transparent;color:var(--ink);border-color:var(--ink)}
+.btn.plain{border-color:var(--line2)}
+.btn.ghost:hover,.btn.plain:hover{background:transparent;border-color:var(--acc);color:var(--acc)}
+.btn.danger{background:transparent;border-color:var(--acc);color:var(--acc)}.btn.danger:hover{background:var(--acc);color:var(--paper)}
+.btn.sm{padding:6px 13px;font-size:13.5px}
+.link{color:var(--acc);font-weight:500;text-decoration:underline;text-decoration-color:currentColor;text-decoration-thickness:1px;text-underline-offset:3px}
+.link:hover{color:var(--ink)}
+input,textarea,select{border-radius:0;background:var(--card);border:1px solid var(--line2)}
+input:focus,textarea:focus,select:focus{outline:1px solid var(--ink);outline-offset:0;border-color:var(--ink)}
+label{font-weight:500}
+/* surfaces: hairlines, not cards */
+.card{background:transparent;border:1px solid var(--line);border-radius:0;box-shadow:none}
+.hint{background:transparent;border:1px solid var(--line);border-radius:0;font-family:var(--serif);font-size:15px;font-style:italic;color:var(--ink2)}
+.banner,.banner.amber,.banner.blue{background:transparent;border:0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);border-radius:0;padding:12px 0;color:var(--ink2)}
+.banner.amber b,.banner.amber{color:var(--ink)}
+.banner.amber{border-top-color:var(--acc)}
+/* chips, pills, badges: typeset labels */
+.chip,.chip.ok,.chip.warn,.chip.tag{border-radius:0;background:transparent;border:1px solid var(--line);color:var(--ink2);font-size:12.5px;padding:2px 9px}
+.chip.ok{border-color:var(--ink2);color:var(--ink)}
+.chip.miss{border-style:solid;border-color:var(--line);color:var(--mute)}
+.chip.tag{border-color:var(--acc);color:var(--acc)}
+.pill,.st-accepted,.st-approved,.st-active,.st-declined,.st-offer,.st-pending,.st-submitted,.st-shortlisted,.st-withdrawn,.st-ended{border-radius:0;background:transparent;border:1px solid var(--line2);color:var(--ink2);font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;padding:2px 7px}
+.st-accepted,.st-approved,.st-active,.st-offer{border-color:var(--ink);color:var(--ink)}
+.st-declined,.st-pending{border-color:var(--acc);color:var(--acc)}
+.bdg,.bdg.jss,.bdg.rise{border-radius:0;background:transparent;border:0;padding:0;color:var(--mute);font-family:var(--serif);font-style:italic;font-size:14px;font-weight:400}
+.bdg+.bdg::before{content:"/";margin-right:5px;color:var(--line2);font-style:normal}
+.aitag{border-radius:0;border:1px solid var(--line2);background:transparent;color:var(--mute)}
+.badge{background:var(--acc);color:var(--paper);border-radius:0}
+.star,:root[data-theme="dark"] .star{color:var(--ink)}
+.starpick button.on{color:var(--acc)}
+.avail{color:var(--ink);font-weight:500}.avail::before{border-radius:0;width:6px;height:6px;background:var(--acc)}
+.avail.no{color:var(--mute)}.avail.no::before{background:var(--line2)}
+/* avatars: initials set in the serif, framed like a contributor box */
+.av{border-radius:0;background:var(--surface2);color:var(--ink);border:1px solid var(--line2);font-family:var(--serif);font-weight:500;letter-spacing:.02em}
+/* the score: a printed numeral */
+.score b{font-family:var(--serif);font-weight:400;font-size:44px;letter-spacing:-.03em;font-variant-numeric:lining-nums}
+.score.t1 b{color:var(--acc)}
+.score.sm b{font-size:30px}
+.score span{font-size:11px;letter-spacing:.06em}
+.ring{background:none;border:1px solid var(--line)}
+.spill{border-radius:0;background:transparent;border:0;border-bottom:1px solid var(--line2);padding:0 0 1px;gap:6px;font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--mute)}
+.spill::before{display:none}
+.spill b{font-family:var(--serif);font-size:20px;letter-spacing:-.02em;text-transform:none;color:var(--ink);font-weight:500}
+.spill.t1 b{color:var(--acc)}
+.tierlbl{font-size:10.5px!important;letter-spacing:.12em;text-transform:uppercase}
+.bar,.w-bar{height:3px;border-radius:0;background:var(--track)}
+.bar i,.w-bar i{border-radius:0;background:var(--ink)}
+/* header: a masthead strip */
+#hdr{background:var(--paper);border-bottom:1px solid var(--ink)}
+.hdr-in{height:68px;gap:28px}
+.logo{font-family:var(--serif);font-weight:500;font-size:29px;letter-spacing:-.03em;color:var(--ink)}
+.logo span{font-style:italic}
+.nav{gap:2px}
+.nav a,.nav button{font-size:12px;font-weight:600;letter-spacing:.11em;text-transform:uppercase;color:var(--ink2);border-bottom:1px solid transparent;padding:0 11px}
+.nav a.on{color:var(--acc);border-bottom-color:var(--acc);font-weight:600}
+.nav a:hover,.nav button:hover{color:var(--acc)}
+.icon-btn{border-radius:0}.icon-btn:hover{background:transparent;color:var(--acc)}
+.seg{border-radius:0;background:transparent;border:1px solid var(--ink);padding:0}
+.seg button{border-radius:0;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink2);padding:6px 13px}
+.seg button.on{background:var(--ink);color:var(--paper);box-shadow:none}
+.seg.sm button{padding:4px 10px;font-size:11px}
+.who{border-radius:0;background:transparent;border-color:var(--line2);padding:2px 10px 2px 2px}
+/* page headers read like section openers */
+.page{padding-top:40px}
+.ph{border-bottom:1px solid var(--ink);padding-bottom:18px;margin-bottom:28px;align-items:flex-end}
+.ph h1{margin:0 0 6px}
+.ph p{font-family:var(--serif);font-style:italic;font-size:17px}
+.secttl{border-bottom:1px solid var(--ink);padding-bottom:8px;margin:40px 0 0}
+.secttl h2{font-size:24px}
+.tabs{border-bottom:1px solid var(--line)}
+.tabs button{font-size:12px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;border-bottom-width:1px}
+.tabs button.on{border-bottom-color:var(--acc);color:var(--ink)}
+.filters select{border-radius:0;background:transparent}
+.filters select.set{background:transparent;border-color:var(--ink);color:var(--ink)}
+/* lists: ruled columns of copy, no boxes */
+.jlist,.mlist{border:0;border-top:1px solid var(--ink);border-radius:0;background:transparent}
+.jlist>.card,.mlist>.card{border:0;border-bottom:1px solid var(--line);padding:26px 0;background:transparent}
+.jlist>.card:last-child,.mlist>.card:last-child{border-bottom:1px solid var(--line)}
+.jcard:hover{background:transparent}.jcard:hover h3{color:var(--acc)}
+.jcard h3,.mcard h3{font-size:23px!important}
+.jcard .desc{font-family:var(--serif);font-size:16.5px;line-height:1.5;color:var(--ink2)}
+.reason{font-family:var(--serif);font-size:17px;line-height:1.5;color:var(--ink2)}
+.mcard{grid-template-columns:auto 1fr auto;gap:14px 22px}
+.mscore{min-width:96px}
+.mact{padding-top:2px}
+.mcard.top1{border-color:var(--line)}
+.mcard.top1 .mhead h3::after{content:"Best fit";font-family:var(--sans);font-size:10.5px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--acc);margin-left:12px;vertical-align:middle}
+.bd{background:transparent;border-top:1px solid var(--line);border-radius:0;padding:12px 0 0}
+.bd-pts{font-family:var(--serif);font-weight:500;font-size:16px}
+.side .card{border:0;border-top:1px solid var(--ink);padding:16px 0 4px}
+.side .card h3{font-size:19px}
+/* tables: a printed ledger */
+.tw{border:0;border-top:1px solid var(--ink);border-radius:0;background:transparent}
+th{background:transparent;border-bottom:1px solid var(--ink);font-size:11px;letter-spacing:.12em;color:var(--ink2)}
+td.best{background:var(--surface2)}
+.best-tag{color:var(--acc);letter-spacing:.08em;text-transform:uppercase;font-size:10.5px}
+/* chat: correspondence, not bubbles */
+.chat{border-radius:0;background:transparent;border:1px solid var(--line)}
+.titem.on{background:var(--surface2);box-shadow:inset 1px 0 0 var(--acc)}
+.titem:hover{background:var(--surface2)}
+.msgs{background:var(--card)}
+.msg,.msg.me,.msg.them{border-radius:0;font-size:15px}
+.msg.me{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+.msg.sys{font-family:var(--serif);font-style:italic;font-size:14px}
+.dot{border-radius:0;background:var(--acc);width:7px;height:7px}
+/* dialogs and popovers */
+.sheet{background:rgba(29,27,24,.42)}
+.sheet-body{border-radius:0;border:1px solid var(--ink);box-shadow:none;background:var(--paper)}
+.sheet-h h2{font-size:30px}
+.x{border-radius:0;background:transparent;border:1px solid var(--line2);color:var(--ink)}
+.rolecard,.pitem{border-radius:0;background:transparent}
+.rolecard b{font-family:var(--serif);font-size:22px;font-weight:500}
+.rolecard:hover,.pitem:hover{border-color:var(--acc);background:transparent}
+.npanel{border-radius:0;box-shadow:none;border:1px solid var(--ink);background:var(--paper)}
+.npanel h3{font-size:18px}
+.nitem.new{background:var(--surface2)}
+#toast{border-radius:0;background:var(--ink);color:var(--paper);font-family:var(--serif);font-size:16px;font-style:italic}
+.heart{border-radius:0;background:transparent;border-color:var(--line2)}
+.heart.on{color:var(--acc);border-color:var(--acc);background:transparent}
+.skillbox{border-radius:0;background:var(--card)}
+.port div{border-radius:0;background:transparent;border:0;border-top:1px solid var(--ink);padding:12px 0 0}
+.port b{font-family:var(--serif);font-size:18px;font-weight:500}
+.qa{border-radius:0;background:transparent;border-left:1px solid var(--acc);padding:4px 0 4px 14px}
+.ms-n{border-radius:0;background:transparent;border:1px solid var(--line2);font-family:var(--serif);font-size:15px}
+.ms.approved .ms-n{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.ms.submitted .ms-n{background:transparent;border-color:var(--acc);color:var(--acc)}
+.ms.active .ms-n{box-shadow:none;border-color:var(--ink);color:var(--ink);background:transparent}
+.offerbox{border:1px solid var(--ink)!important;background:transparent!important}
+.empty h3{font-size:26px}
+.empty p{font-family:var(--serif);font-style:italic;font-size:17px}
+footer{background:var(--paper);border-top:1px solid var(--ink);font-size:12.5px}
+:root[data-theme="dark"] .cta,:root[data-theme="dark"] #toast{border:0}
+:root[data-theme="dark"] .spill i{color:var(--paper)}
+
+/* ---- freelancer entries (talent pages): a ruled directory, not a card grid ---- */
+.fgrid{display:block;border-top:1px solid var(--ink)}
+.fcard{display:grid;grid-template-columns:minmax(210px,1fr) minmax(0,2fr) minmax(170px,.85fr);gap:30px;padding:26px 0;border-bottom:1px solid var(--line)}
+.fc-who{display:flex;gap:14px;align-items:flex-start}
+.fc-name{font-family:var(--serif);font-size:22px;font-weight:500;line-height:1.15;text-decoration:none;color:var(--ink)}
+.fc-name:hover{color:var(--acc)}
+.fc-body p{font-family:var(--serif);font-size:16.5px;line-height:1.5;color:var(--ink2);margin:0 0 12px}
+.fc-side{display:flex;flex-direction:column;gap:8px;align-items:flex-start;border-left:1px solid var(--line);padding-left:20px}
+.fc-side .meta{flex-direction:column;gap:2px}
+
+/* ---- landing: an issue cover and its departments ---- */
+.ed-dateline{display:flex;justify-content:space-between;align-items:center;gap:16px;border-bottom:1px solid var(--line);padding:12px 0;font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--mute);flex-wrap:wrap}
+.ed-cover{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));column-gap:28px;padding:48px 0 64px;border-bottom:1px solid var(--ink)}
+.ed-cover-main{grid-column:1/span 8;padding-right:20px}
+.ed-cover h1{font-size:clamp(46px,7.4vw,96px);line-height:.95;letter-spacing:-.035em;margin:18px 0 26px;font-weight:400}
+.ed-cover h1 em{font-style:italic;color:var(--acc)}
+.ed-lead{font-family:var(--serif);font-size:21px;line-height:1.45;color:var(--ink2);max-width:600px;margin-left:12%}
+.ed-lead::first-letter{font-size:3.4em;float:left;line-height:.82;margin:6px 8px 0 0;color:var(--ink);font-weight:500}
+.ed-ask{display:flex;align-items:flex-end;gap:14px;max-width:620px;margin:30px 0 0 12%}
+.ed-ask input{border:0;border-bottom:1px solid var(--ink);background:transparent;padding:10px 0;font-family:var(--serif);font-size:19px;font-style:italic}
+.ed-ask input:focus{outline:0;border-bottom-color:var(--acc)}
+.ed-try{margin:14px 0 0 12%;font-size:13.5px;color:var(--mute)}
+.ed-try .link{font-weight:400}
+.ed-cover-side{grid-column:10/span 3;border-left:1px solid var(--line);padding-left:24px;align-self:end}
+.ed-side-h{font-family:var(--serif);font-size:15px;font-style:italic;color:var(--mute);margin:6px 0 16px}
+.ed-pick{display:flex;align-items:baseline;justify-content:space-between;gap:10px;border-top:1px solid var(--ink);padding-top:12px}
+.ed-pick .score b{font-size:64px}
+.ed-pick-name{font-family:var(--serif);font-size:23px;line-height:1.1;margin:10px 0 2px}
+.ed-quote{font-family:var(--serif);font-size:17px;line-height:1.45;font-style:italic;color:var(--ink2);margin:14px 0 16px;padding-top:14px;border-top:1px solid var(--line)}
+.ed-parts{font-size:12.5px}
+.ed-parts div{display:grid;grid-template-columns:1fr 56px;gap:6px;padding:5px 0;border-top:1px solid var(--line)}
+.ed-parts span:last-child{text-align:right;font-variant-numeric:tabular-nums;color:var(--mute)}
+.ed-sec{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));column-gap:28px;padding:64px 0;border-bottom:1px solid var(--line)}
+.ed-sec-h{grid-column:1/span 3}
+.ed-sec-h h2{font-size:34px;margin:10px 0 12px}
+.ed-sec-h p{font-family:var(--serif);font-style:italic;font-size:16.5px;color:var(--mute)}
+.ed-sec-b{grid-column:5/span 8}
+.ed-sec.flip .ed-sec-h{grid-column:10/span 3;grid-row:1;border-left:1px solid var(--line);padding-left:24px}
+.ed-sec.flip .ed-sec-b{grid-column:1/span 8;grid-row:1}
+.ed-two{display:grid;grid-template-columns:1fr 1fr;column-gap:40px}
+.ed-two>div+div{border-left:1px solid var(--line);padding-left:40px}
+.ed-two h3{font-size:22px;font-style:italic;margin:0 0 6px}
+.ed-steps{list-style:none;margin:0;padding:0;counter-reset:s}
+.ed-steps li{counter-increment:s;display:grid;grid-template-columns:44px 1fr;gap:4px;padding:16px 0;border-top:1px solid var(--line)}
+.ed-steps li::before{content:counter(s);font-family:var(--serif);font-size:34px;line-height:1;color:var(--acc)}
+.ed-steps b{display:block;font-family:var(--serif);font-size:18px;font-weight:500;margin-bottom:2px}
+.ed-steps span{font-size:14.5px;color:var(--mute)}
+.ed-weights{border-top:1px solid var(--ink)}
+.ed-w{display:grid;grid-template-columns:110px 1fr;gap:24px;padding:18px 0;border-bottom:1px solid var(--line);align-items:baseline}
+.ed-w-n{font-family:var(--serif);font-size:56px;line-height:.9;letter-spacing:-.04em}
+.ed-w:first-child .ed-w-n{color:var(--acc)}
+.ed-w b{font-family:var(--serif);font-size:20px;font-weight:500}
+.ed-w p{margin:2px 0 0;color:var(--mute);font-size:14.5px}
+.ed-pull{font-family:var(--serif);font-size:25px;line-height:1.3;font-style:italic;margin:4px 0 22px;color:var(--ink)}
+.ed-fine{list-style:none;padding:0;margin:0;font-size:14px;color:var(--mute)}
+.ed-fine li{padding:9px 0;border-top:1px solid var(--line)}
+.ed-fine b{color:var(--ink)}
+.ed-index{columns:2;column-gap:48px;column-rule:1px solid var(--line);border-top:1px solid var(--ink);padding-top:6px}
+.ed-index button{display:flex;align-items:baseline;width:100%;gap:10px;background:none;border:0;border-bottom:1px solid var(--line);padding:13px 0;font:inherit;color:var(--ink);text-align:left;cursor:pointer;break-inside:avoid}
+.ed-index button:hover .ed-ix-n{color:var(--acc)}
+.ed-ix-n{font-family:var(--serif);font-size:20px}
+.ed-ix-l{flex:1;border-bottom:1px dotted var(--line2);transform:translateY(-5px)}
+.ed-ix-c{font-size:13px;color:var(--mute);white-space:nowrap}
+.ed-people{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(0,1fr);column-gap:40px;border-top:1px solid var(--ink)}
+.ed-feature{padding:26px 40px 0 0;border-right:1px solid var(--line)}
+.ed-feature h3{font-size:40px;font-weight:400;margin:12px 0 4px}
+.ed-feature .ed-role{font-family:var(--serif);font-style:italic;font-size:19px;color:var(--mute);margin:0 0 18px}
+.ed-feature blockquote{margin:0 0 18px;font-family:var(--serif);font-size:20px;line-height:1.5;color:var(--ink2)}
+.ed-brief{display:grid;grid-template-columns:auto 1fr;gap:14px;padding:20px 0;border-bottom:1px solid var(--line);cursor:pointer}
+.ed-brief:hover .ed-brief-n{color:var(--acc)}
+.ed-brief-n{font-family:var(--serif);font-size:21px;line-height:1.15}
+.ed-brief p{margin:6px 0 0;font-size:14px;color:var(--mute)}
+.ed-close{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));column-gap:28px;padding:72px 0 80px;align-items:end}
+.ed-close h2{grid-column:1/span 7;font-size:clamp(38px,5vw,64px);line-height:1;letter-spacing:-.03em;margin:0}
+.ed-close h2 em{color:var(--acc)}
+.ed-close div{grid-column:9/span 4;border-left:1px solid var(--line);padding-left:24px}
+.ed-close p{font-family:var(--serif);font-size:17px;color:var(--ink2);margin:0 0 16px}
+
+@media (max-width:900px){
+ h1{font-size:36px}
+ .ed-cover,.ed-sec,.ed-close{grid-template-columns:1fr;row-gap:28px}
+ .ed-cover-main,.ed-cover-side,.ed-sec-h,.ed-sec-b,.ed-sec.flip .ed-sec-h,.ed-sec.flip .ed-sec-b,.ed-close h2,.ed-close div{grid-column:1/-1;grid-row:auto}
+ .ed-cover-main{padding-right:0}
+ .ed-cover-side,.ed-sec.flip .ed-sec-h,.ed-close div{border-left:0;padding-left:0;border-top:1px solid var(--line);padding-top:20px}
+ .ed-lead,.ed-ask,.ed-try{margin-left:0}
+ .ed-people{grid-template-columns:1fr}
+ .ed-feature{border-right:0;padding-right:0;padding-bottom:24px;border-bottom:1px solid var(--line)}
+ .fcard{grid-template-columns:1fr 1.6fr;gap:20px}
+ .fc-side{grid-column:1/-1;border-left:0;padding-left:0;flex-direction:row;flex-wrap:wrap;align-items:center;gap:14px}
+ .fc-side .meta{flex-direction:row;gap:4px 14px}
+}
+@media (max-width:640px){
+ .hdr-in{height:auto;padding-top:10px;padding-bottom:0;gap:6px 12px}
+ .nav{order:3;flex-basis:100%;align-self:auto;border-top:1px solid var(--line);margin:0;padding:2px 0}
+ .nav a,.nav button{padding:10px 8px 9px;font-size:11px}
+ .hdr-r{margin-left:auto}
+ h1,.ph h1{font-size:32px}
+ .logo{font-size:25px}
+ .ed-cover{padding:32px 0 44px}
+ .ed-lead{font-size:18.5px}
+ .ed-ask{flex-direction:column;align-items:stretch}
+ .ed-two{grid-template-columns:1fr}
+ .ed-two>div+div{border-left:0;padding-left:0;margin-top:28px}
+ .ed-index{columns:1}
+ .ed-w{grid-template-columns:76px 1fr;gap:14px}.ed-w-n{font-size:42px}
+ .ed-sec{padding:44px 0}
+ .fcard{grid-template-columns:1fr;gap:14px}
+ .mcard .mscore{align-items:flex-start}
+}
 </style>
 </head>
 <body>
@@ -409,12 +693,12 @@ function ago(ts){const d=NOW()-ts;if(d<MIN)return'just now';if(d<HR)return Math.
 const hhmm=ts=>new Date(ts).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});
 const fdate=s=>s?new Date(s+'T12:00').toLocaleDateString('en-US',{month:'short',day:'numeric'}):'—';
 const isoIn=d=>new Date(NOW()+d*DAY).toISOString().slice(0,10);
-const LOGO=`<svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true"><rect width="28" height="28" rx="8" fill="#0e7c66"/><path d="M7 19V9l7 6 7-6v10" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+const LOGO='';/* the masthead is a typeset wordmark, no icon */
 const IMOON=`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>`;
 const ISUN=`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>`;
 const ICHAT=`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg>`;
 const AVC=['#4f6f63','#566583','#6b5f7a','#7a6a55','#5b6b73','#6d5a5a','#5f6f52','#74635a','#5a6b7c','#62666d'];
-const av=(f,s=44)=>`<span class="av" style="width:${s}px;height:${s}px;font-size:${Math.round(s*.38)}px;background:${AVC[f.id%AVC.length]}">${esc(f.name.split(' ').map(w=>w[0]).join('').slice(0,2))}</span>`;
+const av=(f,s=44)=>`<span class="av" style="width:${s}px;height:${s}px;font-size:${Math.round(s*.42)}px">${esc(f.name.split(' ').map(w=>w[0]).join('').slice(0,2))}</span>`;
 const stars=f=>f.rating?`<span class="star">★</span> <b>${f.rating.toFixed(1)}</b> <span>(${f.jobs} jobs)</span>`:`<span class="chip tag">New talent</span>`;
 
 /* ============ seed data ============ */
@@ -745,47 +1029,82 @@ function newProfile(){closeSheet();D.ui.role='freelancer';save();S.me={isNew:tru
 function sampleCard(){
  const e=EX['AI fitness coaching app'],p={...e,skills:detect(e.title+' '+e.desc)};
  const {list}=rankFor(p),m=list[0];if(!m)return'';
- return `<div class="sample"><div class="back"></div><div class="card">
- <div class="row between" style="margin-bottom:10px"><span class="mute sm">Project · <b style="color:var(--ink)">${esc(e.title)}</b></span><span class="chip tag">#1 of ${list.length}</span></div>
- <div class="row" style="align-items:flex-start;gap:14px">${av(m.f,48)}<div class="grow"><b>${esc(m.f.name)}</b> <span class="mute sm">· ${esc(m.f.title)}</span><div class="meta"><span><b>$${m.f.rate}</b>/hr</span><span>${stars(m.f)}</span></div></div><div class="mscore">${ring(m.total)}<span class="tierlbl ${tier(m.total)[1]}">${tier(m.total)[0]}</span></div></div>
- <p class="reason" style="font-size:14px">${esc(reasonClient(m))}</p><div class="chips">${skillChips(m)}</div>
- <div style="margin-top:14px">${Object.keys(W).map(k=>`<div class="row" style="gap:10px;margin:5px 0"><span class="sm" style="width:128px">${WL[k]}</span><div class="bar grow"><i style="width:${Math.round(m.parts[k]*100)}%"></i></div><span class="xs mute" style="width:40px;text-align:right">${(m.parts[k]*Math.round(W[k]*100)).toFixed(0)}/${Math.round(W[k]*100)}</span></div>`).join('')}</div>
- </div></div>`;
+ return `<aside class="ed-cover-side" aria-label="A sample shortlist">
+ <div class="kick ink">An example</div>
+ <p class="ed-side-h">Someone asked for “${esc(e.title.toLowerCase())}”. Out of ${list.length} people who could do it, this is who came first.</p>
+ <div class="ed-pick"><span class="kick">No. 1 of ${list.length}</span>${ring(m.total)}</div>
+ <div class="ed-pick-name">${esc(m.f.name)}</div>
+ <div class="mute sm">${esc(m.f.title)} · $${m.f.rate}/hr</div>
+ <p class="ed-quote">“${esc(reasonClient(m))}”</p>
+ <div class="ed-parts">${Object.keys(W).map(k=>`<div><span>${WL[k]}</span><span>${(m.parts[k]*Math.round(W[k]*100)).toFixed(0)} of ${Math.round(W[k]*100)}</span></div>`).join('')}</div>
+ </aside>`;
 }
 function vLanding(){
  const hire=S.hero==='hire';
- const cats=CATS.slice(0,9).map(([n,sk])=>[n,sk]);
- const feat=[...D.fl].filter(f=>f.rating).sort((a,b)=>b.rating-a.rating||b.jobs-a.jobs).slice(0,4);
- return `<section class="hero"><div class="wrap hero-in"><div>
- <div class="seg" role="tablist"><button class="${hire?'on':''}" onclick="S.hero='hire';render()">Hire</button><button class="${!hire?'on':''}" onclick="S.hero='work';render()">Work</button></div>
- ${hire?`<h1>Post a project.<br>Get a ranked shortlist in under 60 seconds.</h1>
- <p class="lead">Gigwise scores every freelancer on skills, experience and budget fit, and tells you exactly why each person was suggested.</p>
- <form class="hero-q" onsubmit="event.preventDefault();startPost(this.q.value)"><input name="q" aria-label="Describe your project" placeholder="What do you need built? e.g. an AI fitness coaching app"><button class="btn">Find my matches</button></form>
- <div class="try">Try: ${Object.keys(EX).map(x=>`<button class="link" onclick="startPost('${x}')">${x}</button>`).join(' · ')}</div>`
- :`<h1>Find projects<br>you're likely to win.</h1>
- <p class="lead">Open projects are ranked by how well they fit your skills, rate and experience, with a short note on why you fit. Spend proposals where they count.</p>
- <div class="row" style="margin-top:22px"><button class="btn" onclick="setRole('freelancer','#/dashboard')">See projects that fit me</button><button class="btn ghost" onclick="newProfile()">Create a profile</button></div>`}
- </div>${sampleCard()}</div></section>
- <div class="wrap">
- 
- <section class="sec" id="how"><div class="sec-h"><h2>How Gigwise works</h2><p>One place for posting, matching, proposals and chat, on both sides of the job.</p></div>
- <div class="how"><div class="card"><h3>For clients</h3><ol class="steps"><li><div><b>Post a project</b><br><span class="mute sm">Title, description, budget and hours. Skip skills and we'll detect them.</span></div></li><li><div><b>See ranked matches</b><br><span class="mute sm">Each freelancer gets a 0–100 score with matched and missing skills.</span></div></li><li><div><b>Invite and chat</b><br><span class="mute sm">Invite your top picks; a thread opens for each one.</span></div></li><li><div><b>Compare proposals and hire</b><br><span class="mute sm">Bids, delivery times and match scores side by side.</span></div></li></ol></div>
- <div class="card"><h3>For freelancers</h3><ol class="steps"><li><div><b>Build your profile</b><br><span class="mute sm">Skills, rate, experience and portfolio.</span></div></li><li><div><b>See projects that fit you</b><br><span class="mute sm">Ranked by the same score clients see, with a “why you fit” note.</span></div></li><li><div><b>Send one strong proposal</b><br><span class="mute sm">Cover letter drafted from your profile, bid and timeline.</span></div></li><li><div><b>Chat and deliver</b><br><span class="mute sm">Talk with the client in one thread per project.</span></div></li></ol></div></div></section>
- <section class="sec"><div class="sec-h"><h2>How the match score works</h2><p>The same transparent formula ranks freelancers for clients and projects for freelancers.</p></div>
- <div class="weights"><div class="card">${Object.keys(W).map(k=>`<div class="w-row"><div><b>${WL[k]}</b><div class="mute xs">${{skills:'Share of required skills the freelancer has',text:'Overlap between project text and profile + portfolio',budget:'Hourly rate vs budget ÷ estimated hours',exp:'Years of experience, capped at 10',rating:'Average client rating'}[k]}</div></div><div class="w-bar"><i style="width:${Math.round(W[k]*100)/0.45}%"></i></div><b style="text-align:right">${Math.round(W[k]*100)}%</b></div>`).join('')}</div>
- <div class="card"><h3>Fair by design</h3><ul class="guard mute sm" style="padding-left:18px;margin:8px 0 0"><li><b style="color:var(--ink)">Never scored:</b> name, gender, location, photo or any other personal attribute.</li><li><b style="color:var(--ink)">Grounded reasons:</b> explanations cite only facts from the freelancer's profile.</li><li><b style="color:var(--ink)">Hard filters first:</b> only available freelancers with at least one required skill are ranked.</li><li><b style="color:var(--ink)">Learns from outcomes:</b> invites, shortlists, hires and declines are logged to tune the weights.</li></ul></div></div></section>
- <section class="sec"><div class="sec-h"><h2>Find freelancers for every kind of work</h2></div><div class="cats">${cats.map(([n,sk])=>{const c=D.fl.filter(f=>f.available&&f.skills.some(s=>sk.includes(s))).length;return`<button class="cat" onclick="S.tq='';S.tf.cat='${esc(n)}';setRole('client','#/talent')"><b>${esc(n)}</b><span class="mute sm">${c} available · ${specsOf(n).length} specialties</span></button>`}).join('')}</div></section>
- <section class="sec"><div class="sec-h"><h2>Top-rated freelancers</h2></div><div class="fgrid">${feat.map(f=>fCard(f)).join('')}</div></section>
- <section class="sec"><div class="cta"><div><h2>Ready to see who fits?</h2><p>Post a project and get your ranked shortlist in under a minute.</p></div><div class="row"><button class="btn" onclick="startPost('')">Post a project</button><button class="btn ghost" onclick="setRole('freelancer','#/dashboard')">I'm a freelancer</button></div></div></section>
+ const cats=CATS.slice(0,10);
+ const feat=[...D.fl].filter(f=>f.rating&&f.available).sort((a,b)=>b.rating-a.rating||b.jobs-a.jobs).slice(0,4);
+ const lead=feat[0],rest=feat.slice(1);
+ const month=new Date().toLocaleDateString('en-US',{month:'long',year:'numeric'});
+ const avail=D.fl.filter(f=>f.available).length,open=D.pr.filter(p=>p.status==='open').length;
+ return `<div class="wrap">
+ <div class="ed-dateline"><span>${month}</span><span>${avail} freelancers available · ${open} open projects</span>
+ <div class="seg sm" role="tablist" aria-label="I am here to"><button class="${hire?'on':''}" onclick="S.hero='hire';render()">Hire</button><button class="${!hire?'on':''}" onclick="S.hero='work';render()">Work</button></div></div>
+
+ <section class="ed-cover"><div class="ed-cover-main">
+ ${hire?`<div class="kick">For people hiring</div>
+ <h1>Find someone good, and <em>know why</em> they’re good.</h1>
+ <p class="ed-lead">Describe the job in a sentence or two. We read it against every freelancer’s skills, rate and past work, then give you a shortlist in order. Each name comes with a plain note on why it’s there, and what’s missing.</p>
+ <form class="ed-ask" onsubmit="event.preventDefault();startPost(this.q.value)"><input name="q" aria-label="Describe your project" placeholder="What do you need made?"><button class="btn">Show me who fits</button></form>
+ <div class="ed-try">Or start from one of these: ${Object.keys(EX).map(x=>`<button class="link" onclick="startPost('${x}')">${x.toLowerCase()}</button>`).join(', ')}.</div>`
+ :`<div class="kick">For freelancers</div>
+ <h1>Spend your proposals on work you can <em>actually win</em>.</h1>
+ <p class="ed-lead">Open projects, sorted by how well they suit your skills, rate and experience. Each one comes with a straight answer: where you’re strong, where you’re thin, and which piece of your portfolio to lead with.</p>
+ <div class="ed-ask"><button class="btn" onclick="setRole('freelancer','#/dashboard')">Show me projects that fit</button><button class="btn ghost" onclick="newProfile()">Make a profile</button></div>`}
+ </div>${sampleCard()}</section>
+
+ <section class="ed-sec" id="how"><div class="ed-sec-h"><div class="kick">How it works</div><h2>Two sides of the same job</h2><p>Posting, matching, proposals and conversation all happen in one place.</p></div>
+ <div class="ed-sec-b ed-two">
+ <div><h3>If you’re hiring</h3><ol class="ed-steps">
+ <li><div><b>Say what you need</b><span>A title, a few lines, a budget. Skip the skills list if you like; we’ll pick them out of what you wrote.</span></div></li>
+ <li><div><b>Read the shortlist</b><span>Everyone is scored out of 100, with the skills they have and the ones they don’t.</span></div></li>
+ <li><div><b>Invite a few people</b><span>Each invite opens its own conversation.</span></div></li>
+ <li><div><b>Compare and hire</b><span>Bids, timelines and scores, side by side.</span></div></li></ol></div>
+ <div><h3>If you’re freelancing</h3><ol class="ed-steps">
+ <li><div><b>Fill in your profile</b><span>Skills, rate, years of experience and a couple of past projects.</span></div></li>
+ <li><div><b>See what suits you</b><span>Projects ranked by the same score clients see.</span></div></li>
+ <li><div><b>Send one good proposal</b><span>Better than ten rushed ones. We’ll tell you what to lead with.</span></div></li>
+ <li><div><b>Talk and deliver</b><span>One thread per project, and milestones you can both see.</span></div></li></ol></div>
+ </div></section>
+
+ <section class="ed-sec flip"><div class="ed-sec-h"><div class="kick">The score</div><h2>Five things, weighed in the open</h2><p>The same formula ranks people for clients and projects for freelancers.</p></div>
+ <div class="ed-sec-b"><div class="ed-weights">${Object.keys(W).map(k=>`<div class="ed-w"><div class="ed-w-n">${Math.round(W[k]*100)}<span style="font-size:.4em">%</span></div><div><b>${WL[k]}</b><p>${{skills:'How many of the skills you asked for this person actually has.',text:'How much their profile and past projects talk about the same things your brief does.',budget:'Their hourly rate against your budget divided by the hours you expect.',exp:'Years of experience, counted up to ten.',rating:'What previous clients said, on average.'}[k]}</p></div></div>`).join('')}</div>
+ <p class="ed-pull" style="margin-top:36px">We never look at a name, a photo or where someone lives. Only the work.</p>
+ <ul class="ed-fine"><li><b>Reasons stick to the facts.</b> Every explanation is built from what’s on the profile, nothing invented.</li><li><b>Some people are left out.</b> Anyone who’s booked, or has none of the skills you asked for, isn’t ranked.</li><li><b>It gets better with use.</b> Invites, shortlists, hires and declines are logged so the weights can be tuned.</li></ul></div></section>
+
+ <section class="ed-sec"><div class="ed-sec-h"><div class="kick">The index</div><h2>Every kind of work</h2><p>Pick a field to see who’s free right now.</p></div>
+ <div class="ed-sec-b"><div class="ed-index">${cats.map(([n,sk])=>{const c=D.fl.filter(f=>f.available&&f.skills.some(s=>sk.includes(s))).length;return`<button onclick="S.tq='';S.tf.cat='${esc(n)}';setRole('client','#/talent')"><span class="ed-ix-n">${esc(n)}</span><span class="ed-ix-l"></span><span class="ed-ix-c">${c} free</span></button>`}).join('')}</div></div></section>
+
+ ${lead?`<section class="ed-sec" style="border-bottom:0"><div class="ed-sec-h"><div class="kick">People</div><h2>People clients keep coming back to</h2><p>The highest-rated freelancers on Gigwise right now.</p></div>
+ <div class="ed-sec-b ed-people">
+ <article class="ed-feature"><div class="row" style="gap:16px">${av(lead,64)}<div><div class="kick ink">${esc(lead.loc)}</div></div></div>
+ <h3>${esc(lead.name)}</h3><p class="ed-role">${esc(lead.title)}, ${lead.years} years in</p>
+ <blockquote>${esc(lead.bio)}</blockquote>
+ <div class="meta" style="margin-bottom:18px"><span><b>$${lead.rate}</b>/hr</span><span>${stars(lead)}</span><span>${lead.skills.slice(0,4).map(esc).join(', ')}</span></div>
+ <button class="btn ghost sm" onclick="go('#/profile/${lead.id}')">Read the full profile</button></article>
+ <div>${rest.map(f=>`<div class="ed-brief" onclick="go('#/profile/${f.id}')" role="link" tabindex="0" onkeydown="if(event.key==='Enter')go('#/profile/${f.id}')">${av(f,44)}<div><div class="ed-brief-n">${esc(f.name)}</div><div class="mute sm">${esc(f.title)}</div><p>${esc(f.bio.split('. ')[0].replace(/\.$/,''))}.</p></div></div>`).join('')}</div>
+ </div></section>`:''}
+
+ <section class="ed-close" style="border-top:1px solid var(--ink)"><h2>Got something that <em>needs doing?</em></h2>
+ <div><p>Write it down the way you’d explain it to a friend. The shortlist takes about a minute.</p><div class="row"><button class="btn" onclick="startPost('')">Post a project</button><button class="btn ghost" onclick="setRole('freelancer','#/dashboard')">I’m a freelancer</button></div></div></section>
  </div>`;
 }
 function startPost(q){q=(q||'').trim();S.postSkills=[];if(EX[q]){const e=EX[q];S.draft={type:'fixed',title:e.title,desc:e.desc,budget:e.budget,hours:e.hours,deadline:isoIn(e.days),level:'Intermediate',duration:'1 to 3 months',questions:[QSUG[catOf(detect(e.title+' '+e.desc))]||QSUG.Other]}}else S.draft=q?{title:q.length<70?q.charAt(0).toUpperCase()+q.slice(1):'',desc:q.length>=70?q:''}:{};D.ui.role='client';save();closeSheet();S.lastRoute=null;go('#/post')}
 function fCard(f,m){
- return `<div class="card fcard"><div class="top">${av(f)}<div class="grow" style="min-width:0"><b>${esc(f.name)}</b><div class="mute sm">${esc(f.title)}</div></div>${m?`<div class="mscore">${ring(m.total,'sm')}</div>`:''}${D.ui.role==='client'?heart('talent',f.id):''}</div>
- <div class="meta"><span><b>$${f.rate}</b>/hr</span><span>${stars(f)}</span><span>${f.years} yrs</span><span class="avail ${f.available?'':'no'}">${f.available?'Available':'Booked'}</span></div>
- ${bdgs(f)}
- ${m?`<p class="sm" style="margin:0"><span class="tierlbl ${tier(m.total)[1]}">${tier(m.total)[0]}.</span> ${esc(reasonClient(m))}</p><div class="chips">${skillChips(m)}</div>`:`<p class="bio">${esc(f.bio)}</p><div class="chips">${f.skills.slice(0,5).map(s=>`<span class="chip">${esc(s)}</span>`).join('')}</div>`}
- <div class="row" style="margin-top:auto"><span class="mute xs grow">${esc(f.loc)}</span><button class="btn ghost sm" onclick="go('#/profile/${f.id}')">See profile</button></div></div>`;
+ return `<article class="fcard">
+ <div class="fc-who">${av(f,52)}<div style="min-width:0"><a class="fc-name" href="#/profile/${f.id}">${esc(f.name)}</a><div class="mute sm">${esc(f.title)}</div><div class="mute xs" style="margin-top:4px">${esc(f.loc)}</div></div></div>
+ <div class="fc-body">${m?`<div class="tierlbl ${tier(m.total)[1]}" style="margin-bottom:4px">${tier(m.total)[0]}</div><p>${esc(reasonClient(m))}</p><div class="chips">${skillChips(m)}</div>`:`<p>${esc(f.bio)}</p><div class="chips">${f.skills.slice(0,5).map(s=>`<span class="chip">${esc(s)}</span>`).join('')}</div>`}</div>
+ <div class="fc-side">${m?ring(m.total,'sm'):''}<div class="meta"><span><b>$${f.rate}</b>/hr</span><span>${stars(f)}</span><span>${f.years} years</span><span class="avail ${f.available?'':'no'}">${f.available?'Available':'Booked'}</span></div>
+ ${bdgs(f)}<div class="row" style="gap:8px">${D.ui.role==='client'?heart('talent',f.id):''}<button class="btn ghost sm" onclick="go('#/profile/${f.id}')">See profile</button></div></div></article>`;
 }
 
 /* ============ POST A PROJECT ============ */
@@ -944,7 +1263,7 @@ function sendInvite(pid,fid){
 /* ============ CLIENT HOME ============ */
 function vClient(){
  const ps=myProjects();
- return `<div class="wrap page"><div class="ph"><div><h1>My projects</h1><p class="mute">Signed in as Pulse Fit · client</p></div><button class="btn" onclick="startPost('')">+ Post a project</button></div>
+ return `<div class="wrap page"><div class="ph"><div><h1>My projects</h1><p class="mute">Signed in as Pulse Fit · client</p></div><button class="btn" onclick="startPost('')">Post a project</button></div>
  ${ps.length?`<div class="jlist">${ps.map(p=>{const {list}=rankFor(p),n=propsOf(p.id).length,inv=Object.values(D.th).filter(t=>t.pid===p.id&&t.invited).length,top=list[0];return `<div class="card"><div class="row between" style="align-items:flex-start"><div class="grow" style="min-width:240px"><div class="mute xs">Posted ${ago(p.ts)} · ${pstat(p)}</div><h3 style="font-size:18px;margin:2px 0 6px"><a href="#/matches/${p.id}" style="color:inherit">${esc(p.title)}</a></h3><div class="meta">${pmeta(p)}</div></div>
  ${top?`<div class="row sm" style="gap:8px"><span class="mute">Top match</span>${av(top.f,28)}<b>${esc(top.f.name)}</b>${spill(top.total)}</div>`:''}</div>
  <div class="chips" style="margin:10px 0">${p.skills.map(s=>`<span class="chip">${esc(s)}</span>`).join('')}</div>
