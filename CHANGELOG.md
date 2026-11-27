@@ -9,6 +9,19 @@ A **small fix** bumps the last number (`v2.1` → `v2.1.1`).
 
 ---
 
+## v2.1.1 · 2026-11-27 · Home page background video
+
+**By:** a teammate (videos), pushed by aiteam27-maker with Claude Code
+**Why:** v2.1 shipped without its video files, so the home page showed a plain dark
+background instead of the video.
+
+**Added**
+- `gigwise/frontend/hero.mp4` (3.8 MB, wide screens) and
+  `gigwise/frontend/hero-portrait.mp4` (0.7 MB, phones), taken from the teammate's
+  published Claude artifact. No code changes.
+
+---
+
 ## v2.1 · 2026-11-27 · New home page, simpler posting, one-click hire
 
 **By:** a teammate, pushed by aiteam27-maker with Claude Code
