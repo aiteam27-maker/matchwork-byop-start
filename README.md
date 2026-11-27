@@ -57,3 +57,7 @@ Gigwise is set up to deploy to [Render](https://render.com) as one website that 
 - **Reset demo data** is turned off on the live site, so visitors can't wipe everyone's data. To reset, run `python -m seed.seed` from `gigwise/backend` on your own computer.
 - The free plan pauses the site after about 15 minutes without visitors, and the next visit takes 30–60 seconds to wake it.
 - There's no login yet, so anyone with the link can act as any user. Share it with your team only.
+
+## Change history
+
+Every version is listed in [CHANGELOG.md](CHANGELOG.md). Rules for making changes (for teammates and Claude Code) are in [CLAUDE.md](CLAUDE.md).
