@@ -9,6 +9,20 @@ A **small fix** bumps the last number (`v2.1` → `v2.1.1`).
 
 ---
 
+## v2.2.2 · 2026-11-27 · Simpler footer
+
+**By:** aiteam27-maker with Claude Code
+**Why:** The footer showed technical details visitors don't need.
+
+**Changed** (`gigwise/frontend/index.html`)
+- Removed "● Live data · saved in Supabase", the "Use offline demo" / "Switch to live data" switch
+  and "How scoring works" from the footer. It now shows "© 2026 Gigwise" (or "Signed in as …
+  · Log out"), Privacy and Terms.
+- Anyone who had chosen the offline demo before is moved back to live data automatically. The
+  offline demo still appears on its own if the server can't be reached.
+
+---
+
 ## v2.2.1 · 2026-11-27 · Privacy Policy and Terms pages
 
 **By:** aiteam27-maker with Claude Code
