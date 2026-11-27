@@ -9,6 +9,9 @@ computer. Read the top of `CHANGELOG.md` too before starting work.
 - `gigwise/frontend/taxonomy.js`: the skill catalog, shared by the frontend and backend.
 - `gigwise/backend/`: FastAPI + Supabase API. Setup and endpoints are in its README.
 - `demo-gigwise.html`: the older demo. **Never change it.**
+- **Two worlds:** `demo` (sample data, no login, for presentations) and `real` (signed-up users).
+  Every endpoint must keep them apart and must only let signed-in users act as themselves.
+  `gigwise/backend/tests/test_login.py` checks this; extend it when you add endpoints.
 - Live site: https://gigwise-sg.onrender.com. Render redeploys automatically within
   about two minutes of every merge to `main`.
 

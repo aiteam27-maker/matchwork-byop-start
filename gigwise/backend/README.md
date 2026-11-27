@@ -69,7 +69,8 @@ Full details and a "Try it out" button for each one: http://localhost:8000/docs
 
 | Area | Endpoints |
 |---|---|
-| System | `GET /health` (also says whether AI is on), `GET /me` (the demo client you act as), `GET /taxonomy` (the skill catalog) |
+| System | `GET /health` (also says whether AI is on), `GET /me` (who you are), `GET /auth/config` (public login settings), `GET /taxonomy` (the skill catalog) |
+| Profiles | `POST /clients`, `PUT /clients/me` (signed-in users' client profile) |
 | Freelancers | `GET /freelancers` (filters: q, category, max_rate, min_rating, available), `GET /freelancers/{id}`, `POST /freelancers` (create profile), `PUT /freelancers/{id}` (edit profile) |
 | Projects | `GET /projects` (filters), `GET /projects/{id}`, `POST /projects` (fixed or hourly; detects skills if blank; returns matches) |
 | Matching | `GET /projects/{id}/matches`, `GET /freelancers/{id}/matches` (reverse matching) |
@@ -84,6 +85,34 @@ Full details and a "Try it out" button for each one: http://localhost:8000/docs
 | AI (optional) | `POST /ai/explain` (Claude-written match reasons for up to 8 freelancers), `POST /ai/draft-proposal` (cover letter draft) |
 
 **Coming next:** real login (Supabase Auth); live chat (Supabase Realtime).
+
+## Login and the investor demo
+
+The database holds two separate worlds:
+
+- **Demo** (`world = 'demo'`): the sample marketplace. Anyone can use it without logging in, via
+  **Try the demo**. "You" are the demo client Pulse Fit, or any demo freelancer.
+- **Real** (`world = 'real'`): people who sign up. They log in with email and password or Google
+  (Supabase Auth). Each login can have one client profile and one freelancer profile. They see the
+  real world's people, projects and reviews, and only their own proposals, offers, contracts,
+  messages and notifications.
+
+The two worlds never see each other, and resetting the demo never touches real accounts.
+
+How it works: the browser signs in with Supabase directly (passwords never reach this server), then
+sends the login token with each request (`Authorization: Bearer ...`). `app/auth.py` checks the token
+with Supabase, and `app/main.py` decides what each person may see and do. Requests without a token
+are demo visitors. The data all screens use comes from `GET /state`, which is scoped to the person asking.
+
+**Setup** (once):
+1. Run `sql/002_login.sql` in the Supabase SQL Editor.
+2. Supabase → Authentication → Sign In / Providers: keep **Email** on with **Confirm email** on.
+   For Google, add a Google OAuth client ID and secret.
+3. Supabase → Authentication → URL Configuration: Site URL `https://gigwise-sg.onrender.com/app/`, and
+   add redirect URLs `https://gigwise-sg.onrender.com/app/**` and `http://localhost:8000/app/**`.
+4. Put the publishable key in `SUPABASE_ANON_KEY` (in `.env` and on Render).
+
+Without `SUPABASE_ANON_KEY` the app works as before: demo only, no login.
 
 ## Skill catalog
 
@@ -100,7 +129,7 @@ With `ANTHROPIC_API_KEY` set (in `.env` locally, and in Render's Environment for
 
 ## Notes
 
-- **Live mode details.** The app loads everything with one call (`GET /demo/state`), sends each action to its endpoint, then reloads, so the screen always shows what's saved. It also refreshes every 20 seconds to pick up changes from other browsers. Match scores are calculated in the browser with the same formula as `app/matching.py`; the tests check both give identical results.
+- **Live mode details.** The app loads everything it may see with one call (`GET /state`), sends each action to its endpoint, then reloads, so the screen always shows what's saved. It also refreshes every 20 seconds to pick up changes from other browsers. Match scores are calculated in the browser with the same formula as `app/matching.py`; the tests check both give identical results.
 - **No login yet.** As a client you act as the demo client (Pulse Fit). Freelancer actions take a `freelancer_id`. Anyone who can reach the API can act as anyone, so run it locally only for now.
 - **Security.** Every table has Row Level Security on with no rules, so the public anon key can't read anything. Only this backend, using the secret key, can.
 - **Fairness.** The score never uses name, location or other personal attributes. A test checks this.

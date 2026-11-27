@@ -1,7 +1,8 @@
 """A tiny in-memory stand-in for the Supabase client, used only by tests.
 
 Supports the subset the API uses: select (with simple embedded relations like
-"*, clients(name)"), eq, neq, gte, in_, order, limit, insert, update, delete.
+"*, clients(name)"), eq, neq, gte, in_, order, limit, insert, update, delete, and
+auth.get_user(token) for logins made with add_user().
 """
 from __future__ import annotations
 
@@ -10,19 +11,20 @@ import itertools
 import re
 import uuid
 from datetime import datetime, timezone
+from types import SimpleNamespace
 from typing import Any, Dict, List
 
 NUMERIC_ID = {"match_events", "notifications", "reviews", "milestones", "messages"}
 PREFIX = {"clients": "c", "freelancers": "f", "projects": "p", "proposals": "q", "threads": "t", "offers": "o",
           "contracts": "k"}
 DEFAULTS = {
-    "projects": {"status": "open", "extra_proposals": 0, "questions": [], "skills_auto": False, "hired_freelancer_id": None},
+    "projects": {"world": "demo", "status": "open", "extra_proposals": 0, "questions": [], "skills_auto": False, "hired_freelancer_id": None},
     "proposals": {"status": "submitted", "answers": [], "links": [], "connects_spent": 0, "edited_at": None},
     "threads": {"invited": False, "client_read_at": None, "freelancer_read_at": None},
     "notifications": {"read": False, "link": ""},
-    "freelancers": {"connects": 40, "jss": None, "rating": None, "jobs": 0, "available": True, "hours_per_week": 30,
+    "freelancers": {"world": "demo", "user_id": None, "connects": 40, "jss": None, "rating": None, "jobs": 0, "available": True, "hours_per_week": 30,
                     "portfolio": [], "employment": [], "education": [], "certifications": [], "languages": []},
-    "clients": {"is_demo_user": False, "rating": None, "hires": 0},
+    "clients": {"world": "demo", "user_id": None, "is_demo_user": False, "rating": None, "hires": 0},
     "offers": {"status": "pending", "milestones": [], "rate": None, "weekly_limit": None, "message": None, "proposal_id": None},
     "contracts": {"status": "active", "ended_at": None, "rate": None, "weekly_limit": None, "offer_id": None},
     "milestones": {"status": "pending", "note": None, "link": None, "changes_requested": None},
@@ -132,6 +134,7 @@ class FakeSupabase:
         names = ["clients", "freelancers", "projects", "proposals", "threads", "messages", "offers", "contracts",
                  "milestones", "reviews", "notifications", "saved_jobs", "saved_freelancers", "match_events"]
         self.tables: Dict[str, List[Dict[str, Any]]] = {n: [] for n in names}
+        self._users: Dict[str, Any] = {}
         self.counter = itertools.count(1)
         self._tick = itertools.count()
         self._base = datetime.now(timezone.utc).replace(microsecond=0)  # start at real time, then only move forward
@@ -144,3 +147,17 @@ class FakeSupabase:
 
     def table(self, name: str) -> Query:
         return Query(self, name)
+
+    # --- logins: tokens made with add_user() are valid, anything else is rejected like Supabase does
+    def add_user(self, token: str, email: str) -> str:
+        uid = str(uuid.uuid4())
+        self._users[token] = SimpleNamespace(id=uid, email=email)
+        return uid
+
+    @property
+    def auth(self):
+        def get_user(token):
+            if token not in self._users:
+                raise Exception("invalid JWT")
+            return SimpleNamespace(user=self._users[token])
+        return SimpleNamespace(get_user=get_user)

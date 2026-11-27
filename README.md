@@ -35,7 +35,7 @@ The earlier demo, with an AI job-post wizard, service packages, a simulated Safe
 ## Notes
 
 - The other side of each conversation is simulated and replies within seconds, so you can demo alone.
-- No real accounts or payments yet. Gigwise saves to Supabase in live mode, or to your browser in offline mode. Demo Gigwise always saves to your browser. Use **Reset demo data** in each app to start over.
+- **Accounts:** sign up with email and password (confirmed by email) or Google. Real accounts are kept apart from the demo, and the **Try the demo** button opens the sample marketplace for presentations. No payments.
 
 ## Live website (Render)
 
