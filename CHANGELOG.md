@@ -9,6 +9,22 @@ A **small fix** bumps the last number (`v2.1` → `v2.1.1`).
 
 ---
 
+## v2.2.1 · 2026-11-27 · Privacy Policy and Terms pages
+
+**By:** aiteam27-maker with Claude Code
+**Why:** Google requires a public privacy policy before "Continue with Google" can open to
+everyone, and users should know what happens to their data.
+
+**Added**
+- `gigwise/frontend/privacy.html` and `terms.html` (plain-English, with a shared `legal.css`),
+  at `/app/privacy.html` and `/app/terms.html`. Contact: the Google support email.
+- Links to both in the footer on every page, and an "agree to the Terms and Privacy Policy" line
+  under the sign-up button.
+
+**Note:** a sensible starting point, not legal advice. Review the wording before a public launch.
+
+---
+
 ## v2.2 · 2026-11-27 · Real accounts: email, Google, and a separate investor demo
 
 **By:** aiteam27-maker with Claude Code

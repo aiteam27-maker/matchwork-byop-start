@@ -1,0 +1,19 @@
+/* Shared style for the Privacy Policy and Terms pages (matches the app's editorial look) */
+:root{--paper:#f4efe6;--ink:#1d1b18;--ink2:#3d3832;--mute:#71695d;--line:#d5cbb8;--acc:#a8361c;
+ --serif:"Newsreader",Georgia,"Times New Roman",serif;--sans:"Instrument Sans",-apple-system,"Segoe UI",Helvetica,Arial,sans-serif}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--paper:#171512;--ink:#ede6d8;--ink2:#cbc2b2;--mute:#9b9283;--line:#3a342b;--acc:#e07656}}
+:root[data-theme="dark"]{--paper:#171512;--ink:#ede6d8;--ink2:#cbc2b2;--mute:#9b9283;--line:#3a342b;--acc:#e07656}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.65 var(--sans)}
+.top{border-bottom:1px solid var(--line)}
+.top a{display:inline-block;padding:16px;font:600 26px/1 var(--serif);color:var(--ink);text-decoration:none;letter-spacing:-.02em}
+main{max-width:720px;margin:0 auto;padding:40px 16px 80px}
+h1{font:400 44px/1.1 var(--serif);letter-spacing:-.02em;margin:0 0 8px}
+h2{font:500 24px/1.2 var(--serif);margin:36px 0 8px}
+p,li{color:var(--ink2)}
+ul{padding-left:20px}
+li{margin:4px 0}
+a{color:var(--acc)}
+.date{color:var(--mute);margin:0 0 28px}
+.lead{font-size:18px;color:var(--ink)}
+footer{border-top:1px solid var(--line);margin-top:48px;padding-top:16px;color:var(--mute);font-size:14px}
