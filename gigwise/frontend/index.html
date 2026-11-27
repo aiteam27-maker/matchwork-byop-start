@@ -1165,8 +1165,8 @@ function hdr(){
  ${r==='freelancer'&&me&&!REAL()?`<button class="who" onclick="pickFreelancer()" title="Switch freelancer">${av(me,26)}<span>${esc(me.name)}</span></button>`:''}${acctBtns()}`
  :REAL()?acctBtns():loginBtns()}</div></div>${demoBar()}`;
 }
-function ftr(){if(REAL()){$('#ftr').innerHTML=`<div class="wrap row between"><span><b style="color:var(--brand)">●</b> Signed in as ${esc(AUTH.session.user.email||'')} · <button class="link" onclick="logout()">Log out</button></span><span class="row"><button class="link" onclick="howScroll()">How scoring works</button></span></div>`;return}
-$('#ftr').innerHTML=`<div class="wrap row between"><span>${API.on?`<b style="color:var(--brand)">● Live data</b> · saved in Supabase${API.ai?' · AI explanations on':''} · <button class="link" onclick="useOffline()">Use offline demo</button>`:`Offline demo · data is saved in this browser only${API.reachable?' · <button class="link" onclick="useLive()">Switch to live data</button>':''}`}</span><span class="row"><button class="link" onclick="howScroll()">How scoring works</button>${API.on&&!API.resetOk?'':'<button class="link" onclick="resetDemo()">Reset demo data</button>'}</span></div>`}
+function ftr(){if(REAL()){$('#ftr').innerHTML=`<div class="wrap row between"><span><b style="color:var(--brand)">●</b> Signed in as ${esc(AUTH.session.user.email||'')} · <button class="link" onclick="logout()">Log out</button></span><span class="row"><button class="link" onclick="howScroll()">How scoring works</button><a class="link" href="privacy.html">Privacy</a><a class="link" href="terms.html">Terms</a></span></div>`;return}
+$('#ftr').innerHTML=`<div class="wrap row between"><span>${API.on?`<b style="color:var(--brand)">● Live data</b> · saved in Supabase${API.ai?' · AI explanations on':''} · <button class="link" onclick="useOffline()">Use offline demo</button>`:`Offline demo · data is saved in this browser only${API.reachable?' · <button class="link" onclick="useLive()">Switch to live data</button>':''}`}</span><span class="row"><button class="link" onclick="howScroll()">How scoring works</button><a class="link" href="privacy.html">Privacy</a><a class="link" href="terms.html">Terms</a>${API.on&&!API.resetOk?'':'<button class="link" onclick="resetDemo()">Reset demo data</button>'}</span></div>`}
 function howScroll(){if(route().r!==''){go('#/');setTimeout(()=>$('#how')?.scrollIntoView(),60)}else $('#how')?.scrollIntoView()}
 
 /* ============ Claude-written reasons (live mode with an API key) ============ */
@@ -2102,6 +2102,7 @@ function authSheet(mode,note){
   ${up?'<p class="xs mute" style="margin:-8px 0 14px">At least 8 characters. We\'ll email you a link to confirm your address.</p>':''}
   <div id="autherr" class="auth-msg" role="alert"></div>
   <button class="btn auth-wide">${up?'Create account':'Log in'}</button>
+  ${up?'<p class="xs mute" style="margin:10px 0 0;text-align:center">By creating an account you agree to the <a href="terms.html" target="_blank">Terms</a> and <a href="privacy.html" target="_blank">Privacy Policy</a>.</p>':''}
  </form>
  <div class="row between sm" style="margin-top:14px">${up?`<span class="mute">Already have an account? <button class="link" onclick="authSheet('login')">Log in</button></span>`
   :`<button class="link" onclick="forgotPw()">Forgot password?</button><span class="mute">New here? <button class="link" onclick="authSheet('signup')">Sign up</button></span>`}</div>
