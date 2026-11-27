@@ -674,6 +674,188 @@ footer{background:var(--paper);border-top:1px solid var(--ink);font-size:12.5px}
  .fcard{grid-template-columns:1fr;gap:14px}
  .mcard .mscore{align-items:flex-start}
 }
+
+/* ---- landing hero: full-screen video, wordmark bottom-left, search that opens on focus ---- */
+body.on-landing #hdr{position:fixed;left:0;right:0;top:0;background:transparent;border-bottom-color:rgba(244,239,230,.16);transition:background .35s,border-color .35s}
+body.on-landing:not(.scrolled) #hdr .nav a,body.on-landing:not(.scrolled) #hdr .nav button,body.on-landing:not(.scrolled) #hdr .icon-btn,body.on-landing:not(.scrolled) #hdr .logo{color:#f4efe6}
+body.on-landing:not(.scrolled) #hdr .btn.plain{color:#f4efe6;border-color:rgba(244,239,230,.45)}
+body.on-landing:not(.scrolled) #hdr .btn:not(.plain){background:#f4efe6;color:#1d1b18;border-color:#f4efe6}
+body.on-landing:not(.scrolled) #hdr .nav a:hover,body.on-landing:not(.scrolled) #hdr .nav button:hover{color:#e07656}
+body.on-landing.scrolled #hdr{background:var(--paper);border-bottom-color:var(--ink)}
+/* menu links: a touch bigger and bolder everywhere */
+.nav a,.nav button{font-size:13.5px;font-weight:700;letter-spacing:.09em}
+.hx{position:relative;overflow:hidden;background:#151310;color:#f4efe6;min-height:100vh;min-height:100svh;display:flex;align-items:center;justify-content:center;padding:110px 20px 120px}
+.hx-video{position:absolute;inset:0;z-index:1;width:100%;height:100%;object-fit:cover;animation:hx-zoom 24s ease-in-out infinite alternate}
+@keyframes hx-zoom{from{transform:scale(1.02)}to{transform:scale(1.12)}}
+.hx-yt{position:absolute;inset:0;overflow:hidden;pointer-events:none;animation:hx-yt-in 1.6s .6s both}
+.hx-yt iframe{position:absolute;top:50%;left:50%;width:max(100%,177.78vh);height:max(100%,56.25vw);transform:translate(-50%,-50%) scale(1.18);border:0;animation:hx-zoom-yt 24s ease-in-out infinite alternate}
+@keyframes hx-zoom-yt{from{transform:translate(-50%,-50%) scale(1.18)}to{transform:translate(-50%,-50%) scale(1.3)}}
+@keyframes hx-yt-in{from{opacity:0}}
+.hx-shade{position:absolute;inset:0;z-index:1;background:rgba(14,12,10,.58)}
+.hx.no-video .hx-video{display:none}
+.hx-in{position:relative;width:100%;max-width:820px;text-align:center;z-index:2}
+.hx-h{font-family:var(--serif);font-weight:400;color:#f4efe6;font-size:clamp(40px,5.6vw,72px);line-height:1.02;letter-spacing:-.03em;margin:0 0 40px;text-wrap:balance;text-shadow:0 2px 18px rgba(0,0,0,.3)}
+.hx.no-video .hx-h{text-shadow:none}
+.hx-h em{color:#ef8a6a}
+.hx-panel{position:relative;text-align:left;border-radius:22px;padding:14px;border:1px solid transparent;transition:background .35s,border-color .35s,backdrop-filter .35s}
+.hx-panel.open{background:rgba(26,23,19,.55);border-color:rgba(244,239,230,.2);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
+.hx-search{display:flex;align-items:center;background:#f4efe6;border-radius:999px;padding:6px 6px 6px 26px;box-shadow:0 0 0 0 rgba(239,138,106,0);transition:box-shadow .3s}
+.hx-panel.open .hx-search{box-shadow:0 0 0 4px rgba(239,138,106,.35)}
+.hx-search input{border:0;background:transparent;color:#1d1b18;font-size:18px;padding:12px 0;outline:0}
+.hx-search input:focus{outline:0}
+.hx-search input::placeholder{color:#857d70}
+.hx-search button{flex:none;width:50px;height:50px;border-radius:50%;border:0;background:#1d1b18;color:#f4efe6;display:grid;place-items:center;cursor:pointer;transition:background .2s,transform .2s}
+.hx-search button:hover{background:#a8361c;transform:scale(1.06)}
+.hx-drop{display:grid;grid-template-rows:0fr;opacity:0;transition:grid-template-rows .4s cubic-bezier(.3,.7,.2,1),opacity .3s}
+.hx-panel.open .hx-drop{grid-template-rows:1fr;opacity:1}
+.hx-drop-in{overflow:hidden;min-height:0}
+.hx-panel.hx-typing .hx-tabs,.hx-panel.hx-typing .hx-list[data-t=quick],.hx-panel.hx-typing .hx-list[data-t=trend]{display:none}
+.hx-panel:not(.hx-typing) .hx-match{display:none}
+.hx-match{padding-top:8px}
+.hx-tabs{position:relative;display:flex;justify-content:center;gap:8px;margin:14px 0 0;border-bottom:1px solid rgba(244,239,230,.18)}
+.hx-tabs button{display:flex;align-items:center;gap:8px;background:none;border:0;font:inherit;font-size:16px;font-weight:600;color:rgba(244,239,230,.62);padding:12px 22px;cursor:pointer;transition:color .2s}
+.hx-tabs button svg{width:16px;height:16px}
+.hx-tabs button.on,.hx-tabs button:hover{color:#f4efe6}
+.hx-ink{position:absolute;left:0;bottom:-1px;height:2px;width:0;background:#f4efe6;transition:transform .35s cubic-bezier(.3,.7,.2,1),width .35s cubic-bezier(.3,.7,.2,1)}
+.hx-list button{display:flex;width:100%;align-items:center;justify-content:space-between;gap:12px;background:none;border:0;border-bottom:1px solid rgba(244,239,230,.12);color:#f4efe6;font:inherit;font-size:17px;padding:17px 12px;cursor:pointer;text-align:left;border-radius:10px;transition:background .2s}
+.hx-list button:last-child{border-bottom:0}
+.hx-list button:hover,.hx-list button.act{background:rgba(244,239,230,.09)}
+.hx-list button b{color:#ef8a6a;font-weight:600}
+.hx-list button svg{flex:none;transition:transform .25s}
+.hx-list button:hover svg,.hx-list button.act svg{transform:translate(3px,-3px)}
+.hx-list small{color:rgba(244,239,230,.55);font-size:13px;margin-left:8px}
+.hx-panel.open .hx-list:not([hidden]) button{animation:hx-row .4s both}
+.hx-list button:nth-child(2){animation-delay:.05s}.hx-list button:nth-child(3){animation-delay:.1s}.hx-list button:nth-child(4){animation-delay:.15s}
+@keyframes hx-row{from{opacity:0;transform:translateY(6px)}}
+.hx-sub{margin:22px 0 0;font-size:15px}
+.hx-sub .link{color:rgba(244,239,230,.8);font-weight:500}
+.hx-sub .link:hover{color:#f4efe6}
+.hx-h,.hx-panel,.hx-sub{animation:hx-up .9s cubic-bezier(.2,.7,.2,1) both}
+.hx-panel{animation-delay:.15s}.hx-sub{animation-delay:.3s}
+@keyframes hx-up{from{opacity:0;transform:translateY(22px)}}
+.hx-mark{position:absolute;left:clamp(16px,4vw,56px);bottom:clamp(18px,4vh,40px);z-index:2;font-family:var(--serif);font-style:italic;font-size:clamp(34px,4vw,54px);letter-spacing:-.03em;color:#f4efe6;text-decoration:none;animation:hx-up 1s .45s cubic-bezier(.2,.7,.2,1) both}
+.hx-mark:hover{color:#ef8a6a}
+/* categories: an endless moving line, pauses when you point at it */
+.hx-cats{overflow:hidden;padding:30px 0;border-bottom:1px solid var(--line);-webkit-mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent)}
+.hx-track{display:flex;gap:12px;width:max-content;animation:hx-slide 40s linear infinite}
+.hx-dup{display:flex;gap:12px}
+.hx-cats:hover .hx-track,.hx-cats:focus-within .hx-track{animation-play-state:paused}
+@keyframes hx-slide{from{transform:translateX(calc(-50% - 6px))}to{transform:translateX(0)}}
+.hx-cats button{flex:none;background:none;border:1px solid var(--line2);border-radius:999px;font:inherit;font-size:15px;font-weight:500;color:var(--ink);padding:11px 22px;cursor:pointer;transition:border-color .2s,color .2s,background .2s,transform .2s}
+.hx-cats button:hover{border-color:var(--ink);background:var(--ink);color:var(--paper);transform:translateY(-2px)}
+.hx-how{display:grid;grid-template-columns:repeat(3,1fr);gap:40px;padding:80px 0;border-bottom:1px solid var(--line)}
+.hx-how b{font-family:var(--serif);font-weight:400;font-size:15px;color:var(--acc)}
+.hx-how h3{font-size:28px;font-weight:400;margin:8px 0 6px}
+.hx-how p{color:var(--mute);margin:0}
+.hx-end{display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap;padding:80px 0 96px}
+.hx-end h2{font-size:clamp(34px,4.6vw,56px);letter-spacing:-.03em;line-height:1;margin:0}
+.hx-end h2 em{color:var(--acc)}
+.hx-end .btn{font-size:16px;padding:14px 28px}
+/* scroll reveal */
+.rv{opacity:0;transform:translateY(24px);transition:opacity .8s cubic-bezier(.2,.7,.2,1),transform .8s cubic-bezier(.2,.7,.2,1)}
+.rv.in{opacity:1;transform:none}
+.hx-how .rv:nth-child(2){transition-delay:.1s}.hx-how .rv:nth-child(3){transition-delay:.2s}
+/* pages fade in when you move between them */
+#app>*{animation:pg-in .45s cubic-bezier(.2,.7,.2,1) both}
+@keyframes pg-in{from{opacity:0;transform:translateY(8px)}}
+.btn:active{transform:translateY(1px) scale(.985)}
+@media (prefers-reduced-motion:reduce){.hx-video,.hx-h,.hx-panel,.hx-sub,.hx-mark,.hx-list button,#app>*{animation:none!important}.hx-track{animation-duration:200s}.rv{opacity:1;transform:none;transition:none}}
+@media (max-width:640px){
+ .nav a,.nav button{font-size:12px;letter-spacing:.06em;padding:10px 6px 9px}
+ body.on-landing #hdr .hdr-in{border-bottom:0}
+ body.on-landing:not(.scrolled) #hdr .nav{border-top-color:rgba(244,239,230,.16)}
+ .hx{padding:150px 16px 110px}
+ .hx-h{margin-bottom:26px}
+ .hx-panel{padding:8px;border-radius:18px}
+ .hx-search{padding-left:18px}.hx-search input{font-size:16px}
+ .hx-tabs button{padding:12px 12px;font-size:15px}
+ .hx-list button{font-size:15.5px;padding:15px 8px}
+ .hx-how{grid-template-columns:1fr;gap:28px;padding:52px 0}
+ .hx-end{padding:52px 0 64px}
+}
+/* wordmark: upright serif, semibold, set tight */
+.logo{font-family:var(--serif);font-style:normal;font-weight:600;font-size:28px;letter-spacing:-.035em;line-height:1}
+.logo span{font-style:normal}
+@media (max-width:640px){.logo{font-size:25px}}
+/* full-width header: wordmark at the far left on every page */
+.hdr-in{max-width:none;padding-left:clamp(16px,2.6vw,40px);padding-right:clamp(16px,2.6vw,40px)}
+.nav a,.nav button{font-size:15px;font-weight:700;letter-spacing:.07em}
+.hdr-in .nav{margin-left:12px}
+/* hero backdrop wall */
+.hx-wall{position:absolute;inset:0;overflow:hidden;pointer-events:none;animation:hx-yt-in 1.4s .2s both}
+.hw-tilt{position:absolute;left:50%;top:50%;width:150%;height:190%;display:grid;grid-template-columns:repeat(6,1fr);gap:22px;transform:translate(-50%,-50%) rotate(-9deg)}
+.hw-run{display:flex;flex-direction:column;gap:22px;animation:hw-up var(--d) linear infinite}
+.hw-col.down .hw-run{animation-name:hw-down}
+@keyframes hw-up{from{transform:translateY(0)}to{transform:translateY(calc(-50% - 11px))}}
+@keyframes hw-down{from{transform:translateY(calc(-50% - 11px))}to{transform:translateY(0)}}
+.hw-card{background:rgba(244,239,230,.075);border:1px solid rgba(244,239,230,.13);border-radius:16px;padding:18px 20px;color:rgba(244,239,230,.9);font-size:15px;line-height:1.35}
+.hw-card b{display:block;font-family:var(--serif);font-weight:500;font-size:19px;color:#f4efe6}
+.hw-card small{display:block;color:rgba(244,239,230,.55);font-size:12.5px}
+.hw-k{text-transform:uppercase;letter-spacing:.12em;font-size:10.5px!important;margin-bottom:4px;color:#ef8a6a!important}
+.hw-who{display:flex;gap:12px;align-items:center}
+.hw-av{width:42px;height:42px;border-radius:50%;flex:none;display:grid;place-items:center;background:rgba(244,239,230,.14);font-family:var(--serif);font-size:16px;color:#f4efe6}
+.hw-row{display:flex;justify-content:space-between;margin-top:12px;color:rgba(244,239,230,.7);font-size:13.5px}
+.hw-ev{display:flex;align-items:center;gap:10px}
+.hw-dot{width:8px;height:8px;border-radius:50%;background:#ef8a6a;flex:none;animation:hw-pulse 2s ease-in-out infinite}
+@keyframes hw-pulse{50%{opacity:.25}}
+.hw-msg{border-bottom-left-radius:4px}
+.hw-score{display:flex;align-items:center;gap:14px}
+.hw-score b{font-size:40px;color:#ef8a6a;line-height:1}
+.hw-score span{font-size:13px;color:rgba(244,239,230,.7)}
+@media (max-width:640px){.hw-tilt{width:260%;gap:14px}.hw-run{gap:14px}.nav a,.nav button{font-size:12.5px;letter-spacing:.05em}}
+@media (prefers-reduced-motion:reduce){.hw-run,.hw-dot{animation:none}}
+/* keep the headline and search readable over the moving wall */
+.hx-shade{background:radial-gradient(ellipse 60% 55% at 50% 50%,rgba(14,12,10,.86),rgba(14,12,10,.6) 70%,rgba(14,12,10,.5))}
+body.on-landing:not(.scrolled) #hdr{background:rgba(14,12,10,.72);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+@media (max-width:640px){.hw-tilt{width:330%}.nav a,.nav button{font-size:11.5px;letter-spacing:.04em;padding:10px 5px 9px}}
+/* ---- posting: two questions ---- */
+.pp{display:flex;flex-direction:column;gap:0;border-top:1px solid var(--ink)}
+.pp-step{display:grid;grid-template-columns:56px 1fr;gap:8px;padding:30px 0;border-bottom:1px solid var(--line)}
+.pp-n{font-family:var(--serif);font-size:40px;line-height:1;color:var(--acc)}
+.pp-body h2{font-size:28px;margin:2px 0 16px}
+.pp-big{font-family:var(--serif);font-size:22px;padding:12px 14px;margin-bottom:10px}
+.pp-auto{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:10px;font-size:13.5px;color:var(--mute);min-height:8px}
+.pp-money{display:flex;align-items:center;gap:8px;max-width:340px;border:1px solid var(--line2);background:var(--card);padding:0 14px}
+.pp-money span{font-family:var(--serif);font-size:26px;color:var(--mute)}
+.pp-money em{font-style:normal;color:var(--mute);white-space:nowrap}
+.pp-money input{border:0;background:transparent;font-family:var(--serif);font-size:26px;padding:10px 0;outline:0}
+.pp-money input:focus{outline:0}
+.pp-money:focus-within{border-color:var(--ink)}
+.pp-quick{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 4px}
+.pp-quick button{background:none;border:1px solid var(--line2);border-radius:999px;font:inherit;font-size:14px;padding:6px 14px;cursor:pointer;color:var(--ink)}
+.pp-quick button:hover{border-color:var(--ink)}
+#ratehint .hint{margin:14px 0 0}
+.pp-more{border-bottom:1px solid var(--line)}
+.pp-more summary{cursor:pointer;padding:18px 0;font-weight:600;list-style:none;display:flex;gap:10px;align-items:baseline}
+.pp-more summary::-webkit-details-marker{display:none}
+.pp-more summary::before{content:"+";font-family:var(--serif);font-size:22px;color:var(--acc);width:48px;text-align:center}
+.pp-more[open] summary::before{content:"–"}
+.pp-more summary span{font-weight:400;color:var(--mute);font-size:14px}
+.pp-more-in{padding:4px 0 22px 56px}
+.pp-go{display:flex;justify-content:flex-end;gap:10px;padding:24px 0}
+.pp-go .btn:last-child{font-size:16px;padding:12px 26px}
+/* ---- hiring ---- */
+.hire-sum{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--ink);border-bottom:1px solid var(--line);margin:4px 0 14px}
+.hire-sum div{padding:14px 0}
+.hire-sum small,.pc-terms small,.pc-pick small{display:block;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--mute)}
+.hire-sum b{font-family:var(--serif);font-size:24px;font-weight:500}
+.pc-pick{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;border:1px solid var(--ink);padding:18px 22px;margin-bottom:24px}
+.pc-pick b{display:block;font-family:var(--serif);font-size:24px;font-weight:500;margin:2px 0}
+.pc-pick span{color:var(--mute);font-size:14px}
+.pc-list{border-top:1px solid var(--ink)}
+.pcard{padding:24px 0;border-bottom:1px solid var(--line)}
+.pcard.is-dead{opacity:.5}
+.pc-who{display:flex;gap:14px;align-items:flex-start}
+.pc-name{font-family:var(--serif);font-size:22px;text-decoration:none;color:var(--ink)}
+.pc-tags{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}
+.pc-tags span{font-size:10.5px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--acc);border:1px solid var(--acc);padding:1px 7px}
+.pc-terms{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:18px 0 12px 60px}
+.pc-terms b{display:block;font-family:var(--serif);font-size:20px;font-weight:500}
+.pc-terms span{font-size:12.5px;color:var(--mute)}
+.pc-cover{margin:0 0 14px 60px;color:var(--ink2);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.pc-act{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-left:60px}
+.pc-no{color:var(--mute)!important}
+@media (max-width:640px){.pp-step{grid-template-columns:36px 1fr}.pp-n{font-size:30px}.pp-more-in{padding-left:0}.pc-terms,.pc-cover,.pc-act{margin-left:0}.pc-terms{grid-template-columns:1fr 1fr}.hire-sum b{font-size:20px}}
 </style>
 </head>
 <body>
@@ -931,7 +1113,7 @@ function render(){
  if(S.me)S.me.keep=false;
  let h;
  try{h=({'':vLanding,contracts:vContracts,contract:vContract,offer:vOffer,post:vPost,matches:vMatches,proposals:vProposals,client:vClient,talent:vTalent,profile:vProfile,projects:vBoard,project:vProject,dashboard:vDash,me:vMe,chat:vChat}[r]||vLanding)(id)}catch(e){console.error(e);h=`<div class="wrap page"><div class="card empty"><h3>Something went wrong</h3><p>${esc(e.message)}</p><button class="btn" onclick="go('#/')">Go home</button></div></div>`}
- $('#app').innerHTML=h;hdr();ftr();
+ $('#app').innerHTML=h;document.body.classList.toggle('on-landing',r==='');hxScroll();hdr();ftr();
  if(changed)window.scrollTo({top:0,behavior:'instant'});
  S.lastRoute=rk;
  if(r==='post'){paintSkills();rateHint()}
@@ -939,6 +1121,8 @@ function render(){
  if(r==='matches')aiMatches(id);
  if(r==='project')aiProject(id);
 }
+function hxScroll(){document.body.classList.toggle('scrolled',window.scrollY>40)}
+window.addEventListener('scroll',hxScroll,{passive:true});
 function soft(){
  const a=document.activeElement;
  if($('#sheet').classList.contains('open')){hdr();return}
@@ -1026,76 +1210,104 @@ function useFreelancer(id,dest){D.ui.fid=id;D.ui.role='freelancer';save();closeS
 function newProfile(){closeSheet();D.ui.role='freelancer';save();S.me={isNew:true,keep:true,name:'',title:'',skills:[],rate:40,years:2,hpw:30,loc:'',bio:'',available:true,port:[],emp:[],edu:[],cert:[],lang:[{l:'English',lv:'Fluent'}]};go('#/me')}
 
 /* ============ LANDING ============ */
-function sampleCard(){
- const e=EX['AI fitness coaching app'],p={...e,skills:detect(e.title+' '+e.desc)};
- const {list}=rankFor(p),m=list[0];if(!m)return'';
- return `<aside class="ed-cover-side" aria-label="A sample shortlist">
- <div class="kick ink">An example</div>
- <p class="ed-side-h">Someone asked for “${esc(e.title.toLowerCase())}”. Out of ${list.length} people who could do it, this is who came first.</p>
- <div class="ed-pick"><span class="kick">No. 1 of ${list.length}</span>${ring(m.total)}</div>
- <div class="ed-pick-name">${esc(m.f.name)}</div>
- <div class="mute sm">${esc(m.f.title)} · $${m.f.rate}/hr</div>
- <p class="ed-quote">“${esc(reasonClient(m))}”</p>
- <div class="ed-parts">${Object.keys(W).map(k=>`<div><span>${WL[k]}</span><span>${(m.parts[k]*Math.round(W[k]*100)).toFixed(0)} of ${Math.round(W[k]*100)}</span></div>`).join('')}</div>
- </aside>`;
+/* ============ landing: video hero, search with suggestions on focus ============ */
+const HX_TYPE=['an AI fitness coaching app','a Shopify store for a tea brand','a logo for a neighbourhood bakery','a help-center chatbot in Python','SEO blog posts for a food startup'];
+const HX_REDUCE=()=>{try{return matchMedia('(prefers-reduced-motion: reduce)').matches}catch(e){return false}};
+let hxT={i:0,c:0,del:false,wait:0};
+setInterval(()=>{
+ const el=document.getElementById('hxq');if(!el||el.value||document.activeElement===el)return;
+ if(HX_REDUCE()){el.placeholder='Try '+HX_TYPE[0];return}
+ const w=HX_TYPE[hxT.i];
+ if(hxT.wait>0){hxT.wait--;return}
+ if(!hxT.del){hxT.c++;if(hxT.c>=w.length){hxT.del=true;hxT.wait=28}}
+ else{hxT.c-=2;if(hxT.c<=0){hxT.c=0;hxT.del=false;hxT.i=(hxT.i+1)%HX_TYPE.length;hxT.wait=4}}
+ el.placeholder='Try '+w.slice(0,hxT.c);
+},55);
+const HX_ARROW=`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9"/></svg>`;
+const HX_SEARCH=`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>`;
+const HX_TREND=`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 17 6-6 4 4 8-8M15 7h6v6"/></svg>`;
+function hxTab(t){S.hxTab=t;document.querySelectorAll('.hx-tabs button').forEach(b=>{b.classList.toggle('on',b.dataset.t===t);b.setAttribute('aria-selected',b.dataset.t===t)});document.querySelectorAll('.hx-list[data-t=quick],.hx-list[data-t=trend]').forEach(l=>l.hidden=l.dataset.t!==t);hxInk();hxAct(-1)}
+function hxInk(){const on=document.querySelector('.hx-tabs button.on'),bar=document.querySelector('.hx-ink');if(on&&bar&&on.offsetWidth){bar.style.width=on.offsetWidth+'px';bar.style.transform=`translateX(${on.offsetLeft}px)`}}
+function hxOpen(){const p=$('#hxp');if(!p||p.classList.contains('open'))return;p.classList.add('open');$('#hxq')?.setAttribute('aria-expanded','true');requestAnimationFrame(hxInk)}
+function hxClose(){const p=$('#hxp');if(!p)return;p.classList.remove('open');$('#hxq')?.setAttribute('aria-expanded','false');hxAct(-1)}
+document.addEventListener('mousedown',e=>{if(!e.target.closest('#hxp'))hxClose()});
+document.addEventListener('focusin',e=>{if($('#hxp')&&!e.target.closest('#hxp'))hxClose()});
+/* typing filters: post it, example projects, categories and skills that match */
+function hxFilter(v){
+ const q=v.trim().toLowerCase(),box=$('#hxm'),p=$('#hxp');if(!box||!p)return;
+ p.classList.toggle('hx-typing',!!q);hxOpen();
+ if(!q){box.innerHTML='';return}
+ const ex=Object.keys(EX).filter(x=>x.toLowerCase().includes(q)).slice(0,2);
+ const cats=CATS.filter(([n])=>n.toLowerCase().includes(q)).slice(0,2);
+ const sk=CATALOG.filter(s=>s.toLowerCase().includes(q)).sort((a,b)=>a.toLowerCase().indexOf(q)-b.toLowerCase().indexOf(q)).slice(0,3);
+ box.innerHTML=`<button onclick="startPost($('#hxq').value)"><span>Post “${esc(v.trim())}” and see who fits</span>${HX_ARROW}</button>`
+  +ex.map(x=>`<button onclick="startPost('${x}')"><span>${hxHi(x,q)} <small>example project</small></span>${HX_ARROW}</button>`).join('')
+  +cats.map(([n])=>`<button onclick="S.tq='';S.tf.cat='${esc(n)}';setRole('client','#/talent')"><span>${hxHi(n,q)} <small>category</small></span>${HX_ARROW}</button>`).join('')
+  +sk.map(s=>`<button onclick="S.tf.cat='';S.tq='${esc(s)}';setRole('client','#/talent')"><span>${hxHi(s,q)} <small>freelancers with this skill</small></span>${HX_ARROW}</button>`).join('');
+ hxAct(-1);
+}
+const hxHi=(t,q)=>{const i=t.toLowerCase().indexOf(q);return i<0?esc(t):esc(t.slice(0,i))+'<b>'+esc(t.slice(i,i+q.length))+'</b>'+esc(t.slice(i+q.length))};
+const hxItems=()=>[...document.querySelectorAll('#hxp .hx-list:not([hidden]) button')].filter(b=>b.offsetParent);
+function hxAct(i){const it=hxItems();it.forEach((b,k)=>b.classList.toggle('act',k===i));S.hxI=i}
+function hxKey(e){
+ const it=hxItems();
+ if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();hxOpen();if(!it.length)return;let i=S.hxI??-1;i=e.key==='ArrowDown'?(i+1)%it.length:(i<=0?it.length-1:i-1);hxAct(i);it[i].scrollIntoView({block:'nearest'})}
+ else if(e.key==='Enter'&&(S.hxI??-1)>=0&&it[S.hxI]){e.preventDefault();it[S.hxI].click()}
+ else if(e.key==='Escape'){hxClose();e.target.blur()}
+}
+const hxClip=()=>innerWidth<innerHeight?'hero-portrait.mp4':'hero.mp4';
+const HX_YT_ID='slTWURpFu4U';/* background video: YouTube, muted and looping */
+document.addEventListener('securitypolicyviolation',e=>{if(/youtube/.test(e.blockedURI||'')){document.querySelectorAll('.hx-yt').forEach(n=>n.remove());S.hxYtBlocked=true}});
+function hxVideoFail(){const h=$('.hx');if(h)h.classList.add('no-video')}
+function hxInit(){
+ const v=$('.hx-video');if(v){if(HX_REDUCE()){v.removeAttribute('autoplay');v.pause()}else v.play?.().catch(()=>{})}
+ const io='IntersectionObserver' in window?new IntersectionObserver(es=>es.forEach(x=>{if(x.isIntersecting){x.target.classList.add('in');io.unobserve(x.target)}}),{threshold:.15}):null;
+ document.querySelectorAll('.rv').forEach(el=>io?io.observe(el):el.classList.add('in'));
+}
+/* hero backdrop: a slow-moving wall of real marketplace activity (works with no video at all) */
+function hxWall(){
+ const fl=D.fl.filter(f=>f.rating),pr=D.pr.filter(p=>p.status==='open');
+ const who=f=>`<div class="hw-who"><span class="hw-av">${esc(f.name.split(' ').map(w=>w[0]).join('').slice(0,2))}</span><div><b>${esc(f.name)}</b><small>${esc(f.title)}</small></div></div>`;
+ const cards=[
+  ...fl.map(f=>`<div class="hw-card">${who(f)}<div class="hw-row"><span>$${f.rate}/hr</span><span>★ ${f.rating.toFixed(1)}</span></div></div>`),
+  ...pr.map(p=>`<div class="hw-card"><small class="hw-k">New project</small><b>${esc(p.title)}</b><div class="hw-row"><span>${p.type==='hourly'?`$${p.rateMin}–$${p.rateMax}/hr`:money(p.budget)}</span><span>${esc(p.skills[0])}</span></div></div>`),
+  ...fl.slice(0,8).map((f,i)=>`<div class="hw-card hw-ev"><span class="hw-dot"></span>${esc(f.name)} ${['was hired','sent a proposal','got a 5★ review','delivered a milestone'][i%4]}</div>`),
+  ...fl.slice(3,9).map((f,i)=>`<div class="hw-card hw-msg"><small>${esc(f.name)}</small>${['Sounds good, I can start Monday.','Here is the first draft for review.','Thanks! Sending the files now.','Happy to jump on this.','Updated the designs as discussed.','All four guides are ready.'][i%6]}</div>`),
+  ...pr.slice(0,6).map((p,i)=>`<div class="hw-card hw-score"><b>${[94,89,86,82,91,78][i%6]}</b><span>match for<br>${esc(p.title)}</span></div>`)
+ ];
+ for(let i=cards.length-1;i>0;i--){const j=(i*7+3)%(i+1);[cards[i],cards[j]]=[cards[j],cards[i]]}
+ const cols=6,col=[...Array(cols)].map(()=>[]);cards.forEach((c,i)=>col[i%cols].push(c));
+ return `<div class="hx-wall" aria-hidden="true"><div class="hw-tilt">${col.map((c,i)=>`<div class="hw-col ${i%2?'up':'down'}" style="--d:${48+i*9}s"><div class="hw-run">${c.join('')}${c.join('')}</div></div>`).join('')}</div></div>`;
 }
 function vLanding(){
- const hire=S.hero==='hire';
- const cats=CATS.slice(0,10);
- const feat=[...D.fl].filter(f=>f.rating&&f.available).sort((a,b)=>b.rating-a.rating||b.jobs-a.jobs).slice(0,4);
- const lead=feat[0],rest=feat.slice(1);
- const month=new Date().toLocaleDateString('en-US',{month:'long',year:'numeric'});
- const avail=D.fl.filter(f=>f.available).length,open=D.pr.filter(p=>p.status==='open').length;
- return `<div class="wrap">
- <div class="ed-dateline"><span>${month}</span><span>${avail} freelancers available · ${open} open projects</span>
- <div class="seg sm" role="tablist" aria-label="I am here to"><button class="${hire?'on':''}" onclick="S.hero='hire';render()">Hire</button><button class="${!hire?'on':''}" onclick="S.hero='work';render()">Work</button></div></div>
-
- <section class="ed-cover"><div class="ed-cover-main">
- ${hire?`<div class="kick">For people hiring</div>
- <h1>Find someone good, and <em>know why</em> they’re good.</h1>
- <p class="ed-lead">Describe the job in a sentence or two. We read it against every freelancer’s skills, rate and past work, then give you a shortlist in order. Each name comes with a plain note on why it’s there, and what’s missing.</p>
- <form class="ed-ask" onsubmit="event.preventDefault();startPost(this.q.value)"><input name="q" aria-label="Describe your project" placeholder="What do you need made?"><button class="btn">Show me who fits</button></form>
- <div class="ed-try">Or start from one of these: ${Object.keys(EX).map(x=>`<button class="link" onclick="startPost('${x}')">${x.toLowerCase()}</button>`).join(', ')}.</div>`
- :`<div class="kick">For freelancers</div>
- <h1>Spend your proposals on work you can <em>actually win</em>.</h1>
- <p class="ed-lead">Open projects, sorted by how well they suit your skills, rate and experience. Each one comes with a straight answer: where you’re strong, where you’re thin, and which piece of your portfolio to lead with.</p>
- <div class="ed-ask"><button class="btn" onclick="setRole('freelancer','#/dashboard')">Show me projects that fit</button><button class="btn ghost" onclick="newProfile()">Make a profile</button></div>`}
- </div>${sampleCard()}</section>
-
- <section class="ed-sec" id="how"><div class="ed-sec-h"><div class="kick">How it works</div><h2>Two sides of the same job</h2><p>Posting, matching, proposals and conversation all happen in one place.</p></div>
- <div class="ed-sec-b ed-two">
- <div><h3>If you’re hiring</h3><ol class="ed-steps">
- <li><div><b>Say what you need</b><span>A title, a few lines, a budget. Skip the skills list if you like; we’ll pick them out of what you wrote.</span></div></li>
- <li><div><b>Read the shortlist</b><span>Everyone is scored out of 100, with the skills they have and the ones they don’t.</span></div></li>
- <li><div><b>Invite a few people</b><span>Each invite opens its own conversation.</span></div></li>
- <li><div><b>Compare and hire</b><span>Bids, timelines and scores, side by side.</span></div></li></ol></div>
- <div><h3>If you’re freelancing</h3><ol class="ed-steps">
- <li><div><b>Fill in your profile</b><span>Skills, rate, years of experience and a couple of past projects.</span></div></li>
- <li><div><b>See what suits you</b><span>Projects ranked by the same score clients see.</span></div></li>
- <li><div><b>Send one good proposal</b><span>Better than ten rushed ones. We’ll tell you what to lead with.</span></div></li>
- <li><div><b>Talk and deliver</b><span>One thread per project, and milestones you can both see.</span></div></li></ol></div>
- </div></section>
-
- <section class="ed-sec flip"><div class="ed-sec-h"><div class="kick">The score</div><h2>Five things, weighed in the open</h2><p>The same formula ranks people for clients and projects for freelancers.</p></div>
- <div class="ed-sec-b"><div class="ed-weights">${Object.keys(W).map(k=>`<div class="ed-w"><div class="ed-w-n">${Math.round(W[k]*100)}<span style="font-size:.4em">%</span></div><div><b>${WL[k]}</b><p>${{skills:'How many of the skills you asked for this person actually has.',text:'How much their profile and past projects talk about the same things your brief does.',budget:'Their hourly rate against your budget divided by the hours you expect.',exp:'Years of experience, counted up to ten.',rating:'What previous clients said, on average.'}[k]}</p></div></div>`).join('')}</div>
- <p class="ed-pull" style="margin-top:36px">We never look at a name, a photo or where someone lives. Only the work.</p>
- <ul class="ed-fine"><li><b>Reasons stick to the facts.</b> Every explanation is built from what’s on the profile, nothing invented.</li><li><b>Some people are left out.</b> Anyone who’s booked, or has none of the skills you asked for, isn’t ranked.</li><li><b>It gets better with use.</b> Invites, shortlists, hires and declines are logged so the weights can be tuned.</li></ul></div></section>
-
- <section class="ed-sec"><div class="ed-sec-h"><div class="kick">The index</div><h2>Every kind of work</h2><p>Pick a field to see who’s free right now.</p></div>
- <div class="ed-sec-b"><div class="ed-index">${cats.map(([n,sk])=>{const c=D.fl.filter(f=>f.available&&f.skills.some(s=>sk.includes(s))).length;return`<button onclick="S.tq='';S.tf.cat='${esc(n)}';setRole('client','#/talent')"><span class="ed-ix-n">${esc(n)}</span><span class="ed-ix-l"></span><span class="ed-ix-c">${c} free</span></button>`}).join('')}</div></div></section>
-
- ${lead?`<section class="ed-sec" style="border-bottom:0"><div class="ed-sec-h"><div class="kick">People</div><h2>People clients keep coming back to</h2><p>The highest-rated freelancers on Gigwise right now.</p></div>
- <div class="ed-sec-b ed-people">
- <article class="ed-feature"><div class="row" style="gap:16px">${av(lead,64)}<div><div class="kick ink">${esc(lead.loc)}</div></div></div>
- <h3>${esc(lead.name)}</h3><p class="ed-role">${esc(lead.title)}, ${lead.years} years in</p>
- <blockquote>${esc(lead.bio)}</blockquote>
- <div class="meta" style="margin-bottom:18px"><span><b>$${lead.rate}</b>/hr</span><span>${stars(lead)}</span><span>${lead.skills.slice(0,4).map(esc).join(', ')}</span></div>
- <button class="btn ghost sm" onclick="go('#/profile/${lead.id}')">Read the full profile</button></article>
- <div>${rest.map(f=>`<div class="ed-brief" onclick="go('#/profile/${f.id}')" role="link" tabindex="0" onkeydown="if(event.key==='Enter')go('#/profile/${f.id}')">${av(f,44)}<div><div class="ed-brief-n">${esc(f.name)}</div><div class="mute sm">${esc(f.title)}</div><p>${esc(f.bio.split('. ')[0].replace(/\.$/,''))}.</p></div></div>`).join('')}</div>
- </div></section>`:''}
-
- <section class="ed-close" style="border-top:1px solid var(--ink)"><h2>Got something that <em>needs doing?</em></h2>
- <div><p>Write it down the way you’d explain it to a friend. The shortlist takes about a minute.</p><div class="row"><button class="btn" onclick="startPost('')">Post a project</button><button class="btn ghost" onclick="setRole('freelancer','#/dashboard')">I’m a freelancer</button></div></div></section>
+ const tab=S.hxTab||'quick';
+ const trend=CATS.map(([n,sk])=>[n,D.fl.filter(f=>f.available&&f.skills.some(s=>sk.includes(s))).length]).sort((a,b)=>b[1]-a[1]).slice(0,3);
+ const cat=([n])=>`<button onclick="S.tq='';S.tf.cat='${esc(n)}';setRole('client','#/talent')">${esc(n)}</button>`;
+ setTimeout(hxInit,0);
+ return `<section class="hx">
+ ${HX_REDUCE()?'':`<video class="hx-video" autoplay muted loop playsinline preload="auto" aria-hidden="true" tabindex="-1" onloadeddata="document.querySelectorAll('.hx-yt').forEach(n=>n.remove())"><source src="${hxClip()}" type="video/mp4"><source src="https://cdn.jsdelivr.net/gh/aiteam27-maker/matchwork-byop-start@main/gigwise/frontend/${hxClip()}" type="video/mp4" onerror="this.parentNode.remove()"></video>`}
+ <div class="hx-shade" aria-hidden="true"></div>
+ <div class="hx-in">
+ <h1 class="hx-h">Hire people who <em>get it right</em></h1>
+ <div class="hx-panel" id="hxp">
+ <form class="hx-search" role="search" onsubmit="event.preventDefault();startPost(this.q.value)"><input id="hxq" name="q" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="hxdrop" aria-label="Describe your project" placeholder="Try an AI fitness coaching app" onfocus="hxOpen()" onclick="hxOpen()" oninput="hxFilter(this.value)" onkeydown="hxKey(event)"><button aria-label="Find matches">${HX_SEARCH}</button></form>
+ <div class="hx-drop" id="hxdrop"><div class="hx-drop-in">
+  <div class="hx-tabs" role="tablist"><button type="button" role="tab" data-t="quick" class="${tab==='quick'?'on':''}" onclick="hxTab('quick')">${HX_SEARCH} Quick search</button><button type="button" role="tab" data-t="trend" class="${tab==='trend'?'on':''}" onclick="hxTab('trend')">${HX_TREND} Trending</button><i class="hx-ink"></i></div>
+  <div class="hx-list" data-t="quick" ${tab!=='quick'?'hidden':''}>${Object.keys(EX).map(x=>`<button type="button" onclick="startPost('${x}')"><span>${x}</span>${HX_ARROW}</button>`).join('')}</div>
+  <div class="hx-list" data-t="trend" ${tab!=='trend'?'hidden':''}>${trend.map(([n,c])=>`<button type="button" onclick="S.tq='';S.tf.cat='${esc(n)}';setRole('client','#/talent')"><span>${esc(n)} <small>${c} available</small></span>${HX_ARROW}</button>`).join('')}</div>
+  <div class="hx-list hx-match" id="hxm" data-t="match"></div>
+ </div></div>
+ </div>
+ </div>
+ </section>
+ <section class="hx-cats" aria-label="Browse by category"><div class="hx-track">${CATS.map(cat).join('')}<span aria-hidden="true" class="hx-dup">${CATS.map(cat).join('').replace(/<button /g,'<button tabindex="-1" ')}</span></div></section>
+ <div class="wrap">
+ <section class="hx-how" id="how">
+ <div class="rv"><b>01</b><h3>Describe the job</h3><p>A few lines is enough.</p></div>
+ <div class="rv"><b>02</b><h3>See who fits</h3><p>Ranked, with the reason why.</p></div>
+ <div class="rv"><b>03</b><h3>Hire and get going</h3><p>Chat, agree milestones, start.</p></div>
+ </section>
+ <section class="hx-end rv"><h2>Got something that <em>needs doing?</em></h2><button class="btn" onclick="startPost('')">Post a project</button></section>
  </div>`;
 }
 function startPost(q){q=(q||'').trim();S.postSkills=[];if(EX[q]){const e=EX[q];S.draft={type:'fixed',title:e.title,desc:e.desc,budget:e.budget,hours:e.hours,deadline:isoIn(e.days),level:'Intermediate',duration:'1 to 3 months',questions:[QSUG[catOf(detect(e.title+' '+e.desc))]||QSUG.Other]}}else S.draft=q?{title:q.length<70?q.charAt(0).toUpperCase()+q.slice(1):'',desc:q.length>=70?q:''}:{};D.ui.role='client';save();closeSheet();S.lastRoute=null;go('#/post')}
@@ -1110,29 +1322,41 @@ function fCard(f,m){
 /* ============ POST A PROJECT ============ */
 function vPost(){
  const d=S.draft||{},ty=d.type||'fixed';
- return `<div class="wrap narrow page"><div class="ph"><div><h1>Post a project</h1><p class="mute">Takes about a minute. Your ranked shortlist appears as soon as you post.</p></div><button class="btn plain sm" onclick="fillExample()">Fill demo example</button></div>
- <div class="card">
- <label>Project title<input id="f_title" value="${esc(d.title||'')}" placeholder="e.g. AI fitness coaching app" oninput="S.draft.title=this.value"></label>
- <label>Description<textarea id="f_desc" rows="6" placeholder="What are you building, what should it do, and what do you need help with?" oninput="S.draft.desc=this.value;paintSkills()">${esc(d.desc||'')}</textarea></label>
+ return `<div class="wrap narrow page"><div class="ph"><div><h1>Post a project</h1><p class="mute">Two questions, then your shortlist.</p></div><button class="btn plain sm" onclick="fillExample()">Try an example</button></div>
+ <div class="pp">
+ <section class="pp-step"><span class="pp-n">1</span><div class="pp-body">
+  <h2>What do you need?</h2>
+  <input id="f_title" class="pp-big" value="${esc(d.title||'')}" placeholder="e.g. An AI fitness coaching app" aria-label="Project title" oninput="S.draft.title=this.value;paintSkills()">
+  <textarea id="f_desc" rows="4" placeholder="A few lines on what it should do. Plain words are fine." aria-label="Description" oninput="S.draft.desc=this.value;paintSkills()">${esc(d.desc||'')}</textarea>
+  <div id="autosk" class="pp-auto"></div>
+ </div></section>
+ <section class="pp-step"><span class="pp-n">2</span><div class="pp-body">
+  <h2>What's your budget?</h2>
+  <div class="seg sm" role="group" aria-label="Payment type" style="margin-bottom:14px"><button type="button" class="${ty==='fixed'?'on':''}" onclick="S.draft.type='fixed';render()">Fixed price</button><button type="button" class="${ty==='hourly'?'on':''}" onclick="S.draft.type='hourly';render()">Hourly</button></div>
+  ${ty==='fixed'?`<div class="pp-money"><span>$</span><input id="f_budget" type="number" min="50" step="50" value="${esc(d.budget||'')}" placeholder="3000" aria-label="Budget in US dollars" oninput="S.draft.budget=this.value;rateHint()"></div>
+  <div class="pp-quick">${[500,1000,3000,6000].map(v=>`<button type="button" onclick="setBudget(${v})">$${v.toLocaleString('en-US')}</button>`).join('')}</div>`
+  :`<div class="pp-money"><span>$</span><input id="f_rmax" type="number" min="5" value="${esc(d.rateMax||'')}" placeholder="50" aria-label="Maximum hourly rate in US dollars" oninput="S.draft.rateMax=this.value;rateHint()"><em>/hr at most</em></div>`}
+  <div id="ratehint"></div>
+ </div></section>
+ <details class="pp-more" ${S.ppMore?'open':''} ontoggle="S.ppMore=this.open"><summary>More options <span>skills, timeline, screening questions</span></summary><div class="pp-more-in">
  ${catPicker(d)}
- <div class="lbl">Skills <span class="mute sm" style="font-weight:400">up to 10 from the catalog. Leave empty and we'll use the suggestions</span> <span id="skcount" class="mute sm"></span></div>
+ <div class="lbl">Skills <span class="mute sm" style="font-weight:400">up to 10. Leave empty and we'll use the ones we picked up</span> <span id="skcount" class="mute sm"></span></div>
  <div class="skillbox" onclick="$('#f_skill').focus()"><span id="skchips" class="chips"></span><input id="f_skill" list="allsk" placeholder="Search ${CATALOG.length} skills, e.g. React" onkeydown="skKey(event)" onchange="if(canonSkill(this.value))addSkill(this.value)" aria-label="Search skills"></div>
  <datalist id="allsk">${allSkills().map(s=>`<option value="${esc(s)}">`).join('')}</datalist>
  <div id="sksugg" class="detected"></div>
  <div id="detected" class="detected"></div>
- <div class="lbl">How do you want to pay?</div>
- <div class="seg" role="group" aria-label="Payment type" style="margin-bottom:14px"><button type="button" class="${ty==='fixed'?'on':''}" onclick="S.draft.type='fixed';render()">Fixed price</button><button type="button" class="${ty==='hourly'?'on':''}" onclick="S.draft.type='hourly';render()">Hourly</button></div>
- ${ty==='fixed'?`<div class="grid3"><label>Budget (USD)<input id="f_budget" type="number" min="50" step="50" value="${esc(d.budget||'')}" placeholder="6000" oninput="S.draft.budget=this.value;rateHint()"></label><label>Estimated hours<input id="f_hours" type="number" min="1" value="${esc(d.hours||'')}" placeholder="120" oninput="S.draft.hours=this.value;rateHint()"></label><label>Deadline<input id="f_deadline" type="date" min="${isoIn(1)}" value="${esc(d.deadline||'')}" oninput="S.draft.deadline=this.value"></label></div>`
- :`<div class="grid2"><label>Min hourly rate (USD)<input id="f_rmin" type="number" min="5" value="${esc(d.rateMin||'')}" placeholder="35" oninput="S.draft.rateMin=this.value;rateHint()"></label><label>Max hourly rate (USD)<input id="f_rmax" type="number" min="5" value="${esc(d.rateMax||'')}" placeholder="55" oninput="S.draft.rateMax=this.value;rateHint()"></label></div>
- <div class="grid2"><label>Estimated total hours<input id="f_hours" type="number" min="1" value="${esc(d.hours||'')}" placeholder="120" oninput="S.draft.hours=this.value;rateHint()"></label><label>Deadline<input id="f_deadline" type="date" min="${isoIn(1)}" value="${esc(d.deadline||'')}" oninput="S.draft.deadline=this.value"></label></div>`}
- <div id="ratehint"></div>
+ <div class="grid3">${ty==='hourly'?`<label>Lowest hourly rate<input id="f_rmin" type="number" min="5" value="${esc(d.rateMin||'')}" placeholder="Auto" oninput="S.draft.rateMin=this.value;rateHint()"></label>`:''}<label>Estimated hours<input id="f_hours" type="number" min="1" value="${esc(d.hours||'')}" placeholder="Auto" oninput="S.draft.hours=this.value;rateHint()"></label><label>Deadline<input id="f_deadline" type="date" min="${isoIn(1)}" value="${esc(d.deadline||'')}" oninput="S.draft.deadline=this.value"></label></div>
  <div class="grid2"><label>Experience level<select id="f_level" onchange="S.draft.level=this.value">${LEVELS.map(l=>`<option ${(d.level||'Intermediate')===l?'selected':''}>${l}</option>`).join('')}</select></label><label>Project length<select id="f_len" onchange="S.draft.duration=this.value">${LENS.map(l=>`<option ${(d.duration||'1 to 3 months')===l?'selected':''}>${l}</option>`).join('')}</select></label></div>
- <div class="lbl">Screening questions <span class="mute sm" style="font-weight:400">optional, up to 3. Freelancers answer them in their proposal</span></div>
- <div style="margin-bottom:16px">${(d.questions||[]).map((q,i)=>`<div class="row" style="flex-wrap:nowrap;margin-bottom:8px"><input value="${esc(q)}" aria-label="Question ${i+1}" oninput="S.draft.questions[${i}]=this.value"><button type="button" class="btn danger sm" onclick="S.draft.questions.splice(${i},1);render()">Remove</button></div>`).join('')}
- ${(d.questions||[]).length<3?`<div class="row"><button type="button" class="btn plain sm" onclick="(S.draft.questions=S.draft.questions||[]).push('');render()">+ Add question</button><button type="button" class="link sm" onclick="suggestQ()">Suggest a question</button></div>`:''}</div>
- <div class="row end"><button class="btn plain" onclick="go('#/client')">Cancel</button><button class="btn" onclick="postProject()">Post &amp; see matches</button></div>
+ <div class="lbl">Screening questions <span class="mute sm" style="font-weight:400">optional, up to 3</span></div>
+ <div>${(d.questions||[]).map((q,i)=>`<div class="row" style="flex-wrap:nowrap;margin-bottom:8px"><input value="${esc(q)}" aria-label="Question ${i+1}" oninput="S.draft.questions[${i}]=this.value"><button type="button" class="btn danger sm" onclick="S.draft.questions.splice(${i},1);render()">Remove</button></div>`).join('')}
+ ${(d.questions||[]).length<3?`<div class="row"><button type="button" class="btn plain sm" onclick="(S.draft.questions=S.draft.questions||[]).push('');render()">Add question</button><button type="button" class="link sm" onclick="suggestQ()">Suggest one</button></div>`:''}</div>
+ </div></details>
+ <div class="pp-go"><button class="btn plain" onclick="go('#/client')">Cancel</button><button class="btn" onclick="postProject()">Post and see matches</button></div>
  </div></div>`;
 }
+function setBudget(v){S.draft.budget=v;const i=$('#f_budget');if(i){i.value=v;i.focus()}rateHint()}
+function ppMore(){const d=$('.pp-more');if(d){d.open=true;S.ppMore=true;setTimeout(()=>{d.scrollIntoView({behavior:'smooth',block:'start'});$('#f_skill')?.focus()},50)}}
+const medRate=()=>{const r=D.fl.filter(f=>f.available).map(f=>f.rate).sort((a,b)=>a-b);return r[r.length>>1]||40};
 const chipBtn=(x,fn)=>`<button type="button" class="chip tag" style="border:0;cursor:pointer" onclick="${fn}('${x.replace(/'/g,"\\'")}')">+ ${esc(x)}</button>`;
 function catPicker(d){
  const cat=d.cat||'',spec=d.spec||'';
@@ -1152,6 +1376,7 @@ function paintSkills(){
  if(!S.draft.cat&&base.length){const c=catOf(base);if(c!=='Other'){const sp=bestSpec(c,base);h+=`<div style="margin-top:6px"><span class="mute">Looks like</span> <b>${esc(c)}${sp?' › '+esc(sp):''}</b> <button type="button" class="link sm" onclick="S.draft.cat='${esc(c)}';S.draft.spec='${esc(sp||'')}';render()">Use this category</button></div>`}}
  if(!S.postSkills.length&&det.length)h+=`<div class="mute xs" style="margin-top:4px">Leave skills empty to use: ${det.map(esc).join(', ')}</div>`;
  $('#detected').innerHTML=h;
+ const a=$('#autosk');if(a){const use=S.postSkills.length?S.postSkills:det;a.innerHTML=use.length?`<span>We'll match on</span> ${use.map(s=>`<span class="chip ok">${esc(s)}</span>`).join(' ')} <button type="button" class="link sm" onclick="ppMore()">Change</button>`:(text.trim().length>12?`<span>Add a little more detail and we'll pick out the skills.</span>`:'')}
 }
 function skKey(e){if(e.key==='Enter'||e.key===','){e.preventDefault();addSkill(e.target.value)}else if(e.key==='Backspace'&&!e.target.value&&S.postSkills.length){S.postSkills.pop();paintSkills()}}
 function addSkill(v){
@@ -1162,27 +1387,27 @@ function addSkill(v){
  if(inp)inp.value='';paintSkills();
 }
 function rateHint(){
- const el=$('#ratehint');if(!el)return;const h=+$('#f_hours')?.value,av=D.fl.filter(f=>f.available);
+ const el=$('#ratehint');if(!el)return;const av=D.fl.filter(f=>f.available);let h=+$('#f_hours')?.value;
  let r=0,txt='';
- if($('#f_rmax')){const lo=+$('#f_rmin').value,hi=+$('#f_rmax').value;if(hi>0){r=hi;txt=`You'll pay <b>$${lo||'?'}–$${hi}/hr</b>${h>0?`, about <b>${money(hi*h)}</b> at most for ${h} hours`:''}.`}}
- else{const b=+$('#f_budget').value;if(b>0&&h>0){r=b/h;txt=`Your budget works out to about <b>$${Math.round(r)}/hr</b>.`}}
- el.innerHTML=r?`<div class="hint">${txt} ${av.filter(f=>f.rate<=r).length} of ${av.length} available freelancers charge that or less. Budget fit is 20% of each match score.</div>`:'';
+ if($('#f_rmax')){const hi=+$('#f_rmax').value;if(hi>0){r=hi;txt=`You'll pay up to <b>$${hi}/hr</b>${h>0?`, about <b>${money(hi*h)}</b> at most for ${h} hours`:''}.`}}
+ else{const b=+$('#f_budget').value;if(b>0){if(h>0){r=b/h;txt=`That's about <b>$${Math.round(r)}/hr</b> for ${h} hours.`}else{r=medRate();h=Math.max(5,Math.round(b/r));txt=`Enough for about <b>${h} hours</b> at a typical <b>$${r}/hr</b>.`}}}
+ el.innerHTML=r?`<div class="hint">${txt} ${av.filter(f=>f.rate<=r).length} of ${av.length} available freelancers charge that or less.</div>`:'';
 }
 const QSUG={'Web Development':'Share a link to a similar site or app you have built.','Mobile Development':'Which apps have you published to the App Store or Play Store?','AI & Machine Learning':'Describe an AI or machine learning project you have shipped.','Data Science & Analytics':'Share a dashboard or analysis you are proud of.','Design & Creative':'Share 2–3 portfolio pieces closest to this brief.','Writing & Translation':'Share a writing sample in a similar niche.','Sales & Marketing':'What results did your last similar campaign get?','E-commerce':'Share an online store you have built.','IT & DevOps':'Describe a system you set up or kept running.','Admin & Support':'What tools do you use day to day?','Finance & Accounting':'Which accounting tools are you certified in?','Legal':'Which jurisdictions do you work in?','Other':'What similar work have you done?'};
 function suggestQ(){const sk=S.postSkills.length?S.postSkills:detect(($('#f_title').value||'')+' '+($('#f_desc').value||''));const q=QSUG[catOf(sk)]||QSUG.Other;S.draft.questions=S.draft.questions||[];if(S.draft.questions.includes(q))return toast('Already added');S.draft.questions.push(q);render()}
 function fillExample(){const e=EX['AI fitness coaching app'];S.postSkills=[];S.draft={type:'fixed',title:e.title,desc:e.desc,budget:e.budget,hours:e.hours,deadline:isoIn(e.days),level:'Intermediate',duration:'1 to 3 months',questions:[QSUG[catOf(detect(e.title+' '+e.desc))]||QSUG.Other]};S.lastRoute=null;render();S.lastRoute='post/';toast('Example filled. Skills left blank so they get detected.')}
 function postProject(){
- const g=id=>$('#'+id),type=S.draft.type||'fixed',title=g('f_title').value.trim(),desc=g('f_desc').value.trim(),hours=+g('f_hours').value,deadline=g('f_deadline').value;
+ const g=id=>$('#'+id),type=S.draft.type||'fixed',title=g('f_title').value.trim(),desc=g('f_desc').value.trim(),hoursIn=+g('f_hours').value,deadline=g('f_deadline').value;
  if(g('f_skill').value.trim())addSkill(g('f_skill').value);
  if(!title)return toast('Add a project title'),g('f_title').focus();
  if(desc.length<20)return toast('Describe the project in a sentence or two'),g('f_desc').focus();
  let budget,rateMin,rateMax;
  if(type==='fixed'){budget=+g('f_budget').value;if(!(budget>0))return toast('Add a budget'),g('f_budget').focus()}
- else{rateMin=+g('f_rmin').value;rateMax=+g('f_rmax').value;if(!(rateMin>0))return toast('Add a minimum hourly rate'),g('f_rmin').focus();if(!(rateMax>=rateMin))return toast('Max rate must be at least the min rate'),g('f_rmax').focus()}
- if(!(hours>0))return toast('Add estimated hours'),g('f_hours').focus();
+ else{rateMax=+g('f_rmax').value;if(!(rateMax>0))return toast('Add the most you would pay per hour'),g('f_rmax').focus();rateMin=+g('f_rmin')?.value||Math.round(rateMax*0.6);if(rateMin>rateMax)rateMin=rateMax}
+ const hours=hoursIn>0?hoursIn:(type==='fixed'?Math.max(5,Math.round(budget/medRate())):40);
  let skills=S.postSkills.slice(),auto=false;
  if(!skills.length){skills=detect(title+' '+desc);auto=true}
- if(!skills.length)return toast('We couldn\'t detect skills. Add at least one.'),g('f_skill').focus();
+ if(!skills.length){ppMore();return toast('Tell us a bit more, or pick a skill under More options')}
  const questions=(S.draft.questions||[]).map(q=>String(q||'').trim()).filter(Boolean).slice(0,3),category=S.draft.cat||null;
  if(API.on){const took=Math.max(1,Math.round((NOW()-S.postStart)/1000));return act(()=>api('POST','/projects',{title,description:desc,skills:S.postSkills.slice(),type,budget:type==='fixed'?budget:null,rate_min:type==='hourly'?rateMin:null,rate_max:type==='hourly'?rateMax:null,hours,level:g('f_level').value,duration:g('f_len').value,deadline:deadline||null,questions,category}),r=>{API.took[r.project.id]=took;const lp=pj(r.project.id);if(lp)lp.took=took;S.draft=null;S.postSkills=[];go('#/matches/'+r.project.id);simulateProposals(r.project.id)})}
  const p={id:'p'+(++D.seq),title,desc,skills,auto,type,budget:type==='hourly'?rateMax*hours:budget,rateMin,rateMax,hours,deadline,level:g('f_level').value,duration:g('f_len').value,questions,cat:category||catOf(skills),owner:'me',client:'Pulse Fit (you)',status:'open',ts:NOW(),took:Math.max(1,Math.round((NOW()-S.postStart)/1000))};
@@ -1226,8 +1451,7 @@ function vMatches(pid){
  <div class="mlist">${sorted.map(m=>matchCard(m,list.indexOf(m))).join('')||'<div class="card empty"><h3>No matches yet</h3><p>No available freelancer has any of these skills. Try broader skills.</p></div>'}</div>
  ${hidden.length?`<div style="margin-top:16px"><button class="link sm" onclick="S.showHidden=!S.showHidden;soft()">${S.showHidden?'Hide':'Show'} ${hidden.length} filtered-out freelancer${hidden.length>1?'s':''}</button>${S.showHidden?`<div class="card" style="margin-top:10px;padding:12px 16px">${hidden.map(m=>`<div class="row" style="padding:6px 0">${av(m.f,30)}<span class="grow"><b>${esc(m.f.name)}</b> <span class="mute sm">· ${esc(m.f.title)}</span></span><span class="chip warn">${m.why}</span></div>`).join('')}</div>`:''}</div>`:''}
  </div>
- <aside class="side"><div class="card"><h3>Why this order?</h3><p class="mute sm">Each score is a weighted blend of five signals. Open “Why this score” on any card to see the parts.</p>${Object.keys(W).map(k=>`<div class="row between sm" style="padding:4px 0;border-top:1px solid var(--line)"><span>${WL[k]}</span><b>${Math.round(W[k]*100)}%</b></div>`).join('')}</div>
- <div class="card"><h3>Fairness</h3><p class="mute sm" style="margin:0">Scores never use name, gender, location or photo. Reasons cite only profile facts. Only available freelancers with at least one required skill are ranked.</p></div></aside></div></div>`;
+ <aside class="side"><div class="card"><h3>Why this order?</h3><p class="mute sm">Each score is a weighted blend of five signals. Open “Why this score” on any card to see the parts.</p>${Object.keys(W).map(k=>`<div class="row between sm" style="padding:4px 0;border-top:1px solid var(--line)"><span>${WL[k]}</span><b>${Math.round(W[k]*100)}%</b></div>`).join('')}</div></aside></div></div>`;
 }
 function matchCard(m,i){
  const f=m.f,p=m.p,k=p.id+':'+f.id,th=D.th[tkey(p.id,f.id)],pr=propOf(p.id,f.id),[tl,tc]=tier(m.total);
@@ -1278,24 +1502,29 @@ function vProposals(pid){
  let rows=propsOf(pid).map(q=>({q,f:fl(q.fid),m:score(fl(q.fid),p)}));
  const so={score:(a,b)=>b.m.total-a.m.total,bid:(a,b)=>a.q.bid-b.q.bid,days:(a,b)=>a.q.days-b.q.days,rating:(a,b)=>(b.f.rating||0)-(a.f.rating||0)};
  rows.sort((a,b)=>dead(a.q)-dead(b.q)||so[S.psort](a,b));
- const live=rows.filter(r=>!dead(r.q)),po=pendingOffer(pid),c=contractOf(pid),many=live.length>1;
+ const live=rows.filter(r=>!dead(r.q)),po=pendingOffer(pid),c=contractOf(pid),many=live.length>1,open=p.status==='open';
  const best={score:Math.max(...live.map(r=>r.m.total)),bid:Math.min(...live.map(r=>r.q.bid)),days:Math.min(...live.map(r=>r.q.days))};
+ const pick=[...live].sort((a,b)=>b.m.total-a.m.total)[0];
  const top=rankFor(p).list.filter(m=>!propOf(pid,m.f.id)).slice(0,3);
- return `<div class="wrap page">${projectSummary(p,`<button class="btn plain" onclick="go('#/matches/${p.id}')">← Matches</button>`)}
- ${po?`<div class="banner" style="background:var(--purple-l);border-color:var(--purple-b);color:var(--purple-t)"><span>Offer sent to <b>${esc(fl(po.fid).name)}</b>, waiting for a reply. <button class="link" onclick="go('#/offer/${po.id}')">View offer</button></span></div>`:''}
- ${c?`<div class="banner"><span>You hired <b>${esc(fl(c.fid).name)}</b>. <button class="link" onclick="go('#/contract/${c.id}')">Open contract</button></span></div>`:''}
- <div class="toolbar"><h2 style="margin:0" class="grow">Compare proposals <span class="mute" style="font-weight:400">(${rows.length})</span></h2>${rows.length>1?`<label style="margin:0" class="row sm"><span class="mute">Sort</span><select onchange="S.psort=this.value;render()">${[['score','Match score'],['bid','Lowest bid'],['days','Fastest delivery'],['rating','Highest rated']].map(([v,l])=>`<option value="${v}" ${S.psort===v?'selected':''}>${l}</option>`).join('')}</select></label>`:''}</div>
- ${rows.length?`<div class="tw"><table class="cmp" style="min-width:1140px"><thead><tr><th>Freelancer</th><th>Match</th><th>${p.type==='hourly'?'Rate':'Bid'}</th><th>Delivery</th><th>Skills</th><th>Proposal</th><th>Status</th><th></th></tr></thead><tbody>
- ${rows.map(({q,f,m})=>{const d=dead(q),diff=Math.round((q.bid/ref-1)*100),o=offerFor(q.id);return `<tr class="${d?'declined':''}">
- <td><div class="row" style="gap:8px;flex-wrap:nowrap;align-items:flex-start">${av(f,34)}<div><a href="#/profile/${f.id}"><b>${esc(f.name)}</b></a><div class="mute xs">$${f.rate}/hr · ${f.rating?'★ '+f.rating.toFixed(1):'New'} · ${f.years} yrs</div><div style="margin-top:4px">${bdgs(f,true)}</div></div></div></td>
- <td class="${!d&&m.total===best.score&&many?'best':''}">${spill(m.total)}${!d&&m.total===best.score&&many?'<span class="best-tag">Best match</span>':''}</td>
- <td class="${!d&&q.bid===best.bid&&many?'best':''}"><b>${bidTxt(q,p)}</b><div class="xs ${diff>0?'':'mute'}" style="${diff>0?'color:var(--amber)':''}">${diff===0?'= '+unit:diff>0?diff+'% over '+unit:Math.abs(diff)+'% under '+unit}</div>${!d&&q.bid===best.bid&&many?'<span class="best-tag">Lowest</span>':''}</td>
- <td class="${!d&&q.days===best.days&&many?'best':''}"><b>${q.days}</b> days<div class="xs mute">${p.deadline?(NOW()+q.days*DAY<=new Date(p.deadline+'T23:59').getTime()?'before deadline':'after deadline'):''}</div>${!d&&q.days===best.days&&many?'<span class="best-tag">Fastest</span>':''}</td>
- <td><b>${m.matched.length}/${p.skills.length}</b>${m.missing.length?`<div class="xs" style="color:var(--red)">Missing ${esc(list3(m.missing))}</div>`:'<div class="xs mute">All covered</div>'}</td>
- <td><div class="cover">${esc(q.cover)}</div><button class="link xs" onclick="viewProposal('${q.id}')">View full proposal${(p.questions||[]).length?' + answers':''}${(q.links||[]).length?' + links':''}</button><div class="xs mute">${ago(q.ts)}${q.edited?' · edited':''}</div></td>
- <td><span class="pill st-${o?'offer':q.status}">${o?'offer sent':q.status}</span></td>
- <td><div class="row" style="gap:6px;flex-wrap:nowrap">${!d&&p.status==='open'?`${q.status==='submitted'?`<button class="btn ghost sm" onclick="setStatus('${q.id}','shortlisted')">Shortlist</button>`:''}${o?`<button class="btn danger sm" onclick="withdrawOffer('${o.id}')">Withdraw offer</button>`:!po?`<button class="btn sm" onclick="openOffer('${q.id}')">Send offer</button><button class="btn danger sm" onclick="setStatus('${q.id}','declined')">Decline</button>`:''}`:''}<button class="btn plain sm" onclick="go('#/chat/${tkey(p.id,f.id)}')">Message</button></div></td></tr>`}).join('')}</tbody></table></div>`
- :`<div class="card empty"><h3>No proposals yet</h3><p>Invite your top matches to get proposals faster.</p>${top.length?`<div class="plist" style="max-width:520px;margin:12px auto 0">${top.map(m=>`<div class="pitem">${av(m.f,34)}<span class="grow"><b>${esc(m.f.name)}</b> <span class="mute sm">· ${esc(m.f.title)}</span></span>${spill(m.total)}${invited(pid,m.f.id)?'<span class="chip ok">Invited</span>':`<button class="btn sm" onclick="openInvite('${pid}',${m.f.id})">Invite</button>`}</div>`).join('')}</div>`:''}</div>`}
+ const card=({q,f,m})=>{const d=dead(q),diff=Math.round((q.bid/ref-1)*100),o=offerFor(q.id),tags=[];
+  if(!d&&many&&m.total===best.score)tags.push('Best match');if(!d&&many&&q.bid===best.bid)tags.push('Lowest price');if(!d&&many&&q.days===best.days)tags.push('Fastest');
+  return `<article class="pcard ${d?'is-dead':''}">
+  <div class="pc-who">${av(f,46)}<div class="grow" style="min-width:0"><a class="pc-name" href="#/profile/${f.id}">${esc(f.name)}</a><div class="mute sm">${esc(f.title)} · ${f.rating?'★ '+f.rating.toFixed(1):'New'} · ${f.years} yrs</div>${tags.length?`<div class="pc-tags">${tags.map(x=>`<span>${x}</span>`).join('')}</div>`:''}</div>${spill(m.total)}</div>
+  <div class="pc-terms"><div><small>${p.type==='hourly'?'Rate':'Price'}</small><b>${bidTxt(q,p)}</b><span>${diff===0?'Same as your '+unit:diff>0?diff+'% over your '+unit:Math.abs(diff)+'% under your '+unit}</span></div>
+  <div><small>Delivery</small><b>${q.days} days</b><span>${p.deadline?(NOW()+q.days*DAY<=new Date(p.deadline+'T23:59').getTime()?'Before your deadline':'After your deadline'):'&nbsp;'}</span></div>
+  <div><small>Skills</small><b>${m.matched.length} of ${p.skills.length}</b><span>${m.missing.length?'Missing '+esc(list3(m.missing)):'All covered'}</span></div></div>
+  <p class="pc-cover">${esc(q.cover)}</p>
+  <div class="pc-act">${o?`<span class="pill st-offer">Offer sent</span><button class="btn danger sm" onclick="withdrawOffer('${o.id}')">Withdraw offer</button>`:!d&&open&&!po?`<button class="btn sm" onclick="quickHire('${q.id}')">Hire ${esc(f.name.split(' ')[0])}</button>`:`<span class="pill st-${q.status}">${q.status}</span>`}
+  <button class="btn plain sm" onclick="go('#/chat/${tkey(p.id,f.id)}')">Message</button><button class="link sm" onclick="viewProposal('${q.id}')">Full proposal</button>
+  <span class="grow"></span>${!d&&open&&!o?`${q.status==='submitted'?`<button class="link sm" onclick="setStatus('${q.id}','shortlisted')">Shortlist</button>`:'<span class="mute xs">Shortlisted</span>'}<button class="link sm pc-no" onclick="setStatus('${q.id}','declined')">Decline</button>`:''}</div>
+  </article>`};
+ return `<div class="wrap page">${projectSummary(p,`<button class="btn plain" onclick="go('#/matches/${p.id}')">Matches</button>`)}
+ ${po?`<div class="banner"><span>Offer sent to <b>${esc(fl(po.fid).name)}</b>. Waiting for their reply. <button class="link" onclick="go('#/offer/${po.id}')">View offer</button></span></div>`:''}
+ ${c?`<div class="banner"><span>You hired <b>${esc(fl(c.fid).name)}</b> <button class="link" onclick="go('#/contract/${c.id}')">Open contract</button></span></div>`:''}
+ ${open&&!po&&pick&&many?`<div class="pc-pick"><div><small>Our pick</small><b>${esc(pick.f.name)}</b><span>Best match at ${pick.m.total}, ${bidTxt(pick.q,p).replace(/<[^>]+>/g,'')} in ${pick.q.days} days</span></div><button class="btn" onclick="quickHire('${pick.q.id}')">Hire ${esc(pick.f.name.split(' ')[0])}</button></div>`:''}
+ <div class="toolbar"><h2 style="margin:0" class="grow">Proposals <span class="mute" style="font-weight:400">(${rows.length})</span></h2>${rows.length>1?`<label style="margin:0" class="row sm"><span class="mute">Sort</span><select onchange="S.psort=this.value;render()">${[['score','Best match'],['bid','Lowest price'],['days','Fastest'],['rating','Highest rated']].map(([v,l])=>`<option value="${v}" ${S.psort===v?'selected':''}>${l}</option>`).join('')}</select></label>`:''}</div>
+ ${rows.length?`<div class="pc-list">${rows.map(card).join('')}</div>`
+ :`<div class="card empty"><h3>No proposals yet</h3><p>Invite your top matches to hear back faster.</p>${top.length?`<div class="plist" style="max-width:520px;margin:12px auto 0">${top.map(m=>`<div class="pitem">${av(m.f,34)}<span class="grow"><b>${esc(m.f.name)}</b> <span class="mute sm">· ${esc(m.f.title)}</span></span>${spill(m.total)}${invited(pid,m.f.id)?'<span class="chip ok">Invited</span>':`<button class="btn sm" onclick="openInvite('${pid}',${m.f.id})">Invite</button>`}</div>`).join('')}</div>`:''}</div>`}
  </div>`;
 }
 function viewProposal(qid){
@@ -1306,7 +1535,7 @@ function viewProposal(qid){
  <div class="qa"><b>Cover letter</b><span style="white-space:pre-wrap">${esc(q.cover)}</span></div>
  ${(p.questions||[]).map((qq,i)=>`<div class="qa"><b>${esc(qq)}</b>${esc(q.answers?.[i]||'No answer')}</div>`).join('')}
  ${(q.links||[]).length?`<div class="qa"><b>Links</b>${q.links.map(l=>`<div><a href="${safeUrl(l)}" target="_blank" rel="noopener noreferrer">${esc(l)}</a></div>`).join('')}</div>`:''}
- <div class="row end" style="margin-top:8px"><button class="btn plain" onclick="closeSheet();go('#/chat/${tkey(p.id,f.id)}')">Message</button>${open&&!o&&!pendingOffer(p.id)?`<button class="btn" onclick="closeSheet();openOffer('${q.id}')">Send offer</button>`:''}</div>`);
+ <div class="row end" style="margin-top:8px"><button class="btn plain" onclick="closeSheet();go('#/chat/${tkey(p.id,f.id)}')">Message</button>${open&&!o&&!pendingOffer(p.id)?`<button class="btn" onclick="closeSheet();quickHire('${q.id}')">Hire ${esc(f.name.split(' ')[0])}</button>`:''}</div>`);
 }
 function setStatus(qid,st){
  const q=D.props.find(x=>x.id===qid),p=pj(q.pid),f=fl(q.fid);
@@ -1493,12 +1722,33 @@ const pstat=p=>{const po=pendingOffer(p.id);return p.status==='hired'?'<b style=
 const myContracts=()=>D.contracts.filter(c=>D.ui.role==='client'?pj(c.pid)?.owner==='me':c.fid===D.ui.fid).sort((a,b)=>b.ts-a.ts);
 const myOffers=()=>D.offers.filter(o=>o.status==='pending'&&(D.ui.role==='client'?pj(o.pid)?.owner==='me':o.fid===D.ui.fid));
 
+function offerDefaults(qid){
+ const q=D.props.find(x=>x.id===qid),p=pj(q.pid),f=fl(q.fid),a=Math.round(q.bid*0.4/50)*50;
+ return {qid,msg:`Hi ${f.name.split(' ')[0]}, we'd love to work with you on “${p.title}”. Here's our offer.`,ms:p.type==='fixed'?(q.bid<1000?[{t:'Complete project',amt:q.bid,due:isoIn(q.days)}]:[{t:'First milestone',amt:a,due:isoIn(Math.ceil(q.days/2))},{t:'Final delivery',amt:q.bid-a,due:isoIn(q.days)}]):[],rate:q.bid,limit:Math.min(40,f.hpw||20)};
+}
 function openOffer(qid){
+ const q=D.props.find(x=>x.id===qid),p=pj(q.pid);
+ if(pendingOffer(p.id))return toast('You already have an offer out on this project');
+ S.offer=offerDefaults(qid);offerSheet();
+}
+/* one-click hire: their own price and timeline, sensible milestones, one confirm */
+function quickHire(qid){
  const q=D.props.find(x=>x.id===qid),p=pj(q.pid),f=fl(q.fid);
  if(pendingOffer(p.id))return toast('You already have an offer out on this project');
- const a=Math.round(q.bid*0.4/50)*50;
- S.offer={qid,msg:`Hi ${f.name.split(' ')[0]}, we'd love to work with you on “${p.title}”. Here's our offer.`,ms:p.type==='fixed'?(q.bid<1000?[{t:'Complete project',amt:q.bid,due:isoIn(q.days)}]:[{t:'First milestone',amt:a,due:isoIn(Math.ceil(q.days/2))},{t:'Final delivery',amt:q.bid-a,due:isoIn(q.days)}]):[],rate:q.bid,limit:Math.min(40,f.hpw||20)};
- offerSheet();
+ const O=offerDefaults(qid),first=esc(f.name.split(' ')[0]);
+ const plan=p.type==='hourly'?`$${O.rate}/hr, up to ${O.limit} hours a week`:O.ms.length>1?`${money(O.ms[0].amt)} halfway, ${money(O.ms[1].amt)} on delivery`:`${money(O.ms[0].amt)} on delivery`;
+ openSheet(sheetH(`Hire ${esc(f.name)}?`,esc(p.title))+`
+ <div class="hire-sum"><div><small>${p.type==='hourly'?'Rate':'Price'}</small><b>${bidTxt(q,p)}</b></div><div><small>Delivery</small><b>${q.days} days</b></div><div><small>Match</small><b>${score(f,p).total}</b></div></div>
+ <p class="mute sm" style="margin:0 0 16px">${plan}. They'll get your offer and a chat opens with them.</p>
+ <div class="row end"><button class="link sm" onclick="closeSheet();openOffer('${qid}')">Change terms</button><span class="grow"></span><button class="btn plain" onclick="closeSheet()">Not yet</button><button class="btn" autofocus onclick="S.offer=offerDefaults('${qid}');sendOffer();simAccept('${p.id}')">Hire ${first}</button></div>`);
+}
+/* demo only: the freelancer answers the offer a few seconds later */
+function simAccept(pid){
+ setTimeout(()=>{
+  const o=pendingOffer(pid);if(!o)return;const f=fl(o.fid),p=pj(pid);
+  if(API.on){api('POST',`/offers/${o.id}/accept`,{freelancer_id:f._id}).then(()=>API.sync()).then(()=>{toast(`${f.name} accepted. Your contract has started.`);soft()}).catch(()=>{});return}
+  hireCore(o);save();toast(`${f.name} accepted. Your contract has started.`);soft();
+ },4000);
 }
 function offerSheet(){
  const O=S.offer,q=D.props.find(x=>x.id===O.qid),p=pj(q.pid),f=fl(q.fid),hourly=p.type==='hourly';
@@ -1528,15 +1778,20 @@ function sendOffer(){
  save();closeSheet();toast('Offer sent to '+f.name);soft();
 }
 function withdrawOffer(oid){const o=D.offers.find(x=>x.id===oid),p=pj(o.pid),f=fl(o.fid);if(API.on)return act(()=>api('POST',`/offers/${oid}/withdraw`),()=>{toast('Offer withdrawn');soft()});o.status='withdrawn';sysMsg(o.pid,o.fid,'Pulse Fit withdrew the offer');notify(f.id,`Pulse Fit withdrew their offer for “${p.title}”`,'#/project/'+p.id);save();toast('Offer withdrawn');soft()}
+function hireCore(o){
+ const p=pj(o.pid),f=fl(o.fid),q=D.props.find(x=>x.id===o.qid);
+ o.status='accepted';if(q)q.status='accepted';p.status='hired';p.hired=f.id;
+ const c={id:'c'+(++D.seq),pid:p.id,fid:f.id,oid:o.id,type:o.type,ms:o.ms.map((x,i)=>({...x,st:i===0?'active':'pending'})),rate:o.rate,limit:o.limit,status:'active',ts:NOW()};
+ D.contracts.push(c);
+ sysMsg(p.id,f.id,`${f.name} accepted the offer. Contract started.`);
+ notifyClient(p,`${f.name} accepted your offer for “${p.title}”`,'#/contract/'+c.id);logEv('hire',p.id,f.id);
+ return c;
+}
 function acceptOffer(oid){
  const o=D.offers.find(x=>x.id===oid),p=pj(o.pid),f=fl(o.fid),q=D.props.find(x=>x.id===o.qid);
  if(o.status!=='pending'||p.status!=='open')return toast('This offer is no longer available');
  if(API.on)return act(()=>api('POST',`/offers/${oid}/accept`,{freelancer_id:f._id}),c=>{toast('Offer accepted. Contract started.');go('#/contract/'+c.id)});
- o.status='accepted';if(q)q.status='accepted';p.status='hired';p.hired=f.id;
- const c={id:'c'+(++D.seq),pid:p.id,fid:f.id,oid,type:o.type,ms:o.ms.map((x,i)=>({...x,st:i===0?'active':'pending'})),rate:o.rate,limit:o.limit,status:'active',ts:NOW()};
- D.contracts.push(c);
- sysMsg(p.id,f.id,`${f.name} accepted the offer. Contract started.`);
- notifyClient(p,`${f.name} accepted your offer for “${p.title}”`,'#/contract/'+c.id);logEv('hire',p.id,f.id);
+ const c=hireCore(o);
  save();toast('Offer accepted. Contract started.');go('#/contract/'+c.id);
 }
 function declineOffer(oid){const o=D.offers.find(x=>x.id===oid),p=pj(o.pid),f=fl(o.fid);if(API.on)return act(()=>api('POST',`/offers/${oid}/decline`,{freelancer_id:f._id}),()=>{toast('Offer declined');soft()});o.status='declined';sysMsg(o.pid,o.fid,`${f.name} declined the offer`);notifyClient(p,`${f.name} declined your offer for “${p.title}”`,'#/proposals/'+p.id);logEv('offer_declined',p.id,f.id);save();toast('Offer declined');soft()}
